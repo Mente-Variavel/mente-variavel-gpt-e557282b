@@ -1,5 +1,5 @@
 import { Link, useLocation } from "react-router-dom";
-import { Menu, X, LogOut, LogIn, Megaphone } from "lucide-react";
+import { Menu, X, LogOut, LogIn, Megaphone, Settings } from "lucide-react";
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useAuth } from "@/hooks/useAuth";
@@ -56,12 +56,21 @@ const Navbar = () => {
             <Megaphone className="w-4 h-4" /> Seja anunciante
           </Link>
           {user ? (
-            <button
-              onClick={() => signOut()}
-              className="ml-2 px-3 py-2 rounded-lg text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-secondary transition-all flex items-center gap-1.5"
-            >
-              <LogOut className="w-4 h-4" /> Sair
-            </button>
+            <>
+              <Link
+                to="/admin/anuncios"
+                className="ml-1 p-2 rounded-lg text-muted-foreground/40 hover:text-muted-foreground hover:bg-secondary transition-all"
+                title="Admin"
+              >
+                <Settings className="w-4 h-4" />
+              </Link>
+              <button
+                onClick={() => signOut()}
+                className="ml-1 px-3 py-2 rounded-lg text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-secondary transition-all flex items-center gap-1.5"
+              >
+                <LogOut className="w-4 h-4" /> Sair
+              </button>
+            </>
           ) : (
             <Link
               to="/auth"
@@ -117,12 +126,21 @@ const Navbar = () => {
                 <Megaphone className="w-4 h-4" /> Seja anunciante
               </Link>
               {user ? (
-                <button
-                  onClick={() => { signOut(); setOpen(false); }}
-                  className="px-4 py-3 rounded-lg text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-secondary transition-all text-left flex items-center gap-1.5"
-                >
-                  <LogOut className="w-4 h-4" /> Sair
-                </button>
+                <>
+                  <Link
+                    to="/admin/anuncios"
+                    onClick={() => setOpen(false)}
+                    className="px-4 py-3 rounded-lg text-sm font-medium text-muted-foreground/40 hover:text-muted-foreground hover:bg-secondary transition-all flex items-center gap-1.5"
+                  >
+                    <Settings className="w-4 h-4" /> Admin
+                  </Link>
+                  <button
+                    onClick={() => { signOut(); setOpen(false); }}
+                    className="px-4 py-3 rounded-lg text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-secondary transition-all text-left flex items-center gap-1.5"
+                  >
+                    <LogOut className="w-4 h-4" /> Sair
+                  </button>
+                </>
               ) : (
                 <Link
                   to="/auth"
