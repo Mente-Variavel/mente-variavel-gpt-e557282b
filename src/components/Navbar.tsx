@@ -1,7 +1,8 @@
 import { Link, useLocation } from "react-router-dom";
-import { Menu, X } from "lucide-react";
+import { Menu, X, LogOut, LogIn } from "lucide-react";
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { useAuth } from "@/hooks/useAuth";
 import logo from "@/assets/logo.png";
 
 const navItems = [
@@ -14,6 +15,7 @@ const navItems = [
 const Navbar = () => {
   const [open, setOpen] = useState(false);
   const location = useLocation();
+  const { user, signOut } = useAuth();
 
   return (
     <nav className="fixed top-0 left-0 right-0 z-50 glass border-b border-border/30">
@@ -40,6 +42,21 @@ const Navbar = () => {
               {item.label}
             </Link>
           ))}
+          {user ? (
+            <button
+              onClick={() => signOut()}
+              className="px-4 py-2 rounded-lg text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-secondary transition-all flex items-center gap-1.5"
+            >
+              <LogOut className="w-4 h-4" /> Sair
+            </button>
+          ) : (
+            <Link
+              to="/auth"
+              className="px-4 py-2 rounded-lg text-sm font-medium bg-primary text-primary-foreground hover:bg-primary/90 transition-all flex items-center gap-1.5"
+            >
+              <LogIn className="w-4 h-4" /> Entrar
+            </Link>
+          )}
         </div>
 
         {/* Mobile toggle */}
