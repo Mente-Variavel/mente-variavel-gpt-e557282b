@@ -162,7 +162,7 @@ const Index = () => {
       </motion.div>
     </section>
 
-    <AdPlaceholder format="inline" className="container mx-auto px-4" />
+    <AdPlaceholder format="inline" slot="inline_1" className="container mx-auto px-4" />
 
     {/* How it helps */}
     <section className="container mx-auto px-4 py-20">
@@ -214,7 +214,7 @@ const Index = () => {
       </div>
     </section>
 
-    <AdPlaceholder format="inline" className="container mx-auto px-4" />
+    <AdPlaceholder format="inline" slot="inline_2" className="container mx-auto px-4" />
 
     {/* Benefits */}
     <section className="container mx-auto px-4 py-20">
