@@ -6,6 +6,7 @@ import { useState, useEffect } from "react";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import AdPlaceholder from "@/components/AdPlaceholder";
+import AudioVisualizer from "@/components/AudioVisualizer";
 import heroBg from "@/assets/hero-bg.jpg";
 import logo from "@/assets/logo.png";
 
@@ -130,8 +131,11 @@ const Index = () => {
                 <Send className="w-4 h-4" />
               </button>
             </div>
+            {isListening && (
+              <AudioVisualizer stream={mediaStream} isActive={isListening} barCount={32} className="rounded-lg mt-2" />
+            )}
             <p className="text-xs text-muted-foreground/60 mt-2">
-              Pressione Enter ou clique no botão para iniciar o chat
+              {isListening ? "Falando... clique no microfone para parar" : "Pressione Enter ou clique no botão para iniciar o chat"}
             </p>
           </div>
         </motion.div>
