@@ -1,6 +1,6 @@
 import { useRef, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Plus, Trash2 } from "lucide-react";
+import { Plus, Trash2, Info } from "lucide-react";
 import { motion } from "framer-motion";
 import ChatMessage from "@/components/ChatMessage";
 import ChatInput from "@/components/ChatInput";
@@ -12,6 +12,13 @@ import chatLogo from "@/assets/logo.png";
 type Msg = { role: "user" | "assistant"; content: string };
 
 const CHAT_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/chat`;
+
+const tips = [
+  "Seja específico: quanto mais detalhes, melhor a resposta.",
+  "Peça para reformular se a resposta não ficou clara.",
+  "Use para estudos, redação, ideias e programação.",
+  "Verifique informações importantes com outras fontes.",
+];
 
 const Chat = () => {
   const { user, loading: authLoading } = useAuth();
@@ -105,7 +112,7 @@ const Chat = () => {
         {/* Header actions */}
         <div className="flex items-center justify-between px-4 py-3 border-b border-border/30">
           <h1 className="font-display text-sm font-semibold text-primary text-glow-cyan">
-            Mente Variável GPT
+            Assistente IA
           </h1>
           <div className="flex gap-2">
             <button
@@ -133,11 +140,31 @@ const Chat = () => {
             >
               <img src={chatLogo} alt="Mente Variável" className="w-20 h-20 rounded-full mb-4 glow-cyan" />
               <h2 className="font-display text-lg font-bold text-foreground mb-2">
-                Olá! Sou o Mente Variável GPT
+                Assistente Mente Variável GPT
               </h2>
-              <p className="text-sm text-muted-foreground max-w-md">
+              <p className="text-sm text-muted-foreground max-w-md mb-6">
                 Seu assistente inteligente gratuito. Pergunte qualquer coisa sobre ideias, textos, código ou soluções criativas.
               </p>
+
+              {/* Tips */}
+              <div className="w-full max-w-md space-y-2 mb-6">
+                <div className="flex items-center gap-2 text-xs text-muted-foreground mb-2">
+                  <Info className="w-3.5 h-3.5 text-primary" />
+                  <span className="font-medium">Dicas de uso</span>
+                </div>
+                {tips.map((tip) => (
+                  <div key={tip} className="glass rounded-lg px-4 py-2.5 text-xs text-muted-foreground text-left">
+                    {tip}
+                  </div>
+                ))}
+              </div>
+
+              {/* Disclaimer */}
+              <div className="glass rounded-lg px-4 py-3 max-w-md">
+                <p className="text-xs text-muted-foreground/70">
+                  ⚠️ O assistente pode não possuir informações em tempo real. As respostas geradas podem conter limitações e não substituem aconselhamento profissional.
+                </p>
+              </div>
             </motion.div>
           )}
           {messages.map((msg, i) => (
