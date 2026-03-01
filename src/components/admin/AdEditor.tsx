@@ -149,8 +149,8 @@ const AdEditor = ({ ad, label, planStatus, onSave, saving }: AdEditorProps) => {
             <Input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Ex: Empresa XYZ" />
           </div>
           <div>
-            <Label className="text-sm text-muted-foreground">Descrição curta ({description.length}/120 caracteres)</Label>
-            <Textarea value={description} onChange={(e) => { if (e.target.value.length <= 120) setDescription(e.target.value); }} placeholder="Breve descrição (máx. 120 caracteres)" rows={2} />
+            <Label className="text-sm text-muted-foreground">Descrição curta ({description.length}/500 caracteres)</Label>
+            <Textarea value={description} onChange={(e) => { if (e.target.value.length <= 500) setDescription(e.target.value); }} placeholder="Breve descrição (máx. 500 caracteres)" rows={2} />
           </div>
           <div>
             <Label className="text-sm text-muted-foreground">Link de destino</Label>

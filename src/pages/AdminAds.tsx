@@ -229,7 +229,7 @@ const AdminAds = () => {
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div><Label>Nome da ferramenta</Label><Input value={value.name} onChange={(e) => onChange({ ...value, name: e.target.value })} /></div>
         <div><Label>URL</Label><Input value={value.url} onChange={(e) => onChange({ ...value, url: e.target.value })} /></div>
-        <div className="sm:col-span-2"><Label>Descrição ({value.description.length}/120 caracteres)</Label><Textarea value={value.description} onChange={(e) => { if (e.target.value.length <= 120) onChange({ ...value, description: e.target.value }); }} placeholder="Breve descrição (máx. 120 caracteres)" rows={2} /></div>
+        <div className="sm:col-span-2"><Label>Descrição ({value.description.length}/500 caracteres)</Label><Textarea value={value.description} onChange={(e) => { if (e.target.value.length <= 500) onChange({ ...value, description: e.target.value }); }} placeholder="Breve descrição (máx. 500 caracteres)" rows={2} /></div>
         <div><Label>URL do Ícone</Label><Input value={value.icon_url} onChange={(e) => onChange({ ...value, icon_url: e.target.value })} placeholder="https://..." /></div>
         <div><Label>Nome do cliente</Label><Input value={value.client_name} onChange={(e) => onChange({ ...value, client_name: e.target.value })} /></div>
         <div><Label>WhatsApp</Label><Input value={value.whatsapp_number} onChange={(e) => onChange({ ...value, whatsapp_number: e.target.value })} placeholder="5511999999999" /></div>
