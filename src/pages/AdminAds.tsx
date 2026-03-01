@@ -12,8 +12,9 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
-import { LogIn, AlertTriangle, Clock, Plus, Sparkles, Trash2, Save } from "lucide-react";
+import { LogIn, AlertTriangle, Clock, Plus, Sparkles, Trash2, Save, Mail, MailOpen, Eye, ChevronDown, ChevronUp } from "lucide-react";
 
 const SLOT_LABELS: Record<string, string> = {
   banner_top: "🔝 Banner Topo",
@@ -63,6 +64,30 @@ const AdminAds = () => {
     },
     enabled: !!user,
   });
+
+  const { data: contactMessages } = useQuery({
+    queryKey: ["admin-contact-messages"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("contact_messages")
+        .select("*")
+        .order("created_at", { ascending: false });
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!user,
+  });
+
+  const markAsRead = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from("contact_messages").update({ is_read: true }).eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["admin-contact-messages"] }),
+  });
+
+  const [showMessages, setShowMessages] = useState(true);
+  const [expandedMessage, setExpandedMessage] = useState<string | null>(null);
 
   const updateMutation = useMutation({
     mutationFn: async (ad: {
@@ -249,6 +274,75 @@ const AdminAds = () => {
         <h1 className="font-display text-2xl md:text-3xl font-bold text-foreground mb-4">
           Gerenciar Anúncios
         </h1>
+
+        {/* Contact Messages Section */}
+        <div className="mb-8">
+          <button
+            onClick={() => setShowMessages(!showMessages)}
+            className="flex items-center gap-2 font-display text-xl md:text-2xl font-bold text-foreground mb-4 hover:text-primary transition-colors"
+          >
+            <Mail className="w-5 h-5 text-primary" />
+            Mensagens de Contato
+            {contactMessages && contactMessages.filter((m) => !m.is_read).length > 0 && (
+              <Badge variant="destructive" className="ml-2">
+                {contactMessages.filter((m) => !m.is_read).length} nova{contactMessages.filter((m) => !m.is_read).length !== 1 ? "s" : ""}
+              </Badge>
+            )}
+            {showMessages ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+          </button>
+
+          {showMessages && (
+            <div className="space-y-3">
+              {!contactMessages || contactMessages.length === 0 ? (
+                <p className="text-sm text-muted-foreground">Nenhuma mensagem recebida.</p>
+              ) : (
+                contactMessages.map((msg) => (
+                  <div
+                    key={msg.id}
+                    className={`glass rounded-xl p-4 border cursor-pointer transition-all ${
+                      msg.is_read ? "border-border/50 opacity-70" : "border-primary/30 bg-primary/5"
+                    }`}
+                    onClick={() => {
+                      setExpandedMessage(expandedMessage === msg.id ? null : msg.id);
+                      if (!msg.is_read) markAsRead.mutate(msg.id);
+                    }}
+                  >
+                    <div className="flex items-center justify-between gap-3">
+                      <div className="flex items-center gap-3 min-w-0">
+                        {msg.is_read ? (
+                          <MailOpen className="w-4 h-4 text-muted-foreground shrink-0" />
+                        ) : (
+                          <Mail className="w-4 h-4 text-primary shrink-0" />
+                        )}
+                        <div className="min-w-0">
+                          <span className={`text-sm font-semibold ${msg.is_read ? "text-muted-foreground" : "text-foreground"}`}>
+                            {msg.name}
+                          </span>
+                          <span className="text-xs text-muted-foreground ml-2">{msg.email}</span>
+                        </div>
+                      </div>
+                      <span className="text-xs text-muted-foreground shrink-0">
+                        {new Date(msg.created_at).toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit", year: "2-digit", hour: "2-digit", minute: "2-digit" })}
+                      </span>
+                    </div>
+                    {expandedMessage === msg.id && (
+                      <div className="mt-3 pt-3 border-t border-border/50">
+                        <p className="text-sm text-foreground whitespace-pre-wrap">{msg.message}</p>
+                        <a
+                          href={`mailto:${msg.email}?subject=Re: Contato MenteVariável`}
+                          className="inline-flex items-center gap-1 mt-3 text-xs text-primary hover:underline"
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          <Mail className="w-3 h-3" /> Responder por e-mail
+                        </a>
+                      </div>
+                    )}
+                  </div>
+                ))
+              )}
+            </div>
+          )}
+        </div>
 
         {allAlerts.length > 0 && (
           <div className="mb-6 space-y-2">
