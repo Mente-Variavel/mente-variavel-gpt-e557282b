@@ -6,6 +6,7 @@ interface UseSpeechRecognitionReturn {
   transcript: string;
   isSupported: boolean;
   error: string | null;
+  mediaStream: MediaStream | null;
   startListening: () => void;
   stopListening: () => void;
   cancelListening: () => void;
@@ -23,6 +24,7 @@ export const useSpeechRecognition = (): UseSpeechRecognitionReturn => {
   const [isListening, setIsListening] = useState(false);
   const [transcript, setTranscript] = useState("");
   const [error, setError] = useState<string | null>(null);
+  const [mediaStream, setMediaStream] = useState<MediaStream | null>(null);
 
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const mediaStreamRef = useRef<MediaStream | null>(null);
@@ -40,6 +42,7 @@ export const useSpeechRecognition = (): UseSpeechRecognitionReturn => {
       mediaStreamRef.current.getTracks().forEach((t) => t.stop());
       mediaStreamRef.current = null;
     }
+    setMediaStream(null);
   }, []);
 
   useEffect(() => {
@@ -60,6 +63,7 @@ export const useSpeechRecognition = (): UseSpeechRecognitionReturn => {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       mediaStreamRef.current = stream;
+      setMediaStream(stream);
 
       const mimeType = MediaRecorder.isTypeSupported("audio/webm;codecs=opus")
         ? "audio/webm;codecs=opus"
@@ -79,6 +83,7 @@ export const useSpeechRecognition = (): UseSpeechRecognitionReturn => {
           mediaStreamRef.current.getTracks().forEach((t) => t.stop());
           mediaStreamRef.current = null;
         }
+        setMediaStream(null);
         mediaRecorderRef.current = null;
 
         if (cancelledRef.current) {
@@ -171,5 +176,5 @@ export const useSpeechRecognition = (): UseSpeechRecognitionReturn => {
     setError(null);
   }, [stopMediaStream]);
 
-  return { isListening, transcript, isSupported, error, startListening, stopListening, cancelListening };
+  return { isListening, transcript, isSupported, error, mediaStream, startListening, stopListening, cancelListening };
 };

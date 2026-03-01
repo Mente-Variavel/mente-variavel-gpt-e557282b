@@ -1,6 +1,7 @@
 import { Send, Mic, MicOff, X, HelpCircle } from "lucide-react";
 import { useState, useRef, useEffect, KeyboardEvent } from "react";
 import { useSpeechRecognition } from "@/hooks/useSpeechRecognition";
+import AudioVisualizer from "@/components/AudioVisualizer";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Dialog,
@@ -19,7 +20,7 @@ const ChatInput = ({ onSend, disabled }: ChatInputProps) => {
   const [input, setInput] = useState("");
   const [helpOpen, setHelpOpen] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
-  const { isListening, transcript, isSupported, error, startListening, stopListening, cancelListening } =
+  const { isListening, transcript, isSupported, error, mediaStream, startListening, stopListening, cancelListening } =
     useSpeechRecognition();
 
   useEffect(() => {
@@ -81,15 +82,18 @@ const ChatInput = ({ onSend, disabled }: ChatInputProps) => {
             initial={{ opacity: 0, height: 0 }}
             animate={{ opacity: 1, height: "auto" }}
             exit={{ opacity: 0, height: 0 }}
-            className="flex items-center gap-2 px-2"
+            className="flex flex-col gap-2 px-2"
           >
-            <span className="flex items-center gap-1.5 text-xs text-primary font-medium">
-              <span className="w-2 h-2 rounded-full bg-primary animate-pulse" />
-              Ouvindo...
-            </span>
-            <button onClick={handleCancel} className="text-xs text-muted-foreground hover:text-destructive flex items-center gap-1">
-              <X className="w-3 h-3" /> Cancelar
-            </button>
+            <div className="flex items-center gap-2">
+              <span className="flex items-center gap-1.5 text-xs text-primary font-medium">
+                <span className="w-2 h-2 rounded-full bg-primary animate-pulse" />
+                Ouvindo...
+              </span>
+              <button onClick={handleCancel} className="text-xs text-muted-foreground hover:text-destructive flex items-center gap-1">
+                <X className="w-3 h-3" /> Cancelar
+              </button>
+            </div>
+            <AudioVisualizer stream={mediaStream} isActive={isListening} barCount={32} className="rounded-lg" />
           </motion.div>
         )}
       </AnimatePresence>
