@@ -15,6 +15,8 @@ import GuideArticle from "./pages/GuideArticle";
 import Blog from "./pages/Blog";
 import BlogPost from "./pages/BlogPost";
 import Tools from "./pages/Tools";
+import Anuncie from "./pages/Anuncie";
+import AdminAds from "./pages/AdminAds";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -39,6 +41,8 @@ const App = () => (
           <Route path="/privacidade" element={<Privacy />} />
           <Route path="/termos" element={<Terms />} />
           <Route path="/contato" element={<Contact />} />
+          <Route path="/anuncie" element={<Anuncie />} />
+          <Route path="/admin/anuncios" element={<AdminAds />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>
