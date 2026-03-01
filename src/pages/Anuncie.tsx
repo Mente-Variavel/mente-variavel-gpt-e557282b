@@ -1,65 +1,45 @@
 import { Link } from "react-router-dom";
-import { Check, Mail, Megaphone, ArrowRight, Shield, Star, FileText, Building2 } from "lucide-react";
+import { Check, Mail, Megaphone, ArrowRight, Shield, Star, FileText, Building2, Lock, Eye, MousePointer, LayoutGrid } from "lucide-react";
 import { motion } from "framer-motion";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 
 const CONTACT_EMAIL = "comercial@klickview.com.br";
 
-const plans = [
+const pricingSlots = [
   {
-    name: "Mensal",
-    price: "R$ 113,85",
-    period: "/mês",
-    features: [
-      "Banner em 1 posição do site",
-      "Link direto para seu site",
-      "Relatório mensal de visualizações",
+    page: "Ferramentas",
+    slots: [
+      { position: "Banner Topo", price: "R$ 189,90", desc: "Primeiro elemento visível, máxima exposição" },
+      { position: "Inline 1", price: "R$ 149,90", desc: "Entre as ferramentas, alto engajamento" },
+      { position: "Inline 2", price: "R$ 139,90", desc: "Posição central, boa visibilidade" },
+      { position: "Rodapé", price: "R$ 99,90", desc: "Final da página, exposição complementar" },
     ],
-    highlight: false,
   },
   {
-    name: "Trimestral",
-    price: "R$ 90,85",
-    period: "/mês",
-    save: "Economize 20%",
-    features: [
-      "Banner em até 2 posições",
-      "Link direto para seu site",
-      "Relatório mensal de visualizações",
-      "Destaque na página inicial",
+    page: "Blog",
+    slots: [
+      { position: "Banner Topo", price: "R$ 169,90", desc: "Destaque antes dos artigos" },
+      { position: "Inline", price: "R$ 129,90", desc: "Entre os artigos do blog" },
+      { position: "Sidebar", price: "R$ 109,90", desc: "Coluna lateral fixa" },
+      { position: "Rodapé", price: "R$ 89,90", desc: "Parte inferior da página" },
     ],
-    highlight: true,
   },
   {
-    name: "Semestral",
-    price: "R$ 67,85",
-    period: "/mês",
-    save: "Economize 40%",
-    features: [
-      "Banner em até 3 posições",
-      "Link direto para seu site",
-      "Relatório mensal de visualizações",
-      "Destaque na página inicial",
-      "Menção nos guias de IA",
+    page: "Guias de IA",
+    slots: [
+      { position: "Banner Topo", price: "R$ 159,90", desc: "Antes da lista de guias" },
+      { position: "Inline", price: "R$ 119,90", desc: "Entre os guias" },
+      { position: "Rodapé", price: "R$ 89,90", desc: "Final da página de guias" },
     ],
-    highlight: false,
   },
-  {
-    name: "Anual",
-    price: "R$ 56,35",
-    period: "/mês",
-    save: "Melhor preço!",
-    features: [
-      "Banner em todas as posições",
-      "Link direto para seu site",
-      "Relatório mensal de visualizações",
-      "Destaque na página inicial",
-      "Menção nos guias e blog",
-      "Prioridade na renovação",
-    ],
-    highlight: false,
-  },
+];
+
+const exclusivityRules = [
+  "Apenas 1 anunciante por segmento em cada página",
+  "Sem concorrência direta no mesmo espaço",
+  "Vagas limitadas — máximo de 4 por página",
+  "Prioridade para contratos de maior duração",
 ];
 
 const Anuncie = () => {
@@ -97,52 +77,88 @@ const Anuncie = () => {
           </motion.div>
         </section>
 
-        {/* Plans */}
+        {/* Exclusividade */}
+        <section className="container mx-auto px-4 py-12">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            className="glass rounded-2xl p-8 md:p-10 max-w-4xl mx-auto border border-primary/20"
+          >
+            <div className="flex items-center gap-3 mb-4">
+              <Lock className="w-6 h-6 text-primary" />
+              <h2 className="font-display text-xl md:text-2xl font-bold text-foreground">
+                Exclusividade Garantida
+              </h2>
+            </div>
+            <p className="text-foreground/70 mb-6">
+              Diferente de plataformas convencionais, nossos espaços são <strong className="text-foreground">limitados e exclusivos</strong>. 
+              Isso garante que seu anúncio receba atenção real, sem competir com dezenas de outros.
+            </p>
+            <div className="grid sm:grid-cols-2 gap-3">
+              {exclusivityRules.map((rule) => (
+                <div key={rule} className="flex items-start gap-2 text-sm text-foreground/80">
+                  <Check className="w-4 h-4 text-accent shrink-0 mt-0.5" />
+                  {rule}
+                </div>
+              ))}
+            </div>
+          </motion.div>
+        </section>
+
+        {/* Tabela de Preços por Posição */}
         <section className="container mx-auto px-4 py-16">
-          <h2 className="font-display text-2xl md:text-3xl font-bold text-foreground text-center mb-12">
-            Planos de Anúncio
+          <h2 className="font-display text-2xl md:text-3xl font-bold text-foreground text-center mb-4">
+            Valores por Posição
           </h2>
-          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6 max-w-6xl mx-auto">
-            {plans.map((plan, i) => (
+          <p className="text-muted-foreground text-center max-w-2xl mx-auto mb-12">
+            Cada posição tem um preço mensal fixo. Quanto maior a visibilidade, maior o investimento — e o retorno.
+          </p>
+
+          <div className="max-w-5xl mx-auto space-y-10">
+            {pricingSlots.map((group, gi) => (
               <motion.div
-                key={plan.name}
+                key={group.page}
                 initial={{ opacity: 0, y: 20 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
-                transition={{ delay: i * 0.1 }}
-                className={`glass rounded-xl p-6 flex flex-col relative ${
-                  plan.highlight ? "border-primary/50 ring-1 ring-primary/30" : ""
-                }`}
+                transition={{ delay: gi * 0.1 }}
               >
-                {plan.save && (
-                  <span className="absolute -top-3 left-1/2 -translate-x-1/2 bg-accent text-accent-foreground text-xs font-bold px-3 py-1 rounded-full whitespace-nowrap">
-                    {plan.save}
-                  </span>
-                )}
-                <h3 className="font-display text-lg font-bold text-foreground mb-2">{plan.name}</h3>
-                <div className="mb-4">
-                  <span className="text-3xl font-black text-primary">{plan.price}</span>
-                  <span className="text-sm text-muted-foreground">{plan.period}</span>
-                </div>
-                <ul className="flex-1 space-y-2 mb-6">
-                  {plan.features.map((f) => (
-                    <li key={f} className="flex items-start gap-2 text-sm text-foreground/80">
-                      <Check className="w-4 h-4 text-accent shrink-0 mt-0.5" />
-                      {f}
-                    </li>
+                <h3 className="font-display text-lg font-bold text-foreground mb-4 flex items-center gap-2">
+                  <LayoutGrid className="w-5 h-5 text-primary" />
+                  Página: {group.page}
+                </h3>
+                <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                  {group.slots.map((slot, si) => (
+                    <div
+                      key={slot.position}
+                      className={`glass rounded-xl p-5 flex flex-col border ${
+                        si === 0 ? "border-primary/40 ring-1 ring-primary/20" : "border-border/50"
+                      }`}
+                    >
+                      <div className="flex items-center gap-2 mb-2">
+                        {si === 0 ? (
+                          <Eye className="w-4 h-4 text-primary" />
+                        ) : (
+                          <MousePointer className="w-4 h-4 text-muted-foreground" />
+                        )}
+                        <span className="text-sm font-semibold text-foreground">{slot.position}</span>
+                      </div>
+                      <p className="text-xs text-muted-foreground mb-4 flex-1">{slot.desc}</p>
+                      <div className="mb-3">
+                        <span className="text-2xl font-black text-primary">{slot.price}</span>
+                        <span className="text-xs text-muted-foreground">/mês</span>
+                      </div>
+                      <a
+                        href={`mailto:${CONTACT_EMAIL}?subject=${encodeURIComponent(`Interesse: ${slot.position} - ${group.page}`)}&body=${encodeURIComponent(`Olá! Tenho interesse na posição "${slot.position}" na página ${group.page} (${slot.price}/mês).\n\nEmpresa:\nSite:\nSegmento:\n\nAguardo retorno!`)}`}
+                        className="w-full inline-flex items-center justify-center gap-2 px-3 py-2.5 rounded-lg bg-secondary text-secondary-foreground hover:bg-secondary/80 font-semibold text-xs transition-all"
+                      >
+                        <Mail className="w-3.5 h-3.5" />
+                        Reservar posição
+                      </a>
+                    </div>
                   ))}
-                </ul>
-                <a
-                  href={`mailto:${CONTACT_EMAIL}?subject=${encodeURIComponent(`Interesse no plano ${plan.name} - Mente Variável GPT`)}&body=${encodeURIComponent(`Olá! Tenho interesse no plano ${plan.name} (${plan.price}${plan.period}).\n\nEmpresa:\nSite:\n\nAguardo retorno!`)}`}
-                  className={`w-full inline-flex items-center justify-center gap-2 px-4 py-3 rounded-lg font-semibold text-sm transition-all ${
-                    plan.highlight
-                      ? "bg-primary text-primary-foreground hover:bg-primary/90 glow-cyan"
-                      : "bg-secondary text-secondary-foreground hover:bg-secondary/80"
-                  }`}
-                >
-                  <Mail className="w-4 h-4" />
-                  Quero este plano
-                </a>
+                </div>
               </motion.div>
             ))}
           </div>
