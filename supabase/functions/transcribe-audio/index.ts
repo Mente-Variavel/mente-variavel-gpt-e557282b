@@ -22,57 +22,100 @@ serve(async (req) => {
       );
     }
 
+    const OPENAI_API_KEY = Deno.env.get("OPENAI_API_KEY");
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
+
+    console.log(`Audio received: ${audioFile.name}, size: ${audioFile.size}, type: ${audioFile.type}`);
+
+    // Try OpenAI Whisper first (cheapest option)
+    if (OPENAI_API_KEY) {
+      try {
+        const whisperForm = new FormData();
+        whisperForm.append("file", audioFile, audioFile.name || "recording.wav");
+        whisperForm.append("model", "whisper-1");
+        whisperForm.append("language", "pt");
+        whisperForm.append("response_format", "json");
+
+        const response = await fetch("https://api.openai.com/v1/audio/transcriptions", {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${OPENAI_API_KEY}`,
+          },
+          body: whisperForm,
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          const transcript = data.text?.trim() || "";
+          console.log("Whisper transcription:", transcript);
+
+          if (!transcript) {
+            return new Response(
+              JSON.stringify({ transcript: "", no_speech: true }),
+              { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+            );
+          }
+
+          return new Response(
+            JSON.stringify({ transcript }),
+            { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+          );
+        }
+
+        console.error("Whisper error:", response.status, await response.text());
+        // Fall through to Lovable AI fallback
+      } catch (e) {
+        console.error("Whisper request failed:", e);
+        // Fall through to Lovable AI fallback
+      }
+    }
+
+    // Fallback: Lovable AI (Gemini) 
     if (!LOVABLE_API_KEY) {
-      throw new Error("LOVABLE_API_KEY is not configured");
+      throw new Error("Nenhuma API de transcrição configurada");
     }
 
     const arrayBuffer = await audioFile.arrayBuffer();
-    const base64Audio = btoa(
-      new Uint8Array(arrayBuffer).reduce((data, byte) => data + String.fromCharCode(byte), "")
+    const base64Audio = new Uint8Array(arrayBuffer).reduce(
+      (data, byte) => data + String.fromCharCode(byte), ""
     );
+    const b64 = btoa(base64Audio);
 
-    console.log(`Audio received: ${audioFile.name}, size: ${arrayBuffer.byteLength}, type: ${audioFile.type}`);
+    console.log("Falling back to Lovable AI for transcription");
 
-    const response = await fetch(
-      "https://ai.gateway.lovable.dev/v1/chat/completions",
-      {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${LOVABLE_API_KEY}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          model: "google/gemini-2.5-flash",
-          messages: [
-            {
-              role: "user",
-              content: [
-                {
-                  type: "text",
-                  text: "Transcreva exatamente o que é dito neste áudio em português brasileiro. Retorne APENAS o texto transcrito, sem explicações, sem aspas, sem prefixos como 'Transcrição:'. Se não houver fala audível, retorne exatamente: [SEM_FALA]",
-                },
-                {
-                  type: "input_audio",
-                  input_audio: {
-                    data: base64Audio,
-                    format: "wav",
-                  },
-                },
-              ],
-            },
-          ],
-        }),
-      }
-    );
+    const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${LOVABLE_API_KEY}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        model: "google/gemini-2.5-flash",
+        messages: [
+          {
+            role: "user",
+            content: [
+              {
+                type: "text",
+                text: "Transcreva exatamente o que é dito neste áudio em português brasileiro. Retorne APENAS o texto transcrito, sem explicações, sem aspas, sem prefixos. Se não houver fala audível, retorne exatamente: [SEM_FALA]",
+              },
+              {
+                type: "input_audio",
+                input_audio: { data: b64, format: "wav" },
+              },
+            ],
+          },
+        ],
+      }),
+    });
 
     if (!response.ok) {
       const errorText = await response.text();
-      console.error("AI gateway error:", response.status, errorText);
+      console.error("Lovable AI error:", response.status, errorText);
 
       if (response.status === 429) {
         return new Response(
-          JSON.stringify({ error: "Limite de requisições excedido. Aguarde alguns segundos." }),
+          JSON.stringify({ error: "Limite de requisições excedido. Aguarde." }),
           { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } }
         );
       }
@@ -82,17 +125,11 @@ serve(async (req) => {
           { status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" } }
         );
       }
-
-      return new Response(
-        JSON.stringify({ error: `Erro na transcrição: ${response.status}` }),
-        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+      throw new Error(`Erro na transcrição: ${response.status}`);
     }
 
     const data = await response.json();
     const transcript = data.choices?.[0]?.message?.content?.trim() || "";
-
-    console.log("Transcription result:", transcript);
 
     if (transcript === "[SEM_FALA]" || !transcript) {
       return new Response(
