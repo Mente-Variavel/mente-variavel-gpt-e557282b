@@ -5,19 +5,27 @@ import { useAuth } from "@/hooks/useAuth";
 import { useNavigate } from "react-router-dom";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
+import AdEditor from "@/components/admin/AdEditor";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Switch } from "@/components/ui/switch";
-import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
-import { Save, LogIn, Upload, X, Image } from "lucide-react";
+import { LogIn, AlertTriangle, Clock } from "lucide-react";
 
 const SLOT_LABELS: Record<string, string> = {
   banner_top: "🔝 Banner Topo",
   inline_1: "📄 Inline 1 (meio da página)",
   inline_2: "📄 Inline 2 (meio da página)",
   footer: "🔻 Rodapé",
+};
+
+const getAdStatus = (planEnd: string | null) => {
+  if (!planEnd) return null;
+  const end = new Date(planEnd);
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const diffDays = Math.ceil((end.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+  if (diffDays < 0) return "expired";
+  if (diffDays <= 3) return "expiring";
+  return "active";
 };
 
 const AdminAds = () => {
@@ -39,7 +47,12 @@ const AdminAds = () => {
   });
 
   const updateMutation = useMutation({
-    mutationFn: async (ad: { id: string; title: string; description: string; image_url: string; link_url: string; whatsapp_number: string; is_active: boolean }) => {
+    mutationFn: async (ad: {
+      id: string; title: string; description: string; image_url: string;
+      link_url: string; whatsapp_number: string; is_active: boolean;
+      plan_name: string; plan_start: string; plan_end: string;
+      plan_value: string; client_name: string;
+    }) => {
       const { error } = await supabase
         .from("ads")
         .update({
@@ -49,6 +62,11 @@ const AdminAds = () => {
           link_url: ad.link_url,
           whatsapp_number: ad.whatsapp_number,
           is_active: ad.is_active,
+          plan_name: ad.plan_name || null,
+          plan_start: ad.plan_start || null,
+          plan_end: ad.plan_end || null,
+          plan_value: ad.plan_value ? parseFloat(ad.plan_value) : null,
+          client_name: ad.client_name || null,
         })
         .eq("id", ad.id);
       if (error) throw error;
@@ -89,19 +107,75 @@ const AdminAds = () => {
     );
   }
 
+  const expiringAds = ads?.filter((ad) => {
+    const status = getAdStatus(ad.plan_end);
+    return status === "expiring" || status === "expired";
+  }) || [];
+
   return (
     <div className="flex flex-col min-h-screen">
       <Navbar />
       <main className="flex-1 pt-20 container mx-auto px-4 py-8">
-        <h1 className="font-display text-2xl md:text-3xl font-bold text-foreground mb-8">
+        <h1 className="font-display text-2xl md:text-3xl font-bold text-foreground mb-4">
           Gerenciar Anúncios
         </h1>
+
+        {expiringAds.length > 0 && (
+          <div className="mb-6 space-y-2">
+            {expiringAds.map((ad) => {
+              const status = getAdStatus(ad.plan_end);
+              const isExpired = status === "expired";
+              const clientName = ad.client_name || ad.title || ad.slot;
+              const daysLeft = ad.plan_end
+                ? Math.ceil((new Date(ad.plan_end).getTime() - new Date().setHours(0,0,0,0)) / (1000*60*60*24))
+                : 0;
+
+              return (
+                <div
+                  key={`alert-${ad.id}`}
+                  className={`flex items-center gap-3 p-3 rounded-lg border ${
+                    isExpired
+                      ? "border-destructive/50 bg-destructive/10"
+                      : "border-yellow-500/50 bg-yellow-500/10"
+                  }`}
+                >
+                  {isExpired ? (
+                    <AlertTriangle className="w-5 h-5 text-destructive shrink-0" />
+                  ) : (
+                    <Clock className="w-5 h-5 text-yellow-500 shrink-0" />
+                  )}
+                  <span className="text-sm flex-1">
+                    {isExpired
+                      ? `⚠️ Plano de "${clientName}" VENCIDO!`
+                      : `⏰ Plano de "${clientName}" vence em ${daysLeft} dia${daysLeft !== 1 ? "s" : ""}`}
+                  </span>
+                  {ad.whatsapp_number && (
+                    <a
+                      href={`https://wa.me/${ad.whatsapp_number.replace(/\D/g, "")}?text=${encodeURIComponent(
+                        isExpired
+                          ? `Olá ${clientName}! Seu plano de anúncio no MenteVariável venceu. Gostaria de renovar?`
+                          : `Olá ${clientName}! Seu plano de anúncio no MenteVariável vence em ${daysLeft} dia${daysLeft !== 1 ? "s" : ""}. Gostaria de renovar?`
+                      )}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="shrink-0 px-3 py-1.5 rounded-md bg-[#25D366] hover:bg-[#20BD5A] text-white text-xs font-medium transition-colors"
+                    >
+                      Avisar no WhatsApp
+                    </a>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        )}
+
         <div className="grid gap-6">
           {ads?.map((ad) => (
             <AdEditor
               key={ad.id}
               ad={ad}
               label={SLOT_LABELS[ad.slot] || ad.slot}
+              planStatus={getAdStatus(ad.plan_end)}
               onSave={(updated) => updateMutation.mutate({ ...updated, id: ad.id })}
               saving={updateMutation.isPending}
             />
@@ -109,177 +183,6 @@ const AdminAds = () => {
         </div>
       </main>
       <Footer />
-    </div>
-  );
-};
-
-interface AdEditorProps {
-  ad: {
-    id: string;
-    slot: string;
-    title: string;
-    description: string | null;
-    image_url: string | null;
-    link_url: string | null;
-    whatsapp_number: string | null;
-    is_active: boolean;
-  };
-  label: string;
-  onSave: (data: { title: string; description: string; image_url: string; link_url: string; whatsapp_number: string; is_active: boolean }) => void;
-  saving: boolean;
-}
-
-const AdEditor = ({ ad, label, onSave, saving }: AdEditorProps) => {
-  const [title, setTitle] = useState(ad.title || "");
-  const [description, setDescription] = useState(ad.description || "");
-  const [imageUrl, setImageUrl] = useState(ad.image_url || "");
-  const [linkUrl, setLinkUrl] = useState(ad.link_url || "");
-  const [whatsappNumber, setWhatsappNumber] = useState(ad.whatsapp_number || "");
-  const [isActive, setIsActive] = useState(ad.is_active);
-  const [uploading, setUploading] = useState(false);
-  const fileInputRef = useRef<HTMLInputElement>(null);
-
-  useEffect(() => {
-    setTitle(ad.title || "");
-    setDescription(ad.description || "");
-    setImageUrl(ad.image_url || "");
-    setLinkUrl(ad.link_url || "");
-    setWhatsappNumber(ad.whatsapp_number || "");
-    setIsActive(ad.is_active);
-  }, [ad]);
-
-  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    if (!file.type.startsWith("image/")) {
-      toast.error("Selecione um arquivo de imagem");
-      return;
-    }
-
-    if (file.size > 5 * 1024 * 1024) {
-      toast.error("Imagem deve ter no máximo 5MB");
-      return;
-    }
-
-    setUploading(true);
-    try {
-      const ext = file.name.split(".").pop();
-      const fileName = `${ad.slot}-${Date.now()}.${ext}`;
-
-      const { error: uploadError } = await supabase.storage
-        .from("ad-images")
-        .upload(fileName, file, { upsert: true });
-
-      if (uploadError) throw uploadError;
-
-      const { data: { publicUrl } } = supabase.storage
-        .from("ad-images")
-        .getPublicUrl(fileName);
-
-      setImageUrl(publicUrl);
-      toast.success("Imagem enviada com sucesso!");
-    } catch (err) {
-      console.error(err);
-      toast.error("Erro ao enviar imagem");
-    } finally {
-      setUploading(false);
-      if (fileInputRef.current) fileInputRef.current.value = "";
-    }
-  };
-
-  return (
-    <div className="glass rounded-xl p-6">
-      <div className="flex items-center justify-between mb-4">
-        <h3 className="font-display text-lg font-bold text-foreground">{label}</h3>
-        <div className="flex items-center gap-2">
-          <Label htmlFor={`active-${ad.id}`} className="text-sm text-muted-foreground">
-            Ativo
-          </Label>
-          <Switch
-            id={`active-${ad.id}`}
-            checked={isActive}
-            onCheckedChange={setIsActive}
-          />
-        </div>
-      </div>
-      <div className="grid md:grid-cols-2 gap-4">
-        <div className="space-y-3">
-          <div>
-            <Label className="text-sm text-muted-foreground">Título do anúncio</Label>
-            <Input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Ex: Empresa XYZ" />
-          </div>
-          <div>
-            <Label className="text-sm text-muted-foreground">Descrição curta</Label>
-            <Textarea value={description} onChange={(e) => setDescription(e.target.value)} placeholder="Breve descrição..." rows={2} />
-          </div>
-          <div>
-            <Label className="text-sm text-muted-foreground">Link de destino</Label>
-            <Input value={linkUrl} onChange={(e) => setLinkUrl(e.target.value)} placeholder="https://empresa.com.br" />
-          </div>
-          <div>
-            <Label className="text-sm text-muted-foreground">WhatsApp (com DDD, ex: 5511999999999)</Label>
-            <Input value={whatsappNumber} onChange={(e) => setWhatsappNumber(e.target.value)} placeholder="5511999999999" />
-          </div>
-        </div>
-        <div className="space-y-3">
-          <div>
-            <Label className="text-sm text-muted-foreground">Imagem do anúncio</Label>
-            <div className="space-y-2">
-              {imageUrl ? (
-                <div className="relative rounded-lg overflow-hidden border border-border/50 bg-card/50">
-                  <img src={imageUrl} alt="Preview" className="w-full h-40 object-contain" />
-                  <button
-                    onClick={() => setImageUrl("")}
-                    className="absolute top-2 right-2 p-1 rounded-full bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                  >
-                    <X className="w-3 h-3" />
-                  </button>
-                </div>
-              ) : (
-                <div className="w-full h-40 rounded-lg border-2 border-dashed border-border/50 flex flex-col items-center justify-center gap-2 text-muted-foreground">
-                  <Image className="w-8 h-8" />
-                  <span className="text-xs">Recomendado: 1080x1080px</span>
-                </div>
-              )}
-              <input
-                ref={fileInputRef}
-                type="file"
-                accept="image/*"
-                onChange={handleImageUpload}
-                className="hidden"
-              />
-              <Button
-                type="button"
-                variant="secondary"
-                size="sm"
-                onClick={() => fileInputRef.current?.click()}
-                disabled={uploading}
-                className="w-full gap-2"
-              >
-                <Upload className="w-4 h-4" />
-                {uploading ? "Enviando..." : "Enviar imagem"}
-              </Button>
-              <Input
-                value={imageUrl}
-                onChange={(e) => setImageUrl(e.target.value)}
-                placeholder="Ou cole a URL da imagem"
-                className="text-xs"
-              />
-            </div>
-          </div>
-        </div>
-      </div>
-      <div className="flex justify-end mt-4">
-        <Button
-          onClick={() => onSave({ title, description, image_url: imageUrl, link_url: linkUrl, whatsapp_number: whatsappNumber, is_active: isActive })}
-          disabled={saving}
-          className="gap-2"
-        >
-          <Save className="w-4 h-4" />
-          Salvar
-        </Button>
-      </div>
     </div>
   );
 };

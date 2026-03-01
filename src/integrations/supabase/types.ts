@@ -16,36 +16,51 @@ export type Database = {
     Tables: {
       ads: {
         Row: {
+          client_name: string | null
           created_at: string
           description: string | null
           id: string
           image_url: string | null
           is_active: boolean
           link_url: string | null
+          plan_end: string | null
+          plan_name: string | null
+          plan_start: string | null
+          plan_value: number | null
           slot: string
           title: string
           updated_at: string
           whatsapp_number: string | null
         }
         Insert: {
+          client_name?: string | null
           created_at?: string
           description?: string | null
           id?: string
           image_url?: string | null
           is_active?: boolean
           link_url?: string | null
+          plan_end?: string | null
+          plan_name?: string | null
+          plan_start?: string | null
+          plan_value?: number | null
           slot: string
           title?: string
           updated_at?: string
           whatsapp_number?: string | null
         }
         Update: {
+          client_name?: string | null
           created_at?: string
           description?: string | null
           id?: string
           image_url?: string | null
           is_active?: boolean
           link_url?: string | null
+          plan_end?: string | null
+          plan_name?: string | null
+          plan_start?: string | null
+          plan_value?: number | null
           slot?: string
           title?: string
           updated_at?: string
