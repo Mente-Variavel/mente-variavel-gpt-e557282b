@@ -5,6 +5,7 @@ import ChatMessage from "@/components/ChatMessage";
 import ChatInput from "@/components/ChatInput";
 import TypingIndicator from "@/components/TypingIndicator";
 import Navbar from "@/components/Navbar";
+import chatLogo from "@/assets/logo.png";
 
 type Msg = { role: "user" | "assistant"; content: string };
 
@@ -122,9 +123,7 @@ const Chat = () => {
               animate={{ opacity: 1 }}
               className="flex flex-col items-center justify-center h-full text-center"
             >
-              <div className="w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center mb-4 glow-cyan">
-                <span className="text-2xl">🧠</span>
-              </div>
+              <img src={chatLogo} alt="Mente Variável" className="w-20 h-20 rounded-full mb-4 glow-cyan" />
               <h2 className="font-display text-lg font-bold text-foreground mb-2">
                 Olá! Sou o Mente Variável GPT
               </h2>
