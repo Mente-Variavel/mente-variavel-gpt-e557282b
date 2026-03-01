@@ -1,6 +1,7 @@
-import { Link } from "react-router-dom";
-import { ArrowRight, Sparkles, Zap, Shield, Brain, BookOpen, MessageSquare, Lightbulb, Users, TrendingUp } from "lucide-react";
+import { Link, useNavigate } from "react-router-dom";
+import { ArrowRight, Sparkles, Zap, Shield, Brain, BookOpen, MessageSquare, Lightbulb, Users, TrendingUp, Send } from "lucide-react";
 import { motion } from "framer-motion";
+import { useState } from "react";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import AdPlaceholder from "@/components/AdPlaceholder";
@@ -39,7 +40,17 @@ const benefits = [
   { icon: Zap, title: "Sempre disponível", desc: "Acesse 24 horas por dia, 7 dias por semana, de qualquer dispositivo." },
 ];
 
-const Index = () => (
+const Index = () => {
+  const [quickMsg, setQuickMsg] = useState("");
+  const navigate = useNavigate();
+
+  const handleQuickSend = () => {
+    const trimmed = quickMsg.trim();
+    if (!trimmed) return;
+    navigate("/assistente", { state: { initialMessage: trimmed } });
+  };
+
+  return (
   <div className="flex flex-col min-h-screen">
     <Navbar />
 
@@ -70,11 +81,35 @@ const Index = () => (
           </p>
           <Link
             to="/assistente"
-            className="inline-flex items-center gap-2 px-8 py-4 rounded-xl bg-primary text-primary-foreground font-semibold text-sm hover:bg-primary/90 transition-all glow-cyan group"
+            className="inline-flex items-center gap-2 px-8 py-4 rounded-xl bg-primary text-primary-foreground font-semibold text-sm hover:bg-primary/90 transition-all glow-cyan group mb-8"
           >
             Usar o Assistente
             <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
           </Link>
+
+          {/* Quick chat input */}
+          <div className="max-w-xl mx-auto w-full">
+            <div className="glass rounded-xl p-2 flex items-center gap-2 border border-border/50">
+              <input
+                type="text"
+                value={quickMsg}
+                onChange={(e) => setQuickMsg(e.target.value)}
+                onKeyDown={(e) => e.key === "Enter" && handleQuickSend()}
+                placeholder="Pergunte algo à IA..."
+                className="flex-1 bg-transparent outline-none text-sm text-foreground placeholder:text-muted-foreground px-3 py-2"
+              />
+              <button
+                onClick={handleQuickSend}
+                disabled={!quickMsg.trim()}
+                className="p-2.5 rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-30 disabled:cursor-not-allowed transition-all glow-cyan shrink-0"
+              >
+                <Send className="w-4 h-4" />
+              </button>
+            </div>
+            <p className="text-xs text-muted-foreground/60 mt-2">
+              Pressione Enter ou clique no botão para iniciar o chat
+            </p>
+          </div>
         </motion.div>
       </div>
     </section>
@@ -208,6 +243,7 @@ const Index = () => (
 
     <Footer />
   </div>
-);
+  );
+};
 
 export default Index;

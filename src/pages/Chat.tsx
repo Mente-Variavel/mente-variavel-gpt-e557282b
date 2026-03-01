@@ -1,5 +1,5 @@
 import { useRef, useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { Plus, Trash2, Info } from "lucide-react";
 import { motion } from "framer-motion";
 import ChatMessage from "@/components/ChatMessage";
@@ -23,13 +23,26 @@ const tips = [
 const Chat = () => {
   const { user, loading: authLoading } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
   const [messages, setMessages] = useState<Msg[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
+  const initialSent = useRef(false);
 
   useEffect(() => {
     if (!authLoading && !user) navigate("/auth");
   }, [user, authLoading, navigate]);
+
+  // Handle initial message from Home page
+  useEffect(() => {
+    const state = location.state as { initialMessage?: string } | null;
+    if (state?.initialMessage && !initialSent.current && user) {
+      initialSent.current = true;
+      sendMessage(state.initialMessage);
+      // Clear the state so it doesn't re-send on re-render
+      window.history.replaceState({}, document.title);
+    }
+  }, [user, location.state]);
 
   useEffect(() => {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
