@@ -1,7 +1,8 @@
 import { Link, useNavigate } from "react-router-dom";
-import { ArrowRight, Sparkles, Zap, Shield, Brain, BookOpen, MessageSquare, Lightbulb, Users, TrendingUp, Send } from "lucide-react";
+import { ArrowRight, Sparkles, Zap, Shield, Brain, BookOpen, MessageSquare, Lightbulb, Users, TrendingUp, Send, Mic, MicOff } from "lucide-react";
+import { useSpeechRecognition } from "@/hooks/useSpeechRecognition";
 import { motion } from "framer-motion";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import AdPlaceholder from "@/components/AdPlaceholder";
@@ -43,6 +44,16 @@ const benefits = [
 const Index = () => {
   const [quickMsg, setQuickMsg] = useState("");
   const navigate = useNavigate();
+  const { isListening, transcript, isSupported, startListening, stopListening } = useSpeechRecognition();
+
+  useEffect(() => {
+    if (transcript) setQuickMsg(transcript);
+  }, [transcript]);
+
+  const toggleMic = () => {
+    if (isListening) stopListening();
+    else startListening();
+  };
 
   const handleQuickSend = () => {
     const trimmed = quickMsg.trim();
@@ -98,6 +109,19 @@ const Index = () => {
                 placeholder="Pergunte algo à IA..."
                 className="flex-1 bg-transparent outline-none text-sm text-foreground placeholder:text-muted-foreground px-3 py-2"
               />
+              {isSupported && (
+                <button
+                  onClick={toggleMic}
+                  className={`p-2.5 rounded-lg transition-all shrink-0 ${
+                    isListening
+                      ? "bg-destructive text-destructive-foreground animate-pulse"
+                      : "bg-secondary text-muted-foreground hover:text-primary hover:bg-secondary/80"
+                  }`}
+                  title={isListening ? "Parar de ouvir" : "Falar"}
+                >
+                  {isListening ? <MicOff className="w-4 h-4" /> : <Mic className="w-4 h-4" />}
+                </button>
+              )}
               <button
                 onClick={handleQuickSend}
                 disabled={!quickMsg.trim()}
