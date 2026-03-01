@@ -9,7 +9,7 @@ const CONTACT_EMAIL = "comercial@klickview.com.br";
 const plans = [
   {
     name: "Mensal",
-    price: "R$ 99",
+    price: "R$ 113,85",
     period: "/mês",
     features: [
       "Banner em 1 posição do site",
@@ -20,7 +20,7 @@ const plans = [
   },
   {
     name: "Trimestral",
-    price: "R$ 79",
+    price: "R$ 90,85",
     period: "/mês",
     save: "Economize 20%",
     features: [
@@ -33,7 +33,7 @@ const plans = [
   },
   {
     name: "Semestral",
-    price: "R$ 59",
+    price: "R$ 67,85",
     period: "/mês",
     save: "Economize 40%",
     features: [
@@ -47,7 +47,7 @@ const plans = [
   },
   {
     name: "Anual",
-    price: "R$ 49",
+    price: "R$ 56,35",
     period: "/mês",
     save: "Melhor preço!",
     features: [
