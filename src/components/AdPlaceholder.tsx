@@ -1,7 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Link } from "react-router-dom";
-import { Megaphone } from "lucide-react";
+import { Megaphone, MessageCircle } from "lucide-react";
 
 interface AdPlaceholderProps {
   format?: "banner" | "sidebar" | "inline" | "footer";
@@ -58,14 +58,28 @@ const AdPlaceholder = ({ format = "inline", slot, className = "" }: AdPlaceholde
       </div>
     );
 
-    if (ad.link_url) {
-      return (
-        <a href={ad.link_url} target="_blank" rel="noopener noreferrer" className="block">
-          {content}
-        </a>
-      );
-    }
-    return content;
+    return (
+      <div className="space-y-2">
+        {ad.link_url ? (
+          <a href={ad.link_url} target="_blank" rel="noopener noreferrer" className="block">
+            {content}
+          </a>
+        ) : (
+          content
+        )}
+        {ad.whatsapp_number && (
+          <a
+            href={`https://wa.me/${ad.whatsapp_number.replace(/\D/g, '')}?text=${encodeURIComponent('Olá! Vi seu anúncio no MenteVariável e gostaria de saber mais.')}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="w-full flex items-center justify-center gap-2 py-2 rounded-lg bg-[#25D366] hover:bg-[#20BD5A] text-white text-sm font-medium transition-colors"
+          >
+            <MessageCircle className="w-4 h-4" />
+            Falar no WhatsApp
+          </a>
+        )}
+      </div>
+    );
   }
 
   // CTA padrão: "Anuncie aqui"

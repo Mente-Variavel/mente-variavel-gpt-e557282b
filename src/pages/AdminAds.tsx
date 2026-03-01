@@ -39,7 +39,7 @@ const AdminAds = () => {
   });
 
   const updateMutation = useMutation({
-    mutationFn: async (ad: { id: string; title: string; description: string; image_url: string; link_url: string; is_active: boolean }) => {
+    mutationFn: async (ad: { id: string; title: string; description: string; image_url: string; link_url: string; whatsapp_number: string; is_active: boolean }) => {
       const { error } = await supabase
         .from("ads")
         .update({
@@ -47,6 +47,7 @@ const AdminAds = () => {
           description: ad.description,
           image_url: ad.image_url,
           link_url: ad.link_url,
+          whatsapp_number: ad.whatsapp_number,
           is_active: ad.is_active,
         })
         .eq("id", ad.id);
@@ -120,10 +121,11 @@ interface AdEditorProps {
     description: string | null;
     image_url: string | null;
     link_url: string | null;
+    whatsapp_number: string | null;
     is_active: boolean;
   };
   label: string;
-  onSave: (data: { title: string; description: string; image_url: string; link_url: string; is_active: boolean }) => void;
+  onSave: (data: { title: string; description: string; image_url: string; link_url: string; whatsapp_number: string; is_active: boolean }) => void;
   saving: boolean;
 }
 
@@ -132,6 +134,7 @@ const AdEditor = ({ ad, label, onSave, saving }: AdEditorProps) => {
   const [description, setDescription] = useState(ad.description || "");
   const [imageUrl, setImageUrl] = useState(ad.image_url || "");
   const [linkUrl, setLinkUrl] = useState(ad.link_url || "");
+  const [whatsappNumber, setWhatsappNumber] = useState(ad.whatsapp_number || "");
   const [isActive, setIsActive] = useState(ad.is_active);
   const [uploading, setUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -141,6 +144,7 @@ const AdEditor = ({ ad, label, onSave, saving }: AdEditorProps) => {
     setDescription(ad.description || "");
     setImageUrl(ad.image_url || "");
     setLinkUrl(ad.link_url || "");
+    setWhatsappNumber(ad.whatsapp_number || "");
     setIsActive(ad.is_active);
   }, [ad]);
 
@@ -213,6 +217,10 @@ const AdEditor = ({ ad, label, onSave, saving }: AdEditorProps) => {
             <Label className="text-sm text-muted-foreground">Link de destino</Label>
             <Input value={linkUrl} onChange={(e) => setLinkUrl(e.target.value)} placeholder="https://empresa.com.br" />
           </div>
+          <div>
+            <Label className="text-sm text-muted-foreground">WhatsApp (com DDD, ex: 5511999999999)</Label>
+            <Input value={whatsappNumber} onChange={(e) => setWhatsappNumber(e.target.value)} placeholder="5511999999999" />
+          </div>
         </div>
         <div className="space-y-3">
           <div>
@@ -264,7 +272,7 @@ const AdEditor = ({ ad, label, onSave, saving }: AdEditorProps) => {
       </div>
       <div className="flex justify-end mt-4">
         <Button
-          onClick={() => onSave({ title, description, image_url: imageUrl, link_url: linkUrl, is_active: isActive })}
+          onClick={() => onSave({ title, description, image_url: imageUrl, link_url: linkUrl, whatsapp_number: whatsappNumber, is_active: isActive })}
           disabled={saving}
           className="gap-2"
         >
