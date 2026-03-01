@@ -17,7 +17,7 @@ serve(async (req) => {
 
     if (!audioFile) {
       return new Response(
-        JSON.stringify({ error: "No audio file provided" }),
+        JSON.stringify({ error: "Nenhum áudio enviado" }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
@@ -27,16 +27,13 @@ serve(async (req) => {
       throw new Error("LOVABLE_API_KEY is not configured");
     }
 
-    // Convert audio to base64
     const arrayBuffer = await audioFile.arrayBuffer();
     const base64Audio = btoa(
-      String.fromCharCode(...new Uint8Array(arrayBuffer))
+      new Uint8Array(arrayBuffer).reduce((data, byte) => data + String.fromCharCode(byte), "")
     );
 
-    // Determine MIME type
-    const mimeType = audioFile.type || "audio/webm";
+    console.log(`Audio received: ${audioFile.name}, size: ${arrayBuffer.byteLength}, type: ${audioFile.type}`);
 
-    // Use Gemini with audio input for transcription
     const response = await fetch(
       "https://ai.gateway.lovable.dev/v1/chat/completions",
       {
@@ -53,13 +50,13 @@ serve(async (req) => {
               content: [
                 {
                   type: "text",
-                  text: "Transcreva exatamente o que é dito neste áudio em português brasileiro. Retorne APENAS o texto transcrito, sem explicações, sem aspas, sem prefixos. Se não houver fala audível, retorne exatamente: [SEM_FALA]",
+                  text: "Transcreva exatamente o que é dito neste áudio em português brasileiro. Retorne APENAS o texto transcrito, sem explicações, sem aspas, sem prefixos como 'Transcrição:'. Se não houver fala audível, retorne exatamente: [SEM_FALA]",
                 },
                 {
                   type: "input_audio",
                   input_audio: {
                     data: base64Audio,
-                    format: mimeType.includes("wav") ? "wav" : mimeType.includes("mp3") ? "mp3" : "wav",
+                    format: "wav",
                   },
                 },
               ],
@@ -75,25 +72,27 @@ serve(async (req) => {
 
       if (response.status === 429) {
         return new Response(
-          JSON.stringify({ error: "Limite de requisições excedido. Tente novamente em alguns segundos." }),
+          JSON.stringify({ error: "Limite de requisições excedido. Aguarde alguns segundos." }),
           { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } }
         );
       }
       if (response.status === 402) {
         return new Response(
-          JSON.stringify({ error: "Créditos insuficientes para transcrição." }),
+          JSON.stringify({ error: "Créditos insuficientes." }),
           { status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" } }
         );
       }
 
       return new Response(
-        JSON.stringify({ error: "Erro na transcrição de áudio" }),
+        JSON.stringify({ error: `Erro na transcrição: ${response.status}` }),
         { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
     const data = await response.json();
     const transcript = data.choices?.[0]?.message?.content?.trim() || "";
+
+    console.log("Transcription result:", transcript);
 
     if (transcript === "[SEM_FALA]" || !transcript) {
       return new Response(
