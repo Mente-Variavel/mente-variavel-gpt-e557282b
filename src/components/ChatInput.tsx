@@ -1,7 +1,14 @@
-import { Send, Mic, MicOff, X } from "lucide-react";
+import { Send, Mic, MicOff, X, HelpCircle } from "lucide-react";
 import { useState, useRef, useEffect, KeyboardEvent } from "react";
 import { useSpeechRecognition } from "@/hooks/useSpeechRecognition";
 import { motion, AnimatePresence } from "framer-motion";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/dialog";
 
 interface ChatInputProps {
   onSend: (message: string) => void;
@@ -10,6 +17,7 @@ interface ChatInputProps {
 
 const ChatInput = ({ onSend, disabled }: ChatInputProps) => {
   const [input, setInput] = useState("");
+  const [helpOpen, setHelpOpen] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const { isListening, transcript, isSupported, error, startListening, stopListening, cancelListening } =
     useSpeechRecognition();
@@ -123,9 +131,43 @@ const ChatInput = ({ onSend, disabled }: ChatInputProps) => {
         </button>
       </div>
 
-      <p className="text-center text-[10px] text-muted-foreground/60">
-        {isSupported ? "Toque no microfone e fale. Toque novamente para parar." : ""}
-      </p>
+      <div className="flex items-center justify-center gap-2">
+        {isSupported && (
+          <button
+            onClick={() => setHelpOpen(true)}
+            className="flex items-center gap-1 text-[10px] text-muted-foreground/60 hover:text-muted-foreground transition-colors"
+          >
+            <HelpCircle className="w-3 h-3" />
+            Como habilitar microfone
+          </button>
+        )}
+      </div>
+
+      {/* Help Modal */}
+      <Dialog open={helpOpen} onOpenChange={setHelpOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Como habilitar o microfone</DialogTitle>
+            <DialogDescription>
+              Siga os passos abaixo para usar o ditado por voz.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-3 text-sm text-foreground/80">
+            <div className="flex gap-3 items-start">
+              <span className="flex items-center justify-center w-6 h-6 rounded-full bg-primary/10 text-primary text-xs font-bold shrink-0">1</span>
+              <p><strong>Use HTTPS:</strong> O reconhecimento de voz só funciona em sites seguros (HTTPS). Verifique se a URL começa com <code className="text-xs bg-secondary px-1 rounded">https://</code></p>
+            </div>
+            <div className="flex gap-3 items-start">
+              <span className="flex items-center justify-center w-6 h-6 rounded-full bg-primary/10 text-primary text-xs font-bold shrink-0">2</span>
+              <p><strong>Permita o microfone:</strong> Quando o navegador pedir permissão, clique em "Permitir". Se já negou, clique no ícone de cadeado na barra de endereço e ative o microfone.</p>
+            </div>
+            <div className="flex gap-3 items-start">
+              <span className="flex items-center justify-center w-6 h-6 rounded-full bg-primary/10 text-primary text-xs font-bold shrink-0">3</span>
+              <p><strong>Use o Google Chrome:</strong> O ditado por voz funciona melhor no Chrome para Android e Desktop. Safari e Firefox têm suporte limitado.</p>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
