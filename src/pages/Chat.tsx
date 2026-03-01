@@ -1,7 +1,7 @@
 import { useRef, useEffect, useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-import { Plus, Trash2, Info } from "lucide-react";
-import { motion } from "framer-motion";
+import { Plus, Trash2, Info, Gift, X } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
 import ChatMessage from "@/components/ChatMessage";
 import ChatInput from "@/components/ChatInput";
 import TypingIndicator from "@/components/TypingIndicator";
@@ -26,8 +26,20 @@ const Chat = () => {
   const location = useLocation();
   const [messages, setMessages] = useState<Msg[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [showWelcome, setShowWelcome] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
   const initialSent = useRef(false);
+
+  // Show welcome popup once per user
+  useEffect(() => {
+    if (user) {
+      const key = `mv_welcome_${user.id}`;
+      if (!localStorage.getItem(key)) {
+        setShowWelcome(true);
+        localStorage.setItem(key, "true");
+      }
+    }
+  }, [user]);
 
   useEffect(() => {
     if (!authLoading && !user) navigate("/auth");
@@ -121,6 +133,53 @@ const Chat = () => {
   return (
     <div className="flex flex-col h-screen">
       <Navbar />
+
+      {/* Welcome popup */}
+      <AnimatePresence>
+        {showWelcome && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-sm px-4"
+            onClick={() => setShowWelcome(false)}
+          >
+            <motion.div
+              initial={{ scale: 0.8, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.8, opacity: 0 }}
+              transition={{ type: "spring", duration: 0.5 }}
+              className="glass rounded-2xl p-8 max-w-sm w-full text-center border border-primary/30 shadow-2xl relative"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <button
+                onClick={() => setShowWelcome(false)}
+                className="absolute top-3 right-3 p-1 rounded-full hover:bg-secondary text-muted-foreground hover:text-foreground transition-colors"
+              >
+                <X className="w-4 h-4" />
+              </button>
+              <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-4">
+                <Gift className="w-8 h-8 text-primary" />
+              </div>
+              <h2 className="font-display text-xl font-bold text-foreground mb-2">
+                🎉 Bem-vindo ao MV GPT!
+              </h2>
+              <p className="text-sm text-muted-foreground mb-4">
+                Você ganhou <span className="text-primary font-bold">100 créditos gratuitos</span> para usar o assistente de IA todos os dias!
+              </p>
+              <p className="text-xs text-muted-foreground/70 mb-6">
+                Seus créditos são renovados diariamente. Aproveite!
+              </p>
+              <button
+                onClick={() => setShowWelcome(false)}
+                className="px-6 py-3 rounded-xl bg-primary text-primary-foreground font-semibold text-sm hover:bg-primary/90 transition-all glow-cyan w-full"
+              >
+                Começar a usar! 🚀
+              </button>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
       <div className="flex-1 flex flex-col pt-16 max-w-3xl mx-auto w-full">
         {/* Header actions */}
         <div className="flex items-center justify-between px-4 py-3 border-b border-border/30">
