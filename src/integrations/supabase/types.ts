@@ -95,6 +95,60 @@ export type Database = {
         }
         Relationships: []
       }
+      sponsored_tools: {
+        Row: {
+          client_name: string
+          created_at: string
+          description: string
+          display_order: number
+          icon_url: string | null
+          id: string
+          is_active: boolean
+          name: string
+          plan_end: string | null
+          plan_start: string | null
+          plan_type: string
+          plan_value: number | null
+          updated_at: string
+          url: string
+          whatsapp_number: string | null
+        }
+        Insert: {
+          client_name?: string
+          created_at?: string
+          description?: string
+          display_order?: number
+          icon_url?: string | null
+          id?: string
+          is_active?: boolean
+          name: string
+          plan_end?: string | null
+          plan_start?: string | null
+          plan_type?: string
+          plan_value?: number | null
+          updated_at?: string
+          url: string
+          whatsapp_number?: string | null
+        }
+        Update: {
+          client_name?: string
+          created_at?: string
+          description?: string
+          display_order?: number
+          icon_url?: string | null
+          id?: string
+          is_active?: boolean
+          name?: string
+          plan_end?: string | null
+          plan_start?: string | null
+          plan_type?: string
+          plan_value?: number | null
+          updated_at?: string
+          url?: string
+          whatsapp_number?: string | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never

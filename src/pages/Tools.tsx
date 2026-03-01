@@ -1,9 +1,12 @@
 import React from "react";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import AdPlaceholder from "@/components/AdPlaceholder";
-import { ExternalLink, ImageMinus, Mail, Wallet } from "lucide-react";
+import { ExternalLink, ImageMinus, Mail, Wallet, Sparkles } from "lucide-react";
 import { motion } from "framer-motion";
+import { Badge } from "@/components/ui/badge";
 
 const tools = [
   {
@@ -27,6 +30,20 @@ const tools = [
 ];
 
 const Tools = () => {
+  const { data: sponsoredTools } = useQuery({
+    queryKey: ["sponsored-tools"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("sponsored_tools")
+        .select("*")
+        .eq("is_active", true)
+        .order("display_order");
+      if (error) throw error;
+      return data;
+    },
+    staleTime: 60_000,
+  });
+
   return (
     <div className="min-h-screen flex flex-col">
       <Navbar />
@@ -49,36 +66,64 @@ const Tools = () => {
 
           <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
             {tools.map((tool, i) => (
-              <React.Fragment key={tool.name}>
-                <motion.a
-                  href={tool.url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: i * 0.1 }}
-                  className="glass rounded-xl p-6 border border-border/50 hover:border-primary/50 transition-all group flex flex-col gap-4"
-                >
-                  <div className="w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center group-hover:glow-cyan transition-all">
-                    <tool.icon className="w-6 h-6 text-primary" />
-                  </div>
-                  <div className="flex-1">
-                    <h2 className="font-display text-lg font-semibold text-foreground mb-2 group-hover:text-primary transition-colors">
-                      {tool.name}
-                    </h2>
-                    <p className="text-sm text-muted-foreground">{tool.description}</p>
-                  </div>
-                  <div className="flex items-center gap-1.5 text-xs text-primary font-medium">
-                    Acessar <ExternalLink className="w-3.5 h-3.5" />
-                  </div>
-                </motion.a>
-                {i === 0 && (
-                  <AdPlaceholder format="inline" slot="ferramentas_inline_1" className="sm:col-span-2 lg:col-span-3" />
-                )}
-                {i === 1 && (
-                  <AdPlaceholder format="inline" slot="ferramentas_inline_2" className="sm:col-span-2 lg:col-span-3" />
-                )}
-              </React.Fragment>
+              <motion.a
+                key={tool.name}
+                href={tool.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: i * 0.1 }}
+                className="glass rounded-xl p-6 border border-border/50 hover:border-primary/50 transition-all group flex flex-col gap-4"
+              >
+                <div className="w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center group-hover:glow-cyan transition-all">
+                  <tool.icon className="w-6 h-6 text-primary" />
+                </div>
+                <div className="flex-1">
+                  <h2 className="font-display text-lg font-semibold text-foreground mb-2 group-hover:text-primary transition-colors">
+                    {tool.name}
+                  </h2>
+                  <p className="text-sm text-muted-foreground">{tool.description}</p>
+                </div>
+                <div className="flex items-center gap-1.5 text-xs text-primary font-medium">
+                  Acessar <ExternalLink className="w-3.5 h-3.5" />
+                </div>
+              </motion.a>
+            ))}
+
+            {/* Ferramentas Patrocinadas */}
+            {sponsoredTools?.map((tool, i) => (
+              <motion.a
+                key={tool.id}
+                href={tool.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: (tools.length + i) * 0.1 }}
+                className="glass rounded-xl p-6 border border-primary/30 hover:border-primary/60 transition-all group flex flex-col gap-4 relative"
+              >
+                <Badge variant="secondary" className="absolute top-3 right-3 gap-1 text-[10px] px-2 py-0.5">
+                  <Sparkles className="w-3 h-3" />
+                  Parceiro
+                </Badge>
+                <div className="w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center group-hover:glow-cyan transition-all overflow-hidden">
+                  {tool.icon_url ? (
+                    <img src={tool.icon_url} alt={tool.name} className="w-8 h-8 object-contain" />
+                  ) : (
+                    <Sparkles className="w-6 h-6 text-primary" />
+                  )}
+                </div>
+                <div className="flex-1">
+                  <h2 className="font-display text-lg font-semibold text-foreground mb-2 group-hover:text-primary transition-colors">
+                    {tool.name}
+                  </h2>
+                  <p className="text-sm text-muted-foreground">{tool.description}</p>
+                </div>
+                <div className="flex items-center gap-1.5 text-xs text-primary font-medium">
+                  Acessar <ExternalLink className="w-3.5 h-3.5" />
+                </div>
+              </motion.a>
             ))}
           </div>
 

@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -7,8 +7,13 @@ import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import AdEditor from "@/components/admin/AdEditor";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { Switch } from "@/components/ui/switch";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
-import { LogIn, AlertTriangle, Clock } from "lucide-react";
+import { LogIn, AlertTriangle, Clock, Plus, Sparkles, Trash2, Save } from "lucide-react";
 
 const SLOT_LABELS: Record<string, string> = {
   banner_top: "🔝 Banner Topo",
@@ -28,6 +33,12 @@ const getAdStatus = (planEnd: string | null) => {
   return "active";
 };
 
+const emptyTool = {
+  name: "", description: "", url: "", icon_url: "", client_name: "",
+  plan_type: "mensal", plan_start: "", plan_end: "", plan_value: "",
+  display_order: "0", whatsapp_number: "", is_active: false,
+};
+
 const AdminAds = () => {
   const { user, loading: authLoading } = useAuth();
   const navigate = useNavigate();
@@ -36,10 +47,17 @@ const AdminAds = () => {
   const { data: ads, isLoading } = useQuery({
     queryKey: ["admin-ads"],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("ads")
-        .select("*")
-        .order("slot");
+      const { data, error } = await supabase.from("ads").select("*").order("slot");
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!user,
+  });
+
+  const { data: sponsoredTools, isLoading: toolsLoading } = useQuery({
+    queryKey: ["admin-sponsored-tools"],
+    queryFn: async () => {
+      const { data, error } = await supabase.from("sponsored_tools").select("*").order("display_order");
       if (error) throw error;
       return data;
     },
@@ -53,22 +71,13 @@ const AdminAds = () => {
       plan_name: string; plan_start: string; plan_end: string;
       plan_value: string; client_name: string;
     }) => {
-      const { error } = await supabase
-        .from("ads")
-        .update({
-          title: ad.title,
-          description: ad.description,
-          image_url: ad.image_url,
-          link_url: ad.link_url,
-          whatsapp_number: ad.whatsapp_number,
-          is_active: ad.is_active,
-          plan_name: ad.plan_name || null,
-          plan_start: ad.plan_start || null,
-          plan_end: ad.plan_end || null,
-          plan_value: ad.plan_value ? parseFloat(ad.plan_value) : null,
-          client_name: ad.client_name || null,
-        })
-        .eq("id", ad.id);
+      const { error } = await supabase.from("ads").update({
+        title: ad.title, description: ad.description, image_url: ad.image_url,
+        link_url: ad.link_url, whatsapp_number: ad.whatsapp_number, is_active: ad.is_active,
+        plan_name: ad.plan_name || null, plan_start: ad.plan_start || null,
+        plan_end: ad.plan_end || null, plan_value: ad.plan_value ? parseFloat(ad.plan_value) : null,
+        client_name: ad.client_name || null,
+      }).eq("id", ad.id);
       if (error) throw error;
     },
     onSuccess: () => {
@@ -78,6 +87,68 @@ const AdminAds = () => {
     },
     onError: () => toast.error("Erro ao salvar anúncio"),
   });
+
+  // Sponsored tools mutations
+  const saveTool = useMutation({
+    mutationFn: async (tool: typeof emptyTool & { id?: string }) => {
+      const payload = {
+        name: tool.name, description: tool.description, url: tool.url,
+        icon_url: tool.icon_url || null, client_name: tool.client_name || null,
+        plan_type: tool.plan_type, plan_start: tool.plan_start || null,
+        plan_end: tool.plan_end || null,
+        plan_value: tool.plan_value ? parseFloat(tool.plan_value) : null,
+        display_order: parseInt(tool.display_order) || 0,
+        whatsapp_number: tool.whatsapp_number || null,
+        is_active: tool.is_active,
+      };
+      if (tool.id) {
+        const { error } = await supabase.from("sponsored_tools").update(payload).eq("id", tool.id);
+        if (error) throw error;
+      } else {
+        const { error } = await supabase.from("sponsored_tools").insert(payload);
+        if (error) throw error;
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["admin-sponsored-tools"] });
+      queryClient.invalidateQueries({ queryKey: ["sponsored-tools"] });
+      toast.success("Ferramenta patrocinada salva!");
+    },
+    onError: () => toast.error("Erro ao salvar ferramenta"),
+  });
+
+  const deleteTool = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from("sponsored_tools").delete().eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["admin-sponsored-tools"] });
+      queryClient.invalidateQueries({ queryKey: ["sponsored-tools"] });
+      toast.success("Ferramenta removida!");
+    },
+    onError: () => toast.error("Erro ao remover ferramenta"),
+  });
+
+  const [newTool, setNewTool] = useState(emptyTool);
+  const [editingTools, setEditingTools] = useState<Record<string, typeof emptyTool>>({});
+
+  useEffect(() => {
+    if (sponsoredTools) {
+      const map: Record<string, typeof emptyTool> = {};
+      sponsoredTools.forEach((t) => {
+        map[t.id] = {
+          name: t.name, description: t.description, url: t.url,
+          icon_url: t.icon_url || "", client_name: t.client_name || "",
+          plan_type: t.plan_type, plan_start: t.plan_start || "",
+          plan_end: t.plan_end || "", plan_value: t.plan_value?.toString() || "",
+          display_order: t.display_order?.toString() || "0",
+          whatsapp_number: t.whatsapp_number || "", is_active: t.is_active,
+        };
+      });
+      setEditingTools(map);
+    }
+  }, [sponsoredTools]);
 
   if (authLoading || isLoading) {
     return (
@@ -112,6 +183,65 @@ const AdminAds = () => {
     return status === "expiring" || status === "expired";
   }) || [];
 
+  const expiringTools = sponsoredTools?.filter((t) => {
+    const status = getAdStatus(t.plan_end);
+    return status === "expiring" || status === "expired";
+  }) || [];
+
+  const allAlerts = [
+    ...expiringAds.map((ad) => ({ ...ad, type: "ad" as const, label: ad.client_name || ad.title || ad.slot })),
+    ...expiringTools.map((t) => ({ ...t, type: "tool" as const, label: t.client_name || t.name })),
+  ];
+
+  const ToolForm = ({ value, onChange, onSave, onDelete, saving }: {
+    value: typeof emptyTool;
+    onChange: (v: typeof emptyTool) => void;
+    onSave: () => void;
+    onDelete?: () => void;
+    saving: boolean;
+  }) => (
+    <div className="glass rounded-xl p-5 border border-border/50 space-y-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div><Label>Nome da ferramenta</Label><Input value={value.name} onChange={(e) => onChange({ ...value, name: e.target.value })} /></div>
+        <div><Label>URL</Label><Input value={value.url} onChange={(e) => onChange({ ...value, url: e.target.value })} /></div>
+        <div className="sm:col-span-2"><Label>Descrição</Label><Textarea value={value.description} onChange={(e) => onChange({ ...value, description: e.target.value })} rows={2} /></div>
+        <div><Label>URL do Ícone</Label><Input value={value.icon_url} onChange={(e) => onChange({ ...value, icon_url: e.target.value })} placeholder="https://..." /></div>
+        <div><Label>Nome do cliente</Label><Input value={value.client_name} onChange={(e) => onChange({ ...value, client_name: e.target.value })} /></div>
+        <div><Label>WhatsApp</Label><Input value={value.whatsapp_number} onChange={(e) => onChange({ ...value, whatsapp_number: e.target.value })} placeholder="5511999999999" /></div>
+        <div>
+          <Label>Tipo de plano</Label>
+          <Select value={value.plan_type} onValueChange={(v) => onChange({ ...value, plan_type: v, plan_end: v === "vitalicio" ? "" : value.plan_end })}>
+            <SelectTrigger><SelectValue /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="mensal">Mensal</SelectItem>
+              <SelectItem value="vitalicio">Vitalício</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+        <div><Label>Início do plano</Label><Input type="date" value={value.plan_start} onChange={(e) => onChange({ ...value, plan_start: e.target.value })} /></div>
+        {value.plan_type !== "vitalicio" && (
+          <div><Label>Fim do plano</Label><Input type="date" value={value.plan_end} onChange={(e) => onChange({ ...value, plan_end: e.target.value })} /></div>
+        )}
+        <div><Label>Valor (R$)</Label><Input type="number" value={value.plan_value} onChange={(e) => onChange({ ...value, plan_value: e.target.value })} /></div>
+        <div><Label>Ordem de exibição</Label><Input type="number" value={value.display_order} onChange={(e) => onChange({ ...value, display_order: e.target.value })} /></div>
+        <div className="flex items-center gap-2 pt-5">
+          <Switch checked={value.is_active} onCheckedChange={(v) => onChange({ ...value, is_active: v })} />
+          <Label>{value.is_active ? "Ativo" : "Inativo"}</Label>
+        </div>
+      </div>
+      <div className="flex gap-2 justify-end">
+        {onDelete && (
+          <Button variant="destructive" size="sm" onClick={onDelete} className="gap-1">
+            <Trash2 className="w-3.5 h-3.5" /> Remover
+          </Button>
+        )}
+        <Button size="sm" onClick={onSave} disabled={saving || !value.name || !value.url} className="gap-1">
+          <Save className="w-3.5 h-3.5" /> Salvar
+        </Button>
+      </div>
+    </div>
+  );
+
   return (
     <div className="flex flex-col min-h-screen">
       <Navbar />
@@ -120,41 +250,33 @@ const AdminAds = () => {
           Gerenciar Anúncios
         </h1>
 
-        {expiringAds.length > 0 && (
+        {allAlerts.length > 0 && (
           <div className="mb-6 space-y-2">
-            {expiringAds.map((ad) => {
-              const status = getAdStatus(ad.plan_end);
+            {allAlerts.map((item) => {
+              const status = getAdStatus(item.plan_end);
               const isExpired = status === "expired";
-              const clientName = ad.client_name || ad.title || ad.slot;
-              const daysLeft = ad.plan_end
-                ? Math.ceil((new Date(ad.plan_end).getTime() - new Date().setHours(0,0,0,0)) / (1000*60*60*24))
+              const daysLeft = item.plan_end
+                ? Math.ceil((new Date(item.plan_end).getTime() - new Date().setHours(0,0,0,0)) / (1000*60*60*24))
                 : 0;
-
               return (
                 <div
-                  key={`alert-${ad.id}`}
+                  key={`alert-${item.id}`}
                   className={`flex items-center gap-3 p-3 rounded-lg border ${
-                    isExpired
-                      ? "border-destructive/50 bg-destructive/10"
-                      : "border-yellow-500/50 bg-yellow-500/10"
+                    isExpired ? "border-destructive/50 bg-destructive/10" : "border-yellow-500/50 bg-yellow-500/10"
                   }`}
                 >
-                  {isExpired ? (
-                    <AlertTriangle className="w-5 h-5 text-destructive shrink-0" />
-                  ) : (
-                    <Clock className="w-5 h-5 text-yellow-500 shrink-0" />
-                  )}
+                  {isExpired ? <AlertTriangle className="w-5 h-5 text-destructive shrink-0" /> : <Clock className="w-5 h-5 text-yellow-500 shrink-0" />}
                   <span className="text-sm flex-1">
                     {isExpired
-                      ? `⚠️ Plano de "${clientName}" VENCIDO!`
-                      : `⏰ Plano de "${clientName}" vence em ${daysLeft} dia${daysLeft !== 1 ? "s" : ""}`}
+                      ? `⚠️ Plano de "${item.label}" VENCIDO! ${item.type === "tool" ? "(Ferramenta)" : ""}`
+                      : `⏰ Plano de "${item.label}" vence em ${daysLeft} dia${daysLeft !== 1 ? "s" : ""} ${item.type === "tool" ? "(Ferramenta)" : ""}`}
                   </span>
-                  {ad.whatsapp_number && (
+                  {item.whatsapp_number && (
                     <a
-                      href={`https://wa.me/${ad.whatsapp_number.replace(/\D/g, "")}?text=${encodeURIComponent(
+                      href={`https://wa.me/${item.whatsapp_number.replace(/\D/g, "")}?text=${encodeURIComponent(
                         isExpired
-                          ? `Olá ${clientName}! Seu plano de anúncio no MenteVariável venceu. Gostaria de renovar?`
-                          : `Olá ${clientName}! Seu plano de anúncio no MenteVariável vence em ${daysLeft} dia${daysLeft !== 1 ? "s" : ""}. Gostaria de renovar?`
+                          ? `Olá ${item.label}! Seu plano no MenteVariável venceu. Gostaria de renovar?`
+                          : `Olá ${item.label}! Seu plano no MenteVariável vence em ${daysLeft} dia${daysLeft !== 1 ? "s" : ""}. Gostaria de renovar?`
                       )}`}
                       target="_blank"
                       rel="noopener noreferrer"
@@ -169,7 +291,8 @@ const AdminAds = () => {
           </div>
         )}
 
-        <div className="grid gap-6">
+        {/* Ads Section */}
+        <div className="grid gap-6 mb-12">
           {ads?.map((ad) => (
             <AdEditor
               key={ad.id}
@@ -180,6 +303,42 @@ const AdminAds = () => {
               saving={updateMutation.isPending}
             />
           ))}
+        </div>
+
+        {/* Sponsored Tools Section */}
+        <h2 className="font-display text-xl md:text-2xl font-bold text-foreground mb-4 flex items-center gap-2">
+          <Sparkles className="w-5 h-5 text-primary" />
+          Ferramentas Patrocinadas
+        </h2>
+
+        <div className="grid gap-6 mb-8">
+          {sponsoredTools?.map((tool) => {
+            const val = editingTools[tool.id];
+            if (!val) return null;
+            return (
+              <ToolForm
+                key={tool.id}
+                value={val}
+                onChange={(v) => setEditingTools((prev) => ({ ...prev, [tool.id]: v }))}
+                onSave={() => saveTool.mutate({ ...val, id: tool.id })}
+                onDelete={() => { if (confirm("Remover esta ferramenta patrocinada?")) deleteTool.mutate(tool.id); }}
+                saving={saveTool.isPending}
+              />
+            );
+          })}
+        </div>
+
+        {/* Add New Tool */}
+        <div className="mb-8">
+          <h3 className="font-display text-lg font-semibold text-foreground mb-3 flex items-center gap-2">
+            <Plus className="w-4 h-4" /> Adicionar nova ferramenta patrocinada
+          </h3>
+          <ToolForm
+            value={newTool}
+            onChange={setNewTool}
+            onSave={() => { saveTool.mutate(newTool); setNewTool(emptyTool); }}
+            saving={saveTool.isPending}
+          />
         </div>
       </main>
       <Footer />
