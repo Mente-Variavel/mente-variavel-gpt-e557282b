@@ -132,7 +132,11 @@ const AdEditor = ({ ad, label, planStatus, onSave, saving }: AdEditorProps) => {
           </div>
           <div>
             <Label className="text-xs text-muted-foreground">Vencimento</Label>
-            <Input type="date" value={planEnd} onChange={(e) => setPlanEnd(e.target.value)} className="text-sm" />
+            {planName.toLowerCase().includes("vitalic") ? (
+              <Input type="text" value="Sem vencimento" disabled className="text-sm bg-muted" />
+            ) : (
+              <Input type="date" value={planEnd} onChange={(e) => setPlanEnd(e.target.value)} className="text-sm" />
+            )}
           </div>
           <div>
             <Label className="text-xs text-muted-foreground">Valor (R$)</Label>
@@ -193,7 +197,8 @@ const AdEditor = ({ ad, label, planStatus, onSave, saving }: AdEditorProps) => {
           onClick={() => onSave({
             title, description, image_url: imageUrl, link_url: linkUrl,
             whatsapp_number: whatsappNumber, is_active: isActive,
-            plan_name: planName, plan_start: planStart, plan_end: planEnd,
+            plan_name: planName, plan_start: planStart,
+            plan_end: planName.toLowerCase().includes("vitalic") ? "" : planEnd,
             plan_value: planValue, client_name: clientName,
           })}
           disabled={saving}
