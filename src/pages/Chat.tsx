@@ -1,10 +1,12 @@
 import { useRef, useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { Plus, Trash2 } from "lucide-react";
 import { motion } from "framer-motion";
 import ChatMessage from "@/components/ChatMessage";
 import ChatInput from "@/components/ChatInput";
 import TypingIndicator from "@/components/TypingIndicator";
 import Navbar from "@/components/Navbar";
+import { useAuth } from "@/hooks/useAuth";
 import chatLogo from "@/assets/logo.png";
 
 type Msg = { role: "user" | "assistant"; content: string };
@@ -12,9 +14,15 @@ type Msg = { role: "user" | "assistant"; content: string };
 const CHAT_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/chat`;
 
 const Chat = () => {
+  const { user, loading: authLoading } = useAuth();
+  const navigate = useNavigate();
   const [messages, setMessages] = useState<Msg[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!authLoading && !user) navigate("/auth");
+  }, [user, authLoading, navigate]);
 
   useEffect(() => {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
