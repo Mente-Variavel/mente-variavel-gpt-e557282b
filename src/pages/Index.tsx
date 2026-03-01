@@ -44,7 +44,7 @@ const benefits = [
 const Index = () => {
   const [quickMsg, setQuickMsg] = useState("");
   const navigate = useNavigate();
-  const { isListening, transcript, isSupported, startListening, stopListening } = useSpeechRecognition();
+  const { isListening, transcript, isSupported, mediaStream, startListening, stopListening } = useSpeechRecognition();
 
   useEffect(() => {
     if (transcript) setQuickMsg(transcript);
