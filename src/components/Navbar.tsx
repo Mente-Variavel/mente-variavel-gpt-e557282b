@@ -1,7 +1,8 @@
 import { Link, useLocation } from "react-router-dom";
-import { MessageSquare, Menu, X } from "lucide-react";
+import { Menu, X } from "lucide-react";
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import logo from "@/assets/logo.png";
 
 const navItems = [
   { to: "/", label: "Início" },
@@ -18,9 +19,7 @@ const Navbar = () => {
     <nav className="fixed top-0 left-0 right-0 z-50 glass border-b border-border/30">
       <div className="container mx-auto px-4 h-16 flex items-center justify-between">
         <Link to="/" className="flex items-center gap-2 group">
-          <div className="w-8 h-8 rounded-lg bg-primary/20 flex items-center justify-center glow-cyan">
-            <MessageSquare className="w-4 h-4 text-primary" />
-          </div>
+          <img src={logo} alt="Mente Variável" className="w-9 h-9 rounded-full" />
           <span className="font-display text-sm font-bold text-primary text-glow-cyan">
             MV GPT
           </span>

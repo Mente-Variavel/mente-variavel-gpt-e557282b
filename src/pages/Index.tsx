@@ -4,6 +4,7 @@ import { motion } from "framer-motion";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import heroBg from "@/assets/hero-bg.jpg";
+import logo from "@/assets/logo.png";
 
 const features = [
   {
@@ -40,6 +41,7 @@ const Index = () => (
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.7 }}
         >
+          <img src={logo} alt="Mente Variável GPT" className="w-28 h-28 mx-auto mb-6 rounded-full glow-cyan" />
           <h1 className="font-display text-4xl md:text-6xl font-black text-primary text-glow-cyan mb-6 leading-tight">
             Mente Variável GPT
           </h1>
