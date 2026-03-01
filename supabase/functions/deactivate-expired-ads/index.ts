@@ -41,8 +41,32 @@ Deno.serve(async (req) => {
       console.log("No expired ads to deactivate.");
     }
 
+    // Deactivate expired sponsored tools
+    const { data: expiredTools, error: toolsFetchError } = await supabase
+      .from("sponsored_tools")
+      .select("id, name, client_name")
+      .eq("is_active", true)
+      .not("plan_end", "is", null)
+      .lt("plan_end", today);
+
+    if (toolsFetchError) throw toolsFetchError;
+
+    if (expiredTools && expiredTools.length > 0) {
+      const toolIds = expiredTools.map((t) => t.id);
+      const { error: toolUpdateError } = await supabase
+        .from("sponsored_tools")
+        .update({ is_active: false })
+        .in("id", toolIds);
+
+      if (toolUpdateError) throw toolUpdateError;
+
+      console.log(`Deactivated ${expiredTools.length} expired sponsored tools:`, expiredTools.map((t) => t.client_name || t.name));
+    } else {
+      console.log("No expired sponsored tools to deactivate.");
+    }
+
     return new Response(
-      JSON.stringify({ deactivated: expiredAds?.length || 0 }),
+      JSON.stringify({ deactivated_ads: expiredAds?.length || 0, deactivated_tools: expiredTools?.length || 0 }),
       { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   } catch (error) {

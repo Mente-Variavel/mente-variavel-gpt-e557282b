@@ -11,8 +11,6 @@ const pricingSlots = [
     page: "Ferramentas",
     slots: [
       { position: "Banner Topo", price: "R$ 189,90", desc: "Primeiro elemento visível, máxima exposição" },
-      { position: "Inline 1", price: "R$ 149,90", desc: "Entre as ferramentas, alto engajamento" },
-      { position: "Inline 2", price: "R$ 139,90", desc: "Posição central, boa visibilidade" },
       { position: "Rodapé", price: "R$ 99,90", desc: "Final da página, exposição complementar" },
     ],
   },
@@ -162,6 +160,75 @@ const Anuncie = () => {
               </motion.div>
             ))}
           </div>
+        </section>
+
+        {/* Ferramenta Patrocinada */}
+        <section className="container mx-auto px-4 py-16">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            className="max-w-4xl mx-auto"
+          >
+            <div className="glass rounded-2xl p-8 md:p-12 border border-accent/30 ring-1 ring-accent/20 relative overflow-hidden">
+              <div className="absolute top-0 right-0 w-64 h-64 bg-accent/5 rounded-full -translate-y-1/2 translate-x-1/2 blur-3xl" />
+              
+              <div className="relative">
+                <div className="flex items-center gap-3 mb-2">
+                  <LayoutGrid className="w-6 h-6 text-accent" />
+                  <span className="text-xs font-bold uppercase tracking-widest text-accent">Novo</span>
+                </div>
+                <h2 className="font-display text-2xl md:text-3xl font-bold text-foreground mb-3">
+                  Ferramenta Patrocinada
+                </h2>
+                <p className="text-foreground/70 max-w-2xl mb-8">
+                  Sua ferramenta ou serviço listado <strong className="text-foreground">junto com as ferramentas gratuitas</strong> do site, 
+                  com selo de parceiro e link direto para sua plataforma. Ideal para empresas de tecnologia que oferecem SaaS, geradores de conteúdo, 
+                  editores de imagem/vídeo e ferramentas similares.
+                </p>
+
+                <div className="grid sm:grid-cols-2 gap-6 mb-8">
+                  <div className="glass rounded-xl p-6 border border-border/50">
+                    <h3 className="font-display text-lg font-semibold text-foreground mb-1">Plano Mensal</h3>
+                    <div className="mb-3">
+                      <span className="text-2xl font-black text-primary">R$ 129,90</span>
+                      <span className="text-xs text-muted-foreground">/mês</span>
+                    </div>
+                    <p className="text-xs text-muted-foreground mb-4">Cancele quando quiser. Sem fidelidade.</p>
+                    <a
+                      href={`mailto:${CONTACT_EMAIL}?subject=${encodeURIComponent("Interesse: Ferramenta Patrocinada - Mensal")}&body=${encodeURIComponent("Olá! Tenho interesse em incluir minha ferramenta/serviço na página de Ferramentas (plano mensal R$ 129,90/mês).\n\nNome da ferramenta:\nURL:\nDescrição curta:\nEmpresa:\n\nAguardo retorno!")}`}
+                      className="w-full inline-flex items-center justify-center gap-2 px-3 py-2.5 rounded-lg bg-secondary text-secondary-foreground hover:bg-secondary/80 font-semibold text-xs transition-all"
+                    >
+                      <Mail className="w-3.5 h-3.5" />
+                      Contratar mensal
+                    </a>
+                  </div>
+                  <div className="glass rounded-xl p-6 border border-primary/40 ring-1 ring-primary/20">
+                    <div className="flex items-center gap-2 mb-1">
+                      <h3 className="font-display text-lg font-semibold text-foreground">Plano Vitalício</h3>
+                      <Star className="w-4 h-4 text-primary" />
+                    </div>
+                    <div className="mb-3">
+                      <span className="text-2xl font-black text-primary">R$ 3.499,90</span>
+                      <span className="text-xs text-muted-foreground"> único</span>
+                    </div>
+                    <p className="text-xs text-muted-foreground mb-4">Equivalente a ~27 meses. Sua ferramenta para sempre no site.</p>
+                    <a
+                      href={`mailto:${CONTACT_EMAIL}?subject=${encodeURIComponent("Interesse: Ferramenta Patrocinada - Vitalício")}&body=${encodeURIComponent("Olá! Tenho interesse no plano vitalício para incluir minha ferramenta/serviço na página de Ferramentas (R$ 3.499,90 único).\n\nNome da ferramenta:\nURL:\nDescrição curta:\nEmpresa:\nSegmento de atuação:\n\nAguardo retorno!")}`}
+                      className="w-full inline-flex items-center justify-center gap-2 px-3 py-2.5 rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 font-semibold text-xs transition-all"
+                    >
+                      <Mail className="w-3.5 h-3.5" />
+                      Contratar vitalício
+                    </a>
+                  </div>
+                </div>
+
+                <p className="text-xs text-muted-foreground italic">
+                  * O serviço/ferramenta deve ser relacionado a tecnologia (IA, produtividade, desenvolvimento, design, etc.). Sujeito a análise.
+                </p>
+              </div>
+            </div>
+          </motion.div>
         </section>
 
         {/* Plano Vitalício */}
