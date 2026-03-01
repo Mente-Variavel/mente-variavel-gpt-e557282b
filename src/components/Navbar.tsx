@@ -8,6 +8,7 @@ import logo from "@/assets/logo.png";
 const navItems = [
   { to: "/", label: "Home" },
   { to: "/assistente", label: "Assistente IA" },
+  { to: "/ferramentas", label: "Ferramentas" },
   { to: "/guias", label: "Guias de IA" },
   { to: "/blog", label: "Blog" },
   { to: "/sobre", label: "Sobre" },

@@ -14,6 +14,7 @@ import Guides from "./pages/Guides";
 import GuideArticle from "./pages/GuideArticle";
 import Blog from "./pages/Blog";
 import BlogPost from "./pages/BlogPost";
+import Tools from "./pages/Tools";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -29,6 +30,7 @@ const App = () => (
           <Route path="/auth" element={<Auth />} />
           <Route path="/assistente" element={<Chat />} />
           <Route path="/chat" element={<Chat />} />
+          <Route path="/ferramentas" element={<Tools />} />
           <Route path="/guias" element={<Guides />} />
           <Route path="/guias/:slug" element={<GuideArticle />} />
           <Route path="/blog" element={<Blog />} />
