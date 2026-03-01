@@ -1,5 +1,5 @@
 import { Link, useLocation } from "react-router-dom";
-import { Menu, X, LogOut, LogIn } from "lucide-react";
+import { Menu, X, LogOut, LogIn, Megaphone } from "lucide-react";
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useAuth } from "@/hooks/useAuth";
@@ -45,6 +45,16 @@ const Navbar = () => {
               {item.label}
             </Link>
           ))}
+          <Link
+            to="/anuncie"
+            className={`ml-1 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 flex items-center gap-1.5 ${
+              location.pathname === "/anuncie"
+                ? "text-accent bg-accent/10"
+                : "text-accent/80 hover:text-accent hover:bg-accent/10"
+            }`}
+          >
+            <Megaphone className="w-4 h-4" /> Seja anunciante
+          </Link>
           {user ? (
             <button
               onClick={() => signOut()}
@@ -95,6 +105,17 @@ const Navbar = () => {
                   {item.label}
                 </Link>
               ))}
+              <Link
+                to="/anuncie"
+                onClick={() => setOpen(false)}
+                className={`px-4 py-3 rounded-lg text-sm font-medium transition-all flex items-center gap-1.5 ${
+                  location.pathname === "/anuncie"
+                    ? "text-accent bg-accent/10"
+                    : "text-accent/80 hover:text-accent hover:bg-accent/10"
+                }`}
+              >
+                <Megaphone className="w-4 h-4" /> Seja anunciante
+              </Link>
               {user ? (
                 <button
                   onClick={() => { signOut(); setOpen(false); }}

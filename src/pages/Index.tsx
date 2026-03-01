@@ -5,7 +5,7 @@ import { motion } from "framer-motion";
 import { useState, useEffect } from "react";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
-import AdPlaceholder from "@/components/AdPlaceholder";
+
 import AudioVisualizer from "@/components/AudioVisualizer";
 import heroBg from "@/assets/hero-bg.jpg";
 import logo from "@/assets/logo.png";
@@ -66,10 +66,7 @@ const Index = () => {
   <div className="flex flex-col min-h-screen">
     <Navbar />
 
-    {/* Ad Banner Top */}
-    <div className="pt-16">
-      <AdPlaceholder format="banner" className="container mx-auto px-4 mt-4" />
-    </div>
+    <div className="pt-16" />
 
     {/* Hero */}
     <section className="relative overflow-hidden">
@@ -162,7 +159,7 @@ const Index = () => {
       </motion.div>
     </section>
 
-    <AdPlaceholder format="inline" slot="inline_1" className="container mx-auto px-4" />
+    
 
     {/* How it helps */}
     <section className="container mx-auto px-4 py-20">
@@ -214,7 +211,7 @@ const Index = () => {
       </div>
     </section>
 
-    <AdPlaceholder format="inline" slot="inline_2" className="container mx-auto px-4" />
+    
 
     {/* Benefits */}
     <section className="container mx-auto px-4 py-20">
@@ -266,8 +263,6 @@ const Index = () => {
         </Link>
       </motion.div>
     </section>
-
-    <AdPlaceholder format="footer" className="container mx-auto px-4 mb-8" />
 
     <Footer />
   </div>
