@@ -4,6 +4,7 @@ import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useAuth } from "@/hooks/useAuth";
 import { useTheme } from "@/hooks/useTheme";
+import { useUserRole } from "@/hooks/useUserRole";
 import logo from "@/assets/logo.png";
 
 const navItems = [
@@ -21,6 +22,7 @@ const Navbar = () => {
   const location = useLocation();
   const { user, signOut } = useAuth();
   const { theme, toggleTheme } = useTheme();
+  const { isAdmin } = useUserRole();
 
   return (
     <nav className="fixed top-0 left-0 right-0 z-50 glass border-b border-border/30">
@@ -66,13 +68,15 @@ const Navbar = () => {
           </button>
           {user ? (
             <>
-              <Link
-                to="/admin/anuncios"
-                className="ml-1 p-2 rounded-lg text-muted-foreground/40 hover:text-muted-foreground hover:bg-secondary transition-all"
-                title="Admin"
-              >
-                <Settings className="w-4 h-4" />
-              </Link>
+              {isAdmin && (
+                <Link
+                  to="/admin/anuncios"
+                  className="ml-1 p-2 rounded-lg text-muted-foreground/40 hover:text-muted-foreground hover:bg-secondary transition-all"
+                  title="Admin"
+                >
+                  <Settings className="w-4 h-4" />
+                </Link>
+              )}
               <button
                 onClick={() => signOut()}
                 className="ml-1 px-3 py-2 rounded-lg text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-secondary transition-all flex items-center gap-1.5"
@@ -143,13 +147,15 @@ const Navbar = () => {
               </button>
               {user ? (
                 <>
-                  <Link
-                    to="/admin/anuncios"
-                    onClick={() => setOpen(false)}
-                    className="px-4 py-3 rounded-lg text-sm font-medium text-muted-foreground/40 hover:text-muted-foreground hover:bg-secondary transition-all flex items-center gap-1.5"
-                  >
-                    <Settings className="w-4 h-4" /> Admin
-                  </Link>
+                  {isAdmin && (
+                    <Link
+                      to="/admin/anuncios"
+                      onClick={() => setOpen(false)}
+                      className="px-4 py-3 rounded-lg text-sm font-medium text-muted-foreground/40 hover:text-muted-foreground hover:bg-secondary transition-all flex items-center gap-1.5"
+                    >
+                      <Settings className="w-4 h-4" /> Admin
+                    </Link>
+                  )}
                   <button
                     onClick={() => { signOut(); setOpen(false); }}
                     className="px-4 py-3 rounded-lg text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-secondary transition-all text-left flex items-center gap-1.5"
