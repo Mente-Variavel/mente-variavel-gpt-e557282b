@@ -21,37 +21,34 @@ serve(async (req) => {
       });
     }
 
-    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
-    if (!LOVABLE_API_KEY) {
-      return new Response(JSON.stringify({ error: "API key não configurada" }), {
+    const openaiKey = Deno.env.get("OPENAI_API_KEY");
+    if (!openaiKey) {
+      return new Response(JSON.stringify({ error: "OpenAI API key não configurada" }), {
         status: 500,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
-    console.log("Generating image with Lovable AI for prompt:", prompt);
+    console.log("Generating image with GPT Image for prompt:", prompt);
 
-    const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+    const response = await fetch("https://api.openai.com/v1/images/generations", {
       method: "POST",
       headers: {
-        Authorization: `Bearer ${LOVABLE_API_KEY}`,
+        Authorization: `Bearer ${openaiKey}`,
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: "google/gemini-2.5-flash-image",
-        messages: [
-          {
-            role: "user",
-            content: `Generate an image: ${prompt}`,
-          },
-        ],
-        modalities: ["image", "text"],
+        model: "gpt-image-1",
+        prompt,
+        n: 1,
+        size: "1024x1024",
+        quality: "high",
       }),
     });
 
     if (!response.ok) {
       const errorText = await response.text();
-      console.error("Lovable AI image error:", response.status, errorText);
+      console.error("OpenAI image error:", response.status, errorText);
 
       if (response.status === 429) {
         return new Response(JSON.stringify({ error: "Limite de requisições atingido. Tente novamente em alguns minutos." }), {
@@ -73,22 +70,18 @@ serve(async (req) => {
     }
 
     const data = await response.json();
-    console.log("Lovable AI response keys:", JSON.stringify(Object.keys(data)));
+    const imageData = data.data?.[0]?.b64_json
+      ? `data:image/png;base64,${data.data[0].b64_json}`
+      : data.data?.[0]?.url;
 
-    // Extract image from Lovable AI response format
-    const choice = data.choices?.[0]?.message;
-    const imageUrl = choice?.images?.[0]?.image_url?.url;
-    const textContent = choice?.content || "";
-
-    if (!imageUrl) {
-      console.error("No image in response:", JSON.stringify(data).slice(0, 500));
+    if (!imageData) {
       return new Response(JSON.stringify({ error: "Nenhuma imagem foi gerada. Tente um prompt diferente." }), {
         status: 500,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
-    return new Response(JSON.stringify({ imageUrl, revisedPrompt: textContent }), {
+    return new Response(JSON.stringify({ imageUrl: imageData, revisedPrompt: data.data?.[0]?.revised_prompt || "" }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (e) {
