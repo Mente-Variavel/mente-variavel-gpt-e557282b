@@ -6,6 +6,61 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
+const SEARCH_TRIGGERS = [
+  "resultado", "resultados", "placar", "jogo", "partida", "campeonato",
+  "notícia", "notícias", "cotação", "câmbio", "dólar", "euro", "bitcoin",
+  "preço", "tempo", "clima", "temperatura", "hoje", "agora", "atual",
+  "aconteceu", "acontecendo", "últimas", "recente", "recentes",
+  "quem ganhou", "quem venceu", "eleição", "eleições",
+  "score", "match", "news", "price", "weather", "current", "latest", "today",
+  "ontem", "yesterday", "esta semana", "this week",
+];
+
+function needsSearch(text: string): boolean {
+  const lower = text.toLowerCase();
+  return SEARCH_TRIGGERS.some((t) => lower.includes(t));
+}
+
+async function searchTavily(query: string, apiKey: string): Promise<string> {
+  try {
+    const resp = await fetch("https://api.tavily.com/search", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        api_key: apiKey,
+        query,
+        search_depth: "basic",
+        include_answer: true,
+        max_results: 5,
+      }),
+    });
+
+    if (!resp.ok) {
+      console.error("Tavily search failed:", resp.status);
+      return "";
+    }
+
+    const data = await resp.json();
+    let context = "";
+
+    if (data.answer) {
+      context += `Resposta resumida: ${data.answer}\n\n`;
+    }
+
+    if (data.results && data.results.length > 0) {
+      context += "Fontes encontradas:\n";
+      for (const r of data.results.slice(0, 5)) {
+        context += `- ${r.title}: ${r.content?.slice(0, 300) || ""} (${r.url})\n`;
+      }
+    }
+
+    return context;
+  } catch (e) {
+    console.error("Tavily error:", e);
+    return "";
+  }
+}
+
 const SYSTEM_PROMPT = `Você é o Assistente Inteligente, um assistente de IA em tempo real com acesso a informações atualizadas e capaz de gerar e editar imagens.
 
 Regras de conteúdo:
@@ -21,8 +76,8 @@ Regras de conteúdo:
   * Câmbio de moedas
   * Eventos recentes
   * Informações ao vivo ou recentes
-- Sempre forneça respostas atualizadas e precisas quando a pergunta envolver eventos atuais ou dados recentes.
-- Se não souber informações em tempo real, informe claramente ao usuário.
+- Quando receber contexto de busca em tempo real, USE essas informações para responder com dados atualizados e cite as fontes.
+- Se não souber informações em tempo real e não receber contexto de busca, informe claramente ao usuário.
 
 Regras de geração de imagens:
 - Você é CAPAZ de gerar e editar imagens em tempo real dentro desta aplicação.
@@ -91,17 +146,39 @@ serve(async (req) => {
   try {
     const { messages } = await req.json();
 
+    // Check if the latest user message needs real-time search
+    const lastUserMsg = [...messages].reverse().find((m: any) => m.role === "user");
+    let searchContext = "";
+
+    if (lastUserMsg && needsSearch(lastUserMsg.content)) {
+      const tavilyKey = Deno.env.get("TAVILY_API_KEY");
+      if (tavilyKey) {
+        console.log("Searching with Tavily:", lastUserMsg.content);
+        searchContext = await searchTavily(lastUserMsg.content, tavilyKey);
+        console.log("Search context length:", searchContext.length);
+      }
+    }
+
+    // If we have search context, inject it into the messages
+    const enrichedMessages = [...messages];
+    if (searchContext) {
+      enrichedMessages.push({
+        role: "system",
+        content: `📡 INFORMAÇÕES EM TEMPO REAL (use para responder ao usuário com dados atualizados):\n\n${searchContext}\n\nUse essas informações para responder de forma precisa e atualizada. Cite as fontes quando relevante.`,
+      });
+    }
+
     let response: Response | null = null;
 
     // Try OpenAI first
     const openaiKey = Deno.env.get("OPENAI_API_KEY");
     if (openaiKey) {
       console.log("Trying OpenAI...");
-      response = await tryOpenAI(messages, openaiKey);
+      response = await tryOpenAI(enrichedMessages, openaiKey);
       if (!response.ok) {
         const errorText = await response.text();
         console.error("OpenAI failed:", response.status, errorText);
-        response = null; // fallback
+        response = null;
       }
     }
 
@@ -112,7 +189,7 @@ serve(async (req) => {
         throw new Error("No AI API key configured");
       }
       console.log("Using Lovable AI fallback...");
-      response = await tryLovableAI(messages, lovableKey);
+      response = await tryLovableAI(enrichedMessages, lovableKey);
       if (!response.ok) {
         const errorText = await response.text();
         console.error("Lovable AI failed:", response.status, errorText);
