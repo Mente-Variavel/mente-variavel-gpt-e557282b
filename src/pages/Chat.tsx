@@ -10,7 +10,9 @@ import Navbar from "@/components/Navbar";
 import { useAuth } from "@/hooks/useAuth";
 import chatLogo from "@/assets/logo.png";
 
-type Msg = { role: "user" | "assistant"; content: string; imageUrl?: string; attachments?: string[] };
+import ReferenceAnalysis, { type AnalysisData } from "@/components/ReferenceAnalysis";
+
+type Msg = { role: "user" | "assistant"; content: string; imageUrl?: string; attachments?: string[]; analysis?: AnalysisData };
 
 const CHAT_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/chat`;
 const IMAGE_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/generate-image`;
@@ -90,6 +92,20 @@ const Chat = () => {
   const generateImage = async (prompt: string, referenceImages?: string[]) => {
     setIsLoading(true);
     try {
+      // Validate references before sending
+      if (referenceImages && referenceImages.length > 0) {
+        for (const img of referenceImages) {
+          if (!img || !img.startsWith("data:image")) {
+            setMessages((prev) => [
+              ...prev,
+              { role: "assistant", content: "❌ **Imagem de referência não foi recebida pelo servidor.** Por favor, tente anexar a imagem novamente." },
+            ]);
+            setIsLoading(false);
+            return;
+          }
+        }
+      }
+
       const resp = await fetch(IMAGE_URL, {
         method: "POST",
         headers: {
@@ -105,11 +121,25 @@ const Chat = () => {
       }
 
       const data = await resp.json();
+      const hasAnalysis = data.analysis && referenceImages && referenceImages.length > 0;
+
+      // Show analysis panel if available
+      if (hasAnalysis) {
+        setMessages((prev) => [
+          ...prev,
+          {
+            role: "assistant",
+            content: "🔍 **Análise da imagem de referência concluída.**",
+            analysis: data.analysis,
+          },
+        ]);
+      }
+
       setMessages((prev) => [
         ...prev,
         {
           role: "assistant",
-          content: `🎨 **Imagem gerada!**\n\n${data.revisedPrompt ? `> ${data.revisedPrompt}` : ""}`,
+          content: `🎨 **Imagem gerada${hasAnalysis ? " usando sua referência" : ""}!**\n\n${data.revisedPrompt ? `> Prompt reforçado aplicado com dados da referência.` : ""}`,
           imageUrl: data.imageUrl,
         },
       ]);
@@ -340,7 +370,10 @@ const Chat = () => {
             </motion.div>
           )}
           {messages.map((msg, i) => (
-            <ChatMessage key={i} role={msg.role} content={msg.content} imageUrl={msg.imageUrl} attachments={msg.attachments} />
+            <div key={i}>
+              <ChatMessage role={msg.role} content={msg.content} imageUrl={msg.imageUrl} attachments={msg.attachments} />
+              {msg.analysis && <ReferenceAnalysis analysis={msg.analysis} />}
+            </div>
           ))}
           {isLoading && !messages.some((m) => m.role === "assistant" && m === messages[messages.length - 1]) && (
             <TypingIndicator />
