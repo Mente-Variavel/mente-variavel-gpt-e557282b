@@ -9,6 +9,7 @@ import { useSpeechSynthesis } from "@/hooks/useSpeechSynthesis";
 interface ChatMessageProps {
   role: "user" | "assistant";
   content: string;
+  imageUrl?: string;
 }
 
 const CodeBlock = ({ language, children }: { language: string; children: string }) => {
@@ -52,7 +53,7 @@ const CodeBlock = ({ language, children }: { language: string; children: string 
   );
 };
 
-const ChatMessage = ({ role, content }: ChatMessageProps) => {
+const ChatMessage = ({ role, content, imageUrl }: ChatMessageProps) => {
   const [copied, setCopied] = useState(false);
   const isAssistant = role === "assistant";
   const { isSpeaking, isPaused, isSupported: ttsSupported, speak, pause, resume, stop } = useSpeechSynthesis();
@@ -90,87 +91,101 @@ const ChatMessage = ({ role, content }: ChatMessageProps) => {
         }`}
       >
         {isAssistant ? (
-          <div className="mv-markdown text-sm leading-relaxed text-foreground">
-            <ReactMarkdown
-              components={{
-                h1: ({ children }) => (
-                  <h1 className="text-xl font-bold text-primary mt-4 mb-2 first:mt-0">{children}</h1>
-                ),
-                h2: ({ children }) => (
-                  <h2 className="text-lg font-bold text-primary mt-4 mb-2 first:mt-0">{children}</h2>
-                ),
-                h3: ({ children }) => (
-                  <h3 className="text-base font-semibold text-primary mt-3 mb-1.5 first:mt-0">{children}</h3>
-                ),
-                h4: ({ children }) => (
-                  <h4 className="text-sm font-semibold text-accent mt-2 mb-1 first:mt-0">{children}</h4>
-                ),
-                p: ({ children }) => <p className="mb-3 last:mb-0 leading-relaxed">{children}</p>,
-                strong: ({ children }) => <strong className="font-semibold text-foreground">{children}</strong>,
-                em: ({ children }) => <em className="italic text-muted-foreground">{children}</em>,
-                ul: ({ children }) => <ul className="mb-3 ml-1 space-y-1.5 list-none">{children}</ul>,
-                ol: ({ children }) => <ol className="mb-3 ml-4 space-y-1.5 list-decimal">{children}</ol>,
-                li: ({ children, ...props }) => {
-                  const parent = (props as any).node?.parentNode?.tagName;
-                  if (parent === "ol") {
-                    return <li className="leading-relaxed text-foreground/90 pl-1">{children}</li>;
-                  }
-                  return (
-                    <li className="leading-relaxed text-foreground/90 flex items-start gap-2">
-                      <span className="text-primary mt-1.5 text-[0.5rem] shrink-0">●</span>
-                      <span>{children}</span>
-                    </li>
-                  );
-                },
-                blockquote: ({ children }) => (
-                  <blockquote className="border-l-2 border-primary/50 pl-4 my-3 text-muted-foreground italic">
-                    {children}
-                  </blockquote>
-                ),
-                hr: () => <hr className="border-border/50 my-4" />,
-                a: ({ href, children }) => (
-                  <a
-                    href={href}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-primary underline underline-offset-2 hover:text-primary/80 transition-colors"
-                  >
-                    {children}
-                  </a>
-                ),
-                table: ({ children }) => (
-                  <div className="overflow-x-auto my-3 rounded-lg border border-border/50">
-                    <table className="w-full text-sm">{children}</table>
-                  </div>
-                ),
-                thead: ({ children }) => <thead className="bg-secondary/80">{children}</thead>,
-                th: ({ children }) => (
-                  <th className="px-3 py-2 text-left font-semibold text-foreground border-b border-border/50">
-                    {children}
-                  </th>
-                ),
-                td: ({ children }) => (
-                  <td className="px-3 py-2 border-b border-border/30 text-foreground/90">{children}</td>
-                ),
-                code: ({ className, children, ...props }) => {
-                  const match = /language-(\w+)/.exec(className || "");
-                  const codeStr = String(children).replace(/\n$/, "");
-                  const isMultiline = codeStr.includes("\n") || match;
-                  if (isMultiline) {
-                    return <CodeBlock language={match?.[1] || ""}>{codeStr}</CodeBlock>;
-                  }
-                  return (
-                    <code className="bg-muted px-1.5 py-0.5 rounded text-[0.8125rem] font-mono text-primary">
+          <>
+            <div className="mv-markdown text-sm leading-relaxed text-foreground">
+              <ReactMarkdown
+                components={{
+                  h1: ({ children }) => (
+                    <h1 className="text-xl font-bold text-primary mt-4 mb-2 first:mt-0">{children}</h1>
+                  ),
+                  h2: ({ children }) => (
+                    <h2 className="text-lg font-bold text-primary mt-4 mb-2 first:mt-0">{children}</h2>
+                  ),
+                  h3: ({ children }) => (
+                    <h3 className="text-base font-semibold text-primary mt-3 mb-1.5 first:mt-0">{children}</h3>
+                  ),
+                  h4: ({ children }) => (
+                    <h4 className="text-sm font-semibold text-accent mt-2 mb-1 first:mt-0">{children}</h4>
+                  ),
+                  p: ({ children }) => <p className="mb-3 last:mb-0 leading-relaxed">{children}</p>,
+                  strong: ({ children }) => <strong className="font-semibold text-foreground">{children}</strong>,
+                  em: ({ children }) => <em className="italic text-muted-foreground">{children}</em>,
+                  ul: ({ children }) => <ul className="mb-3 ml-1 space-y-1.5 list-none">{children}</ul>,
+                  ol: ({ children }) => <ol className="mb-3 ml-4 space-y-1.5 list-decimal">{children}</ol>,
+                  li: ({ children, ...props }) => {
+                    const parent = (props as any).node?.parentNode?.tagName;
+                    if (parent === "ol") {
+                      return <li className="leading-relaxed text-foreground/90 pl-1">{children}</li>;
+                    }
+                    return (
+                      <li className="leading-relaxed text-foreground/90 flex items-start gap-2">
+                        <span className="text-primary mt-1.5 text-[0.5rem] shrink-0">●</span>
+                        <span>{children}</span>
+                      </li>
+                    );
+                  },
+                  blockquote: ({ children }) => (
+                    <blockquote className="border-l-2 border-primary/50 pl-4 my-3 text-muted-foreground italic">
                       {children}
-                    </code>
-                  );
-                },
-                pre: ({ children }) => <>{children}</>,
-              }}
-            >
-              {content}
-            </ReactMarkdown>
-          </div>
+                    </blockquote>
+                  ),
+                  hr: () => <hr className="border-border/50 my-4" />,
+                  a: ({ href, children }) => (
+                    <a
+                      href={href}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-primary underline underline-offset-2 hover:text-primary/80 transition-colors"
+                    >
+                      {children}
+                    </a>
+                  ),
+                  table: ({ children }) => (
+                    <div className="overflow-x-auto my-3 rounded-lg border border-border/50">
+                      <table className="w-full text-sm">{children}</table>
+                    </div>
+                  ),
+                  thead: ({ children }) => <thead className="bg-secondary/80">{children}</thead>,
+                  th: ({ children }) => (
+                    <th className="px-3 py-2 text-left font-semibold text-foreground border-b border-border/50">
+                      {children}
+                    </th>
+                  ),
+                  td: ({ children }) => (
+                    <td className="px-3 py-2 border-b border-border/30 text-foreground/90">{children}</td>
+                  ),
+                  code: ({ className, children, ...props }) => {
+                    const match = /language-(\w+)/.exec(className || "");
+                    const codeStr = String(children).replace(/\n$/, "");
+                    const isMultiline = codeStr.includes("\n") || match;
+                    if (isMultiline) {
+                      return <CodeBlock language={match?.[1] || ""}>{codeStr}</CodeBlock>;
+                    }
+                    return (
+                      <code className="bg-muted px-1.5 py-0.5 rounded text-[0.8125rem] font-mono text-primary">
+                        {children}
+                      </code>
+                    );
+                  },
+                  pre: ({ children }) => <>{children}</>,
+                }}
+              >
+                {content}
+              </ReactMarkdown>
+            </div>
+            {imageUrl && (
+              <div className="mt-3">
+                <a href={imageUrl} target="_blank" rel="noopener noreferrer">
+                  <img
+                    src={imageUrl}
+                    alt="Imagem gerada por IA"
+                    className="rounded-lg border border-border/50 max-w-full cursor-pointer hover:opacity-90 transition-opacity"
+                    loading="lazy"
+                  />
+                </a>
+              </div>
+            )}
+          </>
         ) : (
           <div className="text-sm leading-relaxed text-foreground">
             <ReactMarkdown>{content}</ReactMarkdown>
