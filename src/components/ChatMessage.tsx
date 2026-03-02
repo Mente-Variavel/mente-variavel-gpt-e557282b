@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import { Copy, Check, Bot, User, Volume2, Pause, Square } from "lucide-react";
+import { Copy, Check, Bot, User, Volume2, Pause, Square, Download } from "lucide-react";
 import { useState, useCallback } from "react";
 import ReactMarkdown from "react-markdown";
 import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
@@ -174,14 +174,20 @@ const ChatMessage = ({ role, content, imageUrl }: ChatMessageProps) => {
               </ReactMarkdown>
             </div>
             {imageUrl && (
-              <div className="mt-3">
-                <a href={imageUrl} target="_blank" rel="noopener noreferrer">
-                  <img
-                    src={imageUrl}
-                    alt="Imagem gerada por IA"
-                    className="rounded-lg border border-border/50 max-w-full cursor-pointer hover:opacity-90 transition-opacity"
-                    loading="lazy"
-                  />
+              <div className="mt-3 relative group/img">
+                <img
+                  src={imageUrl}
+                  alt="Imagem gerada por IA"
+                  className="rounded-lg border border-border/50 max-w-full"
+                  loading="lazy"
+                />
+                <a
+                  href={imageUrl}
+                  download="imagem-gerada.png"
+                  className="absolute bottom-2 right-2 flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-primary text-primary-foreground text-xs font-medium opacity-0 group-hover/img:opacity-100 transition-opacity shadow-lg"
+                >
+                  <Download className="w-3.5 h-3.5" />
+                  Baixar
                 </a>
               </div>
             )}
