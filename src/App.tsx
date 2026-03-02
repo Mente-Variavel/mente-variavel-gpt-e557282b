@@ -21,33 +21,35 @@ import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
 
-const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <TooltipProvider>
-      <Toaster />
-      <Sonner />
-      <BrowserRouter>
-        <Routes>
-          <Route path="/" element={<Index />} />
-          <Route path="/auth" element={<Auth />} />
-          <Route path="/assistente" element={<Chat />} />
-          <Route path="/chat" element={<Chat />} />
-          <Route path="/ferramentas" element={<Tools />} />
-          <Route path="/guias" element={<Guides />} />
-          <Route path="/guias/:slug" element={<GuideArticle />} />
-          <Route path="/blog" element={<Blog />} />
-          <Route path="/blog/:slug" element={<BlogPost />} />
-          <Route path="/sobre" element={<About />} />
-          <Route path="/privacidade" element={<Privacy />} />
-          <Route path="/termos" element={<Terms />} />
-          <Route path="/contato" element={<Contact />} />
-          <Route path="/anuncie" element={<Anuncie />} />
-          <Route path="/admin/anuncios" element={<AdminAds />} />
-          <Route path="*" element={<NotFound />} />
-        </Routes>
-      </BrowserRouter>
-    </TooltipProvider>
-  </QueryClientProvider>
-);
+function App() {
+  return (
+    <QueryClientProvider client={queryClient}>
+      <TooltipProvider>
+        <Toaster />
+        <Sonner />
+        <BrowserRouter>
+          <Routes>
+            <Route path="/" element={<Index />} />
+            <Route path="/auth" element={<Auth />} />
+            <Route path="/assistente" element={<Chat />} />
+            <Route path="/chat" element={<Chat />} />
+            <Route path="/ferramentas" element={<Tools />} />
+            <Route path="/guias" element={<Guides />} />
+            <Route path="/guias/:slug" element={<GuideArticle />} />
+            <Route path="/blog" element={<Blog />} />
+            <Route path="/blog/:slug" element={<BlogPost />} />
+            <Route path="/sobre" element={<About />} />
+            <Route path="/privacidade" element={<Privacy />} />
+            <Route path="/termos" element={<Terms />} />
+            <Route path="/contato" element={<Contact />} />
+            <Route path="/anuncie" element={<Anuncie />} />
+            <Route path="/admin/anuncios" element={<AdminAds />} />
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+        </BrowserRouter>
+      </TooltipProvider>
+    </QueryClientProvider>
+  );
+}
 
 export default App;
