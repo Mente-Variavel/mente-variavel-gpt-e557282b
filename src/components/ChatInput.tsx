@@ -1,4 +1,4 @@
-import { Send, Mic, MicOff, X, HelpCircle } from "lucide-react";
+import { Send, Mic, MicOff, X, HelpCircle, Paperclip, Image as ImageIcon, FileText } from "lucide-react";
 import { useState, useRef, useEffect, KeyboardEvent } from "react";
 import { useSpeechRecognition } from "@/hooks/useSpeechRecognition";
 import AudioVisualizer from "@/components/AudioVisualizer";
@@ -11,15 +11,23 @@ import {
   DialogDescription,
 } from "@/components/ui/dialog";
 
+export interface ChatAttachment {
+  file: File;
+  preview: string;
+  type: "image" | "file";
+}
+
 interface ChatInputProps {
-  onSend: (message: string) => void;
+  onSend: (message: string, attachments?: ChatAttachment[]) => void;
   disabled?: boolean;
 }
 
 const ChatInput = ({ onSend, disabled }: ChatInputProps) => {
   const [input, setInput] = useState("");
   const [helpOpen, setHelpOpen] = useState(false);
+  const [attachments, setAttachments] = useState<ChatAttachment[]>([]);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const { isListening, transcript, isSupported, error, mediaStream, startListening, stopListening, cancelListening } =
     useSpeechRecognition();
 
@@ -29,10 +37,11 @@ const ChatInput = ({ onSend, disabled }: ChatInputProps) => {
 
   const handleSend = () => {
     const trimmed = input.trim();
-    if (!trimmed || disabled) return;
+    if ((!trimmed && attachments.length === 0) || disabled) return;
     if (isListening) stopListening();
-    onSend(trimmed);
+    onSend(trimmed, attachments.length > 0 ? attachments : undefined);
     setInput("");
+    setAttachments([]);
     if (textareaRef.current) textareaRef.current.style.height = "auto";
   };
 
@@ -59,6 +68,34 @@ const ChatInput = ({ onSend, disabled }: ChatInputProps) => {
   const handleCancel = () => {
     cancelListening();
     setInput("");
+  };
+
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files) return;
+
+    Array.from(files).forEach((file) => {
+      if (attachments.length >= 5) return; // max 5 files
+
+      const isImage = file.type.startsWith("image/");
+      const preview = isImage ? URL.createObjectURL(file) : "";
+
+      setAttachments((prev) => [
+        ...prev,
+        { file, preview, type: isImage ? "image" : "file" },
+      ]);
+    });
+
+    // Reset input so same file can be re-selected
+    e.target.value = "";
+  };
+
+  const removeAttachment = (index: number) => {
+    setAttachments((prev) => {
+      const removed = prev[index];
+      if (removed.preview) URL.revokeObjectURL(removed.preview);
+      return prev.filter((_, i) => i !== index);
+    });
   };
 
   return (
@@ -98,7 +135,63 @@ const ChatInput = ({ onSend, disabled }: ChatInputProps) => {
         )}
       </AnimatePresence>
 
+      {/* Attachment previews */}
+      <AnimatePresence>
+        {attachments.length > 0 && (
+          <motion.div
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: "auto" }}
+            exit={{ opacity: 0, height: 0 }}
+            className="flex gap-2 px-2 flex-wrap"
+          >
+            {attachments.map((att, i) => (
+              <div key={i} className="relative group">
+                {att.type === "image" ? (
+                  <img
+                    src={att.preview}
+                    alt={att.file.name}
+                    className="w-16 h-16 rounded-lg object-cover border border-border/50"
+                  />
+                ) : (
+                  <div className="w-16 h-16 rounded-lg border border-border/50 bg-secondary flex flex-col items-center justify-center gap-1 p-1">
+                    <FileText className="w-5 h-5 text-muted-foreground" />
+                    <span className="text-[8px] text-muted-foreground truncate w-full text-center">
+                      {att.file.name.split(".").pop()?.toUpperCase()}
+                    </span>
+                  </div>
+                )}
+                <button
+                  onClick={() => removeAttachment(i)}
+                  className="absolute -top-1.5 -right-1.5 w-5 h-5 rounded-full bg-destructive text-destructive-foreground flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                >
+                  <X className="w-3 h-3" />
+                </button>
+              </div>
+            ))}
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       <div className="glass rounded-xl p-2 flex items-end gap-2 border border-border/50">
+        {/* Hidden file input */}
+        <input
+          ref={fileInputRef}
+          type="file"
+          multiple
+          accept="image/*,.pdf,.doc,.docx,.txt"
+          onChange={handleFileSelect}
+          className="hidden"
+        />
+
+        <button
+          onClick={() => fileInputRef.current?.click()}
+          disabled={disabled}
+          className="p-2.5 rounded-lg transition-all shrink-0 bg-secondary text-muted-foreground hover:text-primary hover:bg-secondary/80 disabled:opacity-30 disabled:cursor-not-allowed"
+          title="Anexar arquivo"
+        >
+          <Paperclip className="w-4 h-4" />
+        </button>
+
         <textarea
           ref={textareaRef}
           value={input}
@@ -128,7 +221,7 @@ const ChatInput = ({ onSend, disabled }: ChatInputProps) => {
 
         <button
           onClick={handleSend}
-          disabled={disabled || !input.trim()}
+          disabled={disabled || (!input.trim() && attachments.length === 0)}
           className="flex items-center gap-1.5 px-4 py-2.5 rounded-lg bg-primary text-primary-foreground font-medium text-sm hover:bg-primary/90 disabled:opacity-30 disabled:cursor-not-allowed transition-all glow-cyan shrink-0"
         >
           <Send className="w-4 h-4" />
