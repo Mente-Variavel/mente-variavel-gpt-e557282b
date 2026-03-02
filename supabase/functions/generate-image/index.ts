@@ -21,28 +21,31 @@ serve(async (req) => {
       });
     }
 
-    const openaiKey = Deno.env.get("OPENAI_API_KEY");
-    if (!openaiKey) {
-      return new Response(JSON.stringify({ error: "OpenAI API key não configurada" }), {
+    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
+    if (!LOVABLE_API_KEY) {
+      return new Response(JSON.stringify({ error: "API key não configurada" }), {
         status: 500,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
-    console.log("Generating image with GPT Image for prompt:", prompt);
+    console.log("Generating image with Lovable AI for prompt:", prompt);
 
-    const response = await fetch("https://api.openai.com/v1/images/generations", {
+    const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
       headers: {
-        Authorization: `Bearer ${openaiKey}`,
+        Authorization: `Bearer ${LOVABLE_API_KEY}`,
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: "gpt-image-1",
-        prompt,
-        n: 1,
-        size: "1024x1024",
-        quality: "high",
+        model: "google/gemini-2.5-flash-image",
+        messages: [
+          {
+            role: "user",
+            content: `Generate an image: ${prompt}`,
+          },
+        ],
+        modalities: ["image", "text"],
       }),
     });
 
@@ -70,18 +73,22 @@ serve(async (req) => {
     }
 
     const data = await response.json();
-    const imageData = data.data?.[0]?.b64_json
-      ? `data:image/png;base64,${data.data[0].b64_json}`
-      : data.data?.[0]?.url;
+    console.log("Lovable AI response keys:", JSON.stringify(Object.keys(data)));
 
-    if (!imageData) {
+    // Extract image from Lovable AI response format
+    const choice = data.choices?.[0]?.message;
+    const imageUrl = choice?.images?.[0]?.image_url?.url;
+    const textContent = choice?.content || "";
+
+    if (!imageUrl) {
+      console.error("No image in response:", JSON.stringify(data).slice(0, 500));
       return new Response(JSON.stringify({ error: "Nenhuma imagem foi gerada. Tente um prompt diferente." }), {
         status: 500,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
-    return new Response(JSON.stringify({ imageUrl: imageData, revisedPrompt: data.data?.[0]?.revised_prompt || "" }), {
+    return new Response(JSON.stringify({ imageUrl, revisedPrompt: textContent }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (e) {
