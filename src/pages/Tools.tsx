@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import AdPlaceholder from "@/components/AdPlaceholder";
-import { ExternalLink, ImageMinus, Mail, Wallet, Sparkles } from "lucide-react";
+import { ExternalLink, ImageMinus, Mail, Wallet, Sparkles, QrCode, ArrowLeftRight } from "lucide-react";
 import { motion } from "framer-motion";
 import { Badge } from "@/components/ui/badge";
 
@@ -26,6 +26,18 @@ const tools = [
     description: "Organize suas finanças pessoais de forma simples e inteligente.",
     url: "https://mentevariavelfinancas.base44.app/",
     icon: Wallet,
+  },
+  {
+    name: "Pix Checkout",
+    description: "Solução para pagamentos com Pix de forma rápida e prática.",
+    url: "https://mentevariavel-pixcheckout.lovable.app/",
+    icon: QrCode,
+  },
+  {
+    name: "Conversor de Moedas",
+    description: "Converta valores entre diferentes moedas de forma simples e rápida.",
+    url: "https://mente-conversor.lovable.app/",
+    icon: ArrowLeftRight,
   },
 ];
 
