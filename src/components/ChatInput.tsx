@@ -129,9 +129,10 @@ const ChatInput = ({ onSend, disabled }: ChatInputProps) => {
         <button
           onClick={handleSend}
           disabled={disabled || !input.trim()}
-          className="p-2.5 rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-30 disabled:cursor-not-allowed transition-all glow-cyan shrink-0"
+          className="flex items-center gap-1.5 px-4 py-2.5 rounded-lg bg-primary text-primary-foreground font-medium text-sm hover:bg-primary/90 disabled:opacity-30 disabled:cursor-not-allowed transition-all glow-cyan shrink-0"
         >
           <Send className="w-4 h-4" />
+          Enviar
         </button>
       </div>
 

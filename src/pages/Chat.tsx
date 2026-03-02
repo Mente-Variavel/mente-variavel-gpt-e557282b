@@ -238,7 +238,7 @@ const Chat = () => {
       <div className="flex-1 flex flex-col pt-16 max-w-3xl mx-auto w-full">
         <div className="flex items-center justify-between px-4 py-3 border-b border-border/30">
           <h1 className="font-display text-sm font-semibold text-primary text-glow-cyan">
-            Assistente IA
+            Assistente Inteligente
           </h1>
           <div className="flex gap-2">
             <button
@@ -265,10 +265,10 @@ const Chat = () => {
             >
               <img src={chatLogo} alt="Mente Variável" className="w-20 h-20 rounded-full mb-4 glow-cyan" />
               <h2 className="font-display text-lg font-bold text-foreground mb-2">
-                Assistente Mente Variável GPT
+                Assistente Inteligente
               </h2>
               <p className="text-sm text-muted-foreground max-w-md mb-6">
-                Seu assistente inteligente gratuito. Pergunte qualquer coisa ou diga <span className="text-primary font-medium">"gere uma imagem de..."</span> para criar imagens! 🎨
+                Seu assistente de IA em tempo real. Pergunte sobre notícias, esportes, câmbio, eventos recentes ou diga <span className="text-primary font-medium">"gere uma imagem de..."</span> para criar imagens! 🎨
               </p>
 
               <div className="w-full max-w-md space-y-2 mb-6">
@@ -301,7 +301,7 @@ const Chat = () => {
         <div className="px-4 pb-4 pt-2">
           <ChatInput onSend={sendMessage} disabled={isLoading} />
           <p className="text-center text-xs text-muted-foreground mt-2">
-            Mente Variável GPT pode cometer erros. Verifique informações importantes.
+            Assistente Inteligente pode cometer erros. Verifique informações importantes.
           </p>
         </div>
       </div>
