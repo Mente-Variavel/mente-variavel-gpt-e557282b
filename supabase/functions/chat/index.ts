@@ -16,8 +16,19 @@ const SEARCH_TRIGGERS = [
   "ontem", "yesterday", "esta semana", "this week",
 ];
 
-function needsSearch(text: string): boolean {
-  const lower = text.toLowerCase();
+function extractText(content: any): string {
+  if (typeof content === "string") return content;
+  if (Array.isArray(content)) {
+    return content
+      .filter((c: any) => c.type === "text")
+      .map((c: any) => c.text || "")
+      .join(" ");
+  }
+  return "";
+}
+
+function needsSearch(content: any): boolean {
+  const lower = extractText(content).toLowerCase();
   return SEARCH_TRIGGERS.some((t) => lower.includes(t));
 }
 
@@ -153,8 +164,9 @@ serve(async (req) => {
     if (lastUserMsg && needsSearch(lastUserMsg.content)) {
       const tavilyKey = Deno.env.get("TAVILY_API_KEY");
       if (tavilyKey) {
-        console.log("Searching with Tavily:", lastUserMsg.content);
-        searchContext = await searchTavily(lastUserMsg.content, tavilyKey);
+        const searchQuery = extractText(lastUserMsg.content);
+        console.log("Searching with Tavily:", searchQuery);
+        searchContext = await searchTavily(searchQuery, tavilyKey);
         console.log("Search context length:", searchContext.length);
       }
     }
