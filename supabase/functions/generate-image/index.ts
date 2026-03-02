@@ -12,7 +12,7 @@ serve(async (req) => {
   }
 
   try {
-    const { prompt } = await req.json();
+    const { prompt, referenceImages } = await req.json();
 
     if (!prompt) {
       return new Response(JSON.stringify({ error: "Prompt é obrigatório" }), {
@@ -29,50 +29,94 @@ serve(async (req) => {
       });
     }
 
-    console.log("Generating image with GPT Image for prompt:", prompt);
+    const hasRefImages = referenceImages && referenceImages.length > 0;
+    console.log(`Generating image for prompt: "${prompt}", ref images: ${hasRefImages ? referenceImages.length : 0}`);
 
-    const response = await fetch("https://api.openai.com/v1/images/generations", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${openaiKey}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        model: "gpt-image-1",
-        prompt,
-        n: 1,
-        size: "1024x1024",
-        quality: "high",
-      }),
-    });
+    let imageData: string | null = null;
+    let revisedPrompt = "";
 
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error("OpenAI image error:", response.status, errorText);
+    if (hasRefImages) {
+      // Use Responses API with gpt-image-1 for image editing/reference
+      const inputContent: any[] = [
+        { type: "text", text: prompt },
+      ];
 
-      if (response.status === 429) {
-        return new Response(JSON.stringify({ error: "Limite de requisições atingido. Tente novamente em alguns minutos." }), {
-          status: 429,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
-      }
-      if (response.status === 402) {
-        return new Response(JSON.stringify({ error: "Créditos insuficientes. Adicione créditos para continuar." }), {
-          status: 402,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
+      for (const img of referenceImages) {
+        // img is a data:image/...;base64,... string
+        inputContent.push({
+          type: "input_image",
+          image_url: img,
         });
       }
 
-      return new Response(JSON.stringify({ error: "Erro ao gerar imagem" }), {
-        status: 500,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      const response = await fetch("https://api.openai.com/v1/responses", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${openaiKey}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          model: "gpt-image-1",
+          input: inputContent,
+          tools: [{ type: "image_generation", quality: "high", size: "1024x1024" }],
+        }),
       });
-    }
 
-    const data = await response.json();
-    const imageData = data.data?.[0]?.b64_json
-      ? `data:image/png;base64,${data.data[0].b64_json}`
-      : data.data?.[0]?.url;
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error("OpenAI Responses API error:", response.status, errorText);
+        throw new Error(`Erro da API: ${response.status}`);
+      }
+
+      const data = await response.json();
+      // Extract image from output
+      const imageOutput = data.output?.find((o: any) => o.type === "image_generation_call");
+      if (imageOutput?.result) {
+        imageData = `data:image/png;base64,${imageOutput.result}`;
+      }
+    } else {
+      // Standard image generation without reference
+      const response = await fetch("https://api.openai.com/v1/images/generations", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${openaiKey}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          model: "gpt-image-1",
+          prompt,
+          n: 1,
+          size: "1024x1024",
+          quality: "high",
+        }),
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error("OpenAI image error:", response.status, errorText);
+
+        if (response.status === 429) {
+          return new Response(JSON.stringify({ error: "Limite de requisições atingido. Tente novamente em alguns minutos." }), {
+            status: 429,
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
+        }
+        if (response.status === 402) {
+          return new Response(JSON.stringify({ error: "Créditos insuficientes. Adicione créditos para continuar." }), {
+            status: 402,
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
+        }
+
+        throw new Error(`Erro da API: ${response.status}`);
+      }
+
+      const data = await response.json();
+      imageData = data.data?.[0]?.b64_json
+        ? `data:image/png;base64,${data.data[0].b64_json}`
+        : data.data?.[0]?.url;
+      revisedPrompt = data.data?.[0]?.revised_prompt || "";
+    }
 
     if (!imageData) {
       return new Response(JSON.stringify({ error: "Nenhuma imagem foi gerada. Tente um prompt diferente." }), {
@@ -81,7 +125,7 @@ serve(async (req) => {
       });
     }
 
-    return new Response(JSON.stringify({ imageUrl: imageData, revisedPrompt: data.data?.[0]?.revised_prompt || "" }), {
+    return new Response(JSON.stringify({ imageUrl: imageData, revisedPrompt }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (e) {
