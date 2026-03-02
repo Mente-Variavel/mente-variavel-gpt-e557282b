@@ -8,7 +8,7 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Card, CardContent } from "@/components/ui/card";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
-import { Upload, Image as ImageIcon, Download, Loader2, X, RotateCw, Move, Maximize } from "lucide-react";
+import { Upload, Image, Download, Loader2, X, RotateCw, Move, Maximize } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import { compositeLogo, type CompositeMode } from "@/lib/logoComposite";
@@ -194,7 +194,7 @@ export default function LogoRender() {
                     onClick={() => fileInputRef.current?.click()}
                     className="border-2 border-dashed border-border rounded-lg p-8 text-center cursor-pointer hover:border-primary/50 transition-colors"
                   >
-                    <ImageIcon className="w-8 h-8 mx-auto text-muted-foreground mb-2" />
+                    <Image className="w-8 h-8 mx-auto text-muted-foreground mb-2" />
                     <p className="text-sm text-muted-foreground">Clique para selecionar</p>
                   </div>
                 )}
@@ -321,7 +321,7 @@ export default function LogoRender() {
                   </div>
                 ) : (
                   <div className="text-center py-20">
-                    <ImageIcon className="w-16 h-16 mx-auto text-muted-foreground/30 mb-4" />
+                    <Image className="w-16 h-16 mx-auto text-muted-foreground/30 mb-4" />
                     <p className="text-muted-foreground">
                       {isGenerating ? "Gerando cenário sem logo..." : "O resultado aparecerá aqui"}
                     </p>
