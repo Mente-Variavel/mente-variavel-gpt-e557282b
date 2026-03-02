@@ -27,11 +27,27 @@ const IMAGE_TRIGGERS = [
   "trocar fundo", "troque o fundo", "alterar iluminação", "altere a iluminação",
   "editar imagem", "edite a imagem", "modificar imagem", "modifique a imagem",
   "criar ilustração", "crie uma ilustração", "gerar arte", "gere uma arte",
+  "coloque", "colocar", "coloca", "aplique", "aplicar",
+  "na camiseta", "numa camiseta", "em uma camiseta", "na camisa",
+  "usar esse logo", "use esse logo", "com esse logo", "usando esse logo",
+  "usar essa imagem", "use essa imagem", "com essa imagem", "usando essa imagem",
+  "mockup", "estampa", "estampar", "personalizar", "personalização",
 ];
 
-function isImageRequest(text: string): boolean {
+// If user attached images, also check these lighter triggers
+const IMAGE_WITH_ATTACHMENT_TRIGGERS = [
+  "camiseta", "camisa", "caneca", "boné", "adesivo", "banner", "cartão",
+  "logo", "imagem", "foto", "design", "arte", "produto", "capa",
+  "poster", "cartaz", "flyer", "panfleto", "embalagem",
+  "t-shirt", "shirt", "mug", "cup", "sticker",
+];
+
+function isImageRequest(text: string, hasAttachments: boolean): boolean {
   const lower = text.toLowerCase();
-  return IMAGE_TRIGGERS.some((t) => lower.includes(t));
+  if (IMAGE_TRIGGERS.some((t) => lower.includes(t))) return true;
+  // If user attached images, use lighter triggers — they likely want image generation
+  if (hasAttachments && IMAGE_WITH_ATTACHMENT_TRIGGERS.some((t) => lower.includes(t))) return true;
+  return false;
 }
 
 const tips = [
@@ -179,7 +195,7 @@ const Chat = () => {
     };
     setMessages((prev) => [...prev, userMsg]);
 
-    if (isImageRequest(input)) {
+    if (isImageRequest(input, imageBase64List.length > 0)) {
       const refImages = imageBase64List.map((img) => img.image_url.url);
       await generateImage(input, refImages);
       return;
