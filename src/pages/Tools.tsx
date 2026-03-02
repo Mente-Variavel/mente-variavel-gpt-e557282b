@@ -42,7 +42,7 @@ const tools = [
   {
     name: "Educação Financeira",
     description: "Aprenda sobre finanças de forma interativa e inteligente com a ajuda da IA.",
-    url: "https://mentevariavel-educacao.lovable.app/",
+    url: "https://mente-educ.lovable.app/",
     icon: GraduationCap,
   },
 ];
