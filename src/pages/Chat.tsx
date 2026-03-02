@@ -173,20 +173,19 @@ const Chat = () => {
   const sendMessage = async (input: string, attachments?: ChatAttachment[]) => {
     // Convert attachments to base64 previews for display
     const attachmentPreviews: string[] = [];
-    const imageBase64List: { type: "image_url"; image_url: { url: string } }[] = [];
+    const imageBase64List: string[] = [];
 
-    if (attachments) {
+    if (attachments && attachments.length > 0) {
       for (const att of attachments) {
         if (att.type === "image") {
           const base64 = await fileToBase64(att.file);
           attachmentPreviews.push(att.preview);
-          imageBase64List.push({
-            type: "image_url",
-            image_url: { url: base64 },
-          });
+          imageBase64List.push(base64);
         }
       }
     }
+
+    console.log("[Chat] sendMessage called, input:", input, "attachments:", attachments?.length ?? 0, "imageBase64List:", imageBase64List.length);
 
     const userMsg: Msg = {
       role: "user",
@@ -195,9 +194,13 @@ const Chat = () => {
     };
     setMessages((prev) => [...prev, userMsg]);
 
-    if (isImageRequest(input, imageBase64List.length > 0)) {
-      const refImages = imageBase64List.map((img) => img.image_url.url);
-      await generateImage(input, refImages);
+    const hasImages = imageBase64List.length > 0;
+    const triggerMatch = isImageRequest(input, hasImages);
+
+    // CRITICAL: If user attached images, ALWAYS route to image generation
+    if (hasImages || triggerMatch) {
+      console.log("[Chat] Routing to image generation. hasImages:", hasImages, "triggerMatch:", triggerMatch, "refImages count:", imageBase64List.length);
+      await generateImage(input, hasImages ? imageBase64List : undefined);
       return;
     }
 
@@ -205,14 +208,8 @@ const Chat = () => {
     let assistantSoFar = "";
 
     try {
-      // Build message content - if there are images, use multimodal format
-      const lastUserContent =
-        imageBase64List.length > 0
-          ? [
-              { type: "text" as const, text: input || "Descreva esta imagem." },
-              ...imageBase64List,
-            ]
-          : input;
+      // No images here (they were routed to generateImage above)
+      const lastUserContent = input;
 
       const apiMessages = [
         ...messages.map(({ role, content }) => ({ role, content })),
