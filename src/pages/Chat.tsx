@@ -20,6 +20,10 @@ const IMAGE_TRIGGERS = [
   "generate image", "create image", "draw", "make an image",
   "gere a imagem", "gera uma imagem", "gera imagem",
   "ilustre", "ilustrar", "imagine", "imaginar",
+  "ajustar imagem", "ajuste a imagem", "melhorar imagem", "melhore a imagem",
+  "trocar fundo", "troque o fundo", "alterar iluminação", "altere a iluminação",
+  "editar imagem", "edite a imagem", "modificar imagem", "modifique a imagem",
+  "criar ilustração", "crie uma ilustração", "gerar arte", "gere uma arte",
 ];
 
 function isImageRequest(text: string): boolean {
