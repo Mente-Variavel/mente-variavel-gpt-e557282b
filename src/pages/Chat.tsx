@@ -87,7 +87,7 @@ const Chat = () => {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
   }, [messages, isLoading]);
 
-  const generateImage = async (prompt: string) => {
+  const generateImage = async (prompt: string, referenceImages?: string[]) => {
     setIsLoading(true);
     try {
       const resp = await fetch(IMAGE_URL, {
@@ -96,7 +96,7 @@ const Chat = () => {
           "Content-Type": "application/json",
           Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
         },
-        body: JSON.stringify({ prompt }),
+        body: JSON.stringify({ prompt, referenceImages }),
       });
 
       if (!resp.ok) {
@@ -150,7 +150,8 @@ const Chat = () => {
     setMessages((prev) => [...prev, userMsg]);
 
     if (isImageRequest(input)) {
-      await generateImage(input);
+      const refImages = imageBase64List.map((img) => img.image_url.url);
+      await generateImage(input, refImages);
       return;
     }
 
