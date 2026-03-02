@@ -9,15 +9,29 @@ import Navbar from "@/components/Navbar";
 import { useAuth } from "@/hooks/useAuth";
 import chatLogo from "@/assets/logo.png";
 
-type Msg = { role: "user" | "assistant"; content: string };
+type Msg = { role: "user" | "assistant"; content: string; imageUrl?: string };
 
 const CHAT_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/chat`;
+const IMAGE_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/generate-image`;
+
+const IMAGE_TRIGGERS = [
+  "gere uma imagem", "gerar imagem", "crie uma imagem", "criar imagem",
+  "desenhe", "desenhar", "faça uma imagem", "fazer imagem",
+  "generate image", "create image", "draw", "make an image",
+  "gere a imagem", "gera uma imagem", "gera imagem",
+  "ilustre", "ilustrar", "imagine", "imaginar",
+];
+
+function isImageRequest(text: string): boolean {
+  const lower = text.toLowerCase();
+  return IMAGE_TRIGGERS.some((t) => lower.includes(t));
+}
 
 const tips = [
   "Seja específico: quanto mais detalhes, melhor a resposta.",
   "Peça para reformular se a resposta não ficou clara.",
   "Use para estudos, redação, ideias e programação.",
-  "Verifique informações importantes com outras fontes.",
+  "Diga 'gere uma imagem de...' para criar imagens com IA! 🎨",
 ];
 
 const Chat = () => {
@@ -45,13 +59,11 @@ const Chat = () => {
     if (!authLoading && !user) navigate("/auth");
   }, [user, authLoading, navigate]);
 
-  // Handle initial message from Home page
   useEffect(() => {
     const state = location.state as { initialMessage?: string } | null;
     if (state?.initialMessage && !initialSent.current && user) {
       initialSent.current = true;
       sendMessage(state.initialMessage);
-      // Clear the state so it doesn't re-send on re-render
       window.history.replaceState({}, document.title);
     }
   }, [user, location.state]);
@@ -60,11 +72,53 @@ const Chat = () => {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
   }, [messages, isLoading]);
 
+  const generateImage = async (prompt: string) => {
+    setIsLoading(true);
+    try {
+      const resp = await fetch(IMAGE_URL, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+        },
+        body: JSON.stringify({ prompt }),
+      });
+
+      if (!resp.ok) {
+        const err = await resp.json();
+        throw new Error(err.error || "Erro ao gerar imagem");
+      }
+
+      const data = await resp.json();
+      setMessages((prev) => [
+        ...prev,
+        {
+          role: "assistant",
+          content: `🎨 **Imagem gerada!**\n\n${data.revisedPrompt ? `> ${data.revisedPrompt}` : ""}`,
+          imageUrl: data.imageUrl,
+        },
+      ]);
+    } catch (e: any) {
+      console.error(e);
+      setMessages((prev) => [
+        ...prev,
+        { role: "assistant", content: `❌ Não foi possível gerar a imagem: ${e.message}` },
+      ]);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   const sendMessage = async (input: string) => {
     const userMsg: Msg = { role: "user", content: input };
     setMessages((prev) => [...prev, userMsg]);
-    setIsLoading(true);
 
+    if (isImageRequest(input)) {
+      await generateImage(input);
+      return;
+    }
+
+    setIsLoading(true);
     let assistantSoFar = "";
 
     try {
@@ -74,12 +128,12 @@ const Chat = () => {
           "Content-Type": "application/json",
           Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
         },
-        body: JSON.stringify({ messages: [...messages, userMsg] }),
+        body: JSON.stringify({
+          messages: [...messages, userMsg].map(({ role, content }) => ({ role, content })),
+        }),
       });
 
-      if (!resp.ok || !resp.body) {
-        throw new Error("Erro ao conectar com o assistente");
-      }
+      if (!resp.ok || !resp.body) throw new Error("Erro ao conectar com o assistente");
 
       const reader = resp.body.getReader();
       const decoder = new TextDecoder();
@@ -180,8 +234,8 @@ const Chat = () => {
           </motion.div>
         )}
       </AnimatePresence>
+
       <div className="flex-1 flex flex-col pt-16 max-w-3xl mx-auto w-full">
-        {/* Header actions */}
         <div className="flex items-center justify-between px-4 py-3 border-b border-border/30">
           <h1 className="font-display text-sm font-semibold text-primary text-glow-cyan">
             Assistente IA
@@ -202,7 +256,6 @@ const Chat = () => {
           </div>
         </div>
 
-        {/* Messages */}
         <div ref={scrollRef} className="flex-1 overflow-y-auto px-4 py-6 space-y-6">
           {messages.length === 0 && (
             <motion.div
@@ -215,10 +268,9 @@ const Chat = () => {
                 Assistente Mente Variável GPT
               </h2>
               <p className="text-sm text-muted-foreground max-w-md mb-6">
-                Seu assistente inteligente gratuito. Pergunte qualquer coisa sobre ideias, textos, código ou soluções criativas.
+                Seu assistente inteligente gratuito. Pergunte qualquer coisa ou diga <span className="text-primary font-medium">"gere uma imagem de..."</span> para criar imagens! 🎨
               </p>
 
-              {/* Tips */}
               <div className="w-full max-w-md space-y-2 mb-6">
                 <div className="flex items-center gap-2 text-xs text-muted-foreground mb-2">
                   <Info className="w-3.5 h-3.5 text-primary" />
@@ -231,7 +283,6 @@ const Chat = () => {
                 ))}
               </div>
 
-              {/* Disclaimer */}
               <div className="glass rounded-lg px-4 py-3 max-w-md">
                 <p className="text-xs text-muted-foreground/70">
                   ⚠️ O assistente pode não possuir informações em tempo real. As respostas geradas podem conter limitações e não substituem aconselhamento profissional.
@@ -240,14 +291,13 @@ const Chat = () => {
             </motion.div>
           )}
           {messages.map((msg, i) => (
-            <ChatMessage key={i} role={msg.role} content={msg.content} />
+            <ChatMessage key={i} role={msg.role} content={msg.content} imageUrl={msg.imageUrl} />
           ))}
           {isLoading && !messages.some((m) => m.role === "assistant" && m === messages[messages.length - 1]) && (
             <TypingIndicator />
           )}
         </div>
 
-        {/* Input */}
         <div className="px-4 pb-4 pt-2">
           <ChatInput onSend={sendMessage} disabled={isLoading} />
           <p className="text-center text-xs text-muted-foreground mt-2">
