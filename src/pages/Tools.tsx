@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import AdPlaceholder from "@/components/AdPlaceholder";
-import { ExternalLink, ImageMinus, Mail, Wallet, Sparkles, QrCode, ArrowLeftRight } from "lucide-react";
+import { ExternalLink, ImageMinus, Mail, Wallet, Sparkles, QrCode, ArrowLeftRight, GraduationCap } from "lucide-react";
 import { motion } from "framer-motion";
 import { Badge } from "@/components/ui/badge";
 
@@ -38,6 +38,12 @@ const tools = [
     description: "Converta valores entre diferentes moedas de forma simples e rápida.",
     url: "https://mente-conversor.lovable.app/",
     icon: ArrowLeftRight,
+  },
+  {
+    name: "Educação Financeira",
+    description: "Aprenda sobre finanças de forma interativa e inteligente com a ajuda da IA.",
+    url: "https://mentevariavel-educacao.lovable.app/",
+    icon: GraduationCap,
   },
 ];
 
