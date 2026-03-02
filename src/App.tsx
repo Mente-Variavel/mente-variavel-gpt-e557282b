@@ -17,6 +17,7 @@ import BlogPost from "./pages/BlogPost";
 import Tools from "./pages/Tools";
 import Anuncie from "./pages/Anuncie";
 import AdminAds from "./pages/AdminAds";
+import LogoRender from "./pages/LogoRender";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -44,6 +45,7 @@ function App() {
             <Route path="/contato" element={<Contact />} />
             <Route path="/anuncie" element={<Anuncie />} />
             <Route path="/admin/anuncios" element={<AdminAds />} />
+            <Route path="/logo-render" element={<LogoRender />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>
