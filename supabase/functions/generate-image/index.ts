@@ -21,31 +21,28 @@ serve(async (req) => {
       });
     }
 
-    const lovableKey = Deno.env.get("LOVABLE_API_KEY");
-    if (!lovableKey) {
-      return new Response(JSON.stringify({ error: "API key não configurada" }), {
+    const openaiKey = Deno.env.get("OPENAI_API_KEY");
+    if (!openaiKey) {
+      return new Response(JSON.stringify({ error: "OpenAI API key não configurada" }), {
         status: 500,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
-    console.log("Generating image with Lovable AI for prompt:", prompt);
+    console.log("Generating image with GPT Image for prompt:", prompt);
 
-    const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+    const response = await fetch("https://api.openai.com/v1/images/generations", {
       method: "POST",
       headers: {
-        Authorization: `Bearer ${lovableKey}`,
+        Authorization: `Bearer ${openaiKey}`,
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: "google/gemini-2.5-flash-image",
-        messages: [
-          {
-            role: "user",
-            content: prompt,
-          },
-        ],
-        modalities: ["image", "text"],
+        model: "gpt-image-1",
+        prompt,
+        n: 1,
+        size: "1024x1024",
+        quality: "high",
       }),
     });
 
@@ -73,8 +70,9 @@ serve(async (req) => {
     }
 
     const data = await response.json();
-    const textContent = data.choices?.[0]?.message?.content || "";
-    const imageData = data.choices?.[0]?.message?.images?.[0]?.image_url?.url;
+    const imageData = data.data?.[0]?.b64_json
+      ? `data:image/png;base64,${data.data[0].b64_json}`
+      : data.data?.[0]?.url;
 
     if (!imageData) {
       return new Response(JSON.stringify({ error: "Nenhuma imagem foi gerada. Tente um prompt diferente." }), {
@@ -83,7 +81,7 @@ serve(async (req) => {
       });
     }
 
-    return new Response(JSON.stringify({ imageUrl: imageData, revisedPrompt: textContent }), {
+    return new Response(JSON.stringify({ imageUrl: imageData, revisedPrompt: data.data?.[0]?.revised_prompt || "" }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (e) {
