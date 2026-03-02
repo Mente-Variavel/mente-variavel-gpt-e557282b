@@ -10,6 +10,7 @@ interface ChatMessageProps {
   role: "user" | "assistant";
   content: string;
   imageUrl?: string;
+  attachments?: string[];
 }
 
 const CodeBlock = ({ language, children }: { language: string; children: string }) => {
@@ -53,7 +54,7 @@ const CodeBlock = ({ language, children }: { language: string; children: string 
   );
 };
 
-const ChatMessage = ({ role, content, imageUrl }: ChatMessageProps) => {
+const ChatMessage = ({ role, content, imageUrl, attachments }: ChatMessageProps) => {
   const [copied, setCopied] = useState(false);
   const isAssistant = role === "assistant";
   const { isSpeaking, isPaused, isSupported: ttsSupported, speak, pause, resume, stop } = useSpeechSynthesis();
@@ -193,8 +194,17 @@ const ChatMessage = ({ role, content, imageUrl }: ChatMessageProps) => {
             )}
           </>
         ) : (
-          <div className="text-sm leading-relaxed text-foreground">
-            <ReactMarkdown>{content}</ReactMarkdown>
+          <div className="space-y-2">
+            {attachments && attachments.length > 0 && (
+              <div className="flex gap-2 flex-wrap">
+                {attachments.map((src, i) => (
+                  <img key={i} src={src} alt="Anexo" className="w-32 h-32 rounded-lg object-cover border border-border/50" />
+                ))}
+              </div>
+            )}
+            <div className="text-sm leading-relaxed text-foreground">
+              <ReactMarkdown>{content}</ReactMarkdown>
+            </div>
           </div>
         )}
 

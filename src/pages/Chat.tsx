@@ -4,12 +4,13 @@ import { Plus, Trash2, Info, Gift, X } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import ChatMessage from "@/components/ChatMessage";
 import ChatInput from "@/components/ChatInput";
+import type { ChatAttachment } from "@/components/ChatInput";
 import TypingIndicator from "@/components/TypingIndicator";
 import Navbar from "@/components/Navbar";
 import { useAuth } from "@/hooks/useAuth";
 import chatLogo from "@/assets/logo.png";
 
-type Msg = { role: "user" | "assistant"; content: string; imageUrl?: string };
+type Msg = { role: "user" | "assistant"; content: string; imageUrl?: string; attachments?: string[] };
 
 const CHAT_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/chat`;
 const IMAGE_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/generate-image`;
@@ -36,7 +37,17 @@ const tips = [
   "Peça para reformular se a resposta não ficou clara.",
   "Use para estudos, redação, ideias e programação.",
   "Diga 'gere uma imagem de...' para criar imagens com IA! 🎨",
+  "Anexe imagens como referência usando o clipe 📎",
 ];
+
+async function fileToBase64(file: File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result as string);
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+}
 
 const Chat = () => {
   const { user, loading: authLoading } = useAuth();
@@ -113,8 +124,29 @@ const Chat = () => {
     }
   };
 
-  const sendMessage = async (input: string) => {
-    const userMsg: Msg = { role: "user", content: input };
+  const sendMessage = async (input: string, attachments?: ChatAttachment[]) => {
+    // Convert attachments to base64 previews for display
+    const attachmentPreviews: string[] = [];
+    const imageBase64List: { type: "image_url"; image_url: { url: string } }[] = [];
+
+    if (attachments) {
+      for (const att of attachments) {
+        if (att.type === "image") {
+          const base64 = await fileToBase64(att.file);
+          attachmentPreviews.push(att.preview);
+          imageBase64List.push({
+            type: "image_url",
+            image_url: { url: base64 },
+          });
+        }
+      }
+    }
+
+    const userMsg: Msg = {
+      role: "user",
+      content: input,
+      attachments: attachmentPreviews.length > 0 ? attachmentPreviews : undefined,
+    };
     setMessages((prev) => [...prev, userMsg]);
 
     if (isImageRequest(input)) {
@@ -126,15 +158,27 @@ const Chat = () => {
     let assistantSoFar = "";
 
     try {
+      // Build message content - if there are images, use multimodal format
+      const lastUserContent =
+        imageBase64List.length > 0
+          ? [
+              { type: "text" as const, text: input || "Descreva esta imagem." },
+              ...imageBase64List,
+            ]
+          : input;
+
+      const apiMessages = [
+        ...messages.map(({ role, content }) => ({ role, content })),
+        { role: "user" as const, content: lastUserContent },
+      ];
+
       const resp = await fetch(CHAT_URL, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
         },
-        body: JSON.stringify({
-          messages: [...messages, userMsg].map(({ role, content }) => ({ role, content })),
-        }),
+        body: JSON.stringify({ messages: apiMessages }),
       });
 
       if (!resp.ok || !resp.body) throw new Error("Erro ao conectar com o assistente");
@@ -295,7 +339,7 @@ const Chat = () => {
             </motion.div>
           )}
           {messages.map((msg, i) => (
-            <ChatMessage key={i} role={msg.role} content={msg.content} imageUrl={msg.imageUrl} />
+            <ChatMessage key={i} role={msg.role} content={msg.content} imageUrl={msg.imageUrl} attachments={msg.attachments} />
           ))}
           {isLoading && !messages.some((m) => m.role === "assistant" && m === messages[messages.length - 1]) && (
             <TypingIndicator />
