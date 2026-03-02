@@ -1,8 +1,9 @@
 import { Link, useLocation } from "react-router-dom";
-import { Menu, X, LogOut, LogIn, Megaphone, Settings } from "lucide-react";
+import { Menu, X, LogOut, LogIn, Megaphone, Settings, Sun, Moon } from "lucide-react";
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useAuth } from "@/hooks/useAuth";
+import { useTheme } from "@/hooks/useTheme";
 import logo from "@/assets/logo.png";
 
 const navItems = [
@@ -19,6 +20,7 @@ const Navbar = () => {
   const [open, setOpen] = useState(false);
   const location = useLocation();
   const { user, signOut } = useAuth();
+  const { theme, toggleTheme } = useTheme();
 
   return (
     <nav className="fixed top-0 left-0 right-0 z-50 glass border-b border-border/30">
@@ -55,6 +57,13 @@ const Navbar = () => {
           >
             <Megaphone className="w-4 h-4" /> Seja anunciante
           </Link>
+          <button
+            onClick={toggleTheme}
+            className="ml-1 p-2 rounded-lg text-muted-foreground hover:text-foreground hover:bg-secondary transition-all"
+            title={theme === "dark" ? "Modo claro" : "Modo escuro"}
+          >
+            {theme === "dark" ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+          </button>
           {user ? (
             <>
               <Link
@@ -125,6 +134,13 @@ const Navbar = () => {
               >
                 <Megaphone className="w-4 h-4" /> Seja anunciante
               </Link>
+              <button
+                onClick={toggleTheme}
+                className="px-4 py-3 rounded-lg text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-secondary transition-all text-left flex items-center gap-1.5"
+              >
+                {theme === "dark" ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+                {theme === "dark" ? "Modo claro" : "Modo escuro"}
+              </button>
               {user ? (
                 <>
                   <Link

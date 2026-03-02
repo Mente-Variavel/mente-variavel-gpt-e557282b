@@ -48,6 +48,48 @@
     --neon-glow: 0 0 20px hsl(185 100% 50% / 0.4), 0 0 40px hsl(185 100% 50% / 0.2);
     --neon-green-glow: 0 0 20px hsl(155 100% 45% / 0.4), 0 0 40px hsl(155 100% 45% / 0.2);
   }
+
+  .light {
+    --background: 0 0% 98%;
+    --foreground: 220 20% 14%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 220 20% 14%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 220 20% 14%;
+
+    --primary: 185 80% 40%;
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 220 14% 92%;
+    --secondary-foreground: 220 20% 25%;
+
+    --muted: 220 14% 95%;
+    --muted-foreground: 215 10% 45%;
+
+    --accent: 155 60% 38%;
+    --accent-foreground: 0 0% 100%;
+
+    --destructive: 0 72% 51%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 220 13% 85%;
+    --input: 220 14% 90%;
+    --ring: 185 80% 40%;
+
+    --sidebar-background: 0 0% 97%;
+    --sidebar-foreground: 220 20% 20%;
+    --sidebar-primary: 185 80% 40%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 220 14% 93%;
+    --sidebar-accent-foreground: 220 20% 20%;
+    --sidebar-border: 220 13% 88%;
+    --sidebar-ring: 185 80% 40%;
+
+    --neon-glow: 0 0 10px hsl(185 80% 40% / 0.2), 0 0 20px hsl(185 80% 40% / 0.1);
+    --neon-green-glow: 0 0 10px hsl(155 60% 38% / 0.2), 0 0 20px hsl(155 60% 38% / 0.1);
+  }
 }
 
 @layer base {
@@ -83,6 +125,10 @@
 
   .glass {
     @apply bg-card/80 backdrop-blur-xl border border-border/50;
+  }
+
+  .light .glass {
+    @apply bg-card/90 backdrop-blur-xl border border-border/60;
   }
 }
 
