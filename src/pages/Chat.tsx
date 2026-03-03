@@ -11,7 +11,7 @@ import chatLogo from "@/assets/logo.png";
 
 import ReferenceAnalysis, { type AnalysisData } from "@/components/ReferenceAnalysis";
 
-type Msg = { role: "user" | "assistant"; content: string; imageUrl?: string; attachments?: string[]; analysis?: AnalysisData };
+type Msg = { role: "user" | "assistant"; content: string; imageUrl?: string; attachments?: string[]; analysis?: AnalysisData; retryPrompt?: string; retryRefs?: string[] };
 
 const CHAT_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/chat`;
 const IMAGE_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/generate-image`;
@@ -107,13 +107,22 @@ const Chat = () => {
           if (!img || !img.startsWith("data:image")) {
             setMessages((prev) => [
               ...prev,
-              { role: "assistant", content: "❌ **Imagem de referência não foi recebida pelo servidor.** Por favor, tente anexar a imagem novamente." },
+              { role: "assistant", content: "❌ **Imagem de referência não foi recebida.** Por favor, tente anexar a imagem novamente." },
             ]);
             setIsLoading(false);
             return;
           }
         }
       }
+
+      // Show generating state
+      setMessages((prev) => [
+        ...prev,
+        { role: "assistant", content: "🎨 **Gerando imagem…** Isso pode levar alguns segundos." },
+      ]);
+
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), 60000);
 
       const resp = await fetch(IMAGE_URL, {
         method: "POST",
@@ -122,45 +131,73 @@ const Chat = () => {
           Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
         },
         body: JSON.stringify({ prompt, referenceImages }),
+        signal: controller.signal,
       });
 
+      clearTimeout(timeout);
+
       if (!resp.ok) {
-        const err = await resp.json();
-        throw new Error(err.error || "Erro ao gerar imagem");
+        const err = await resp.json().catch(() => ({ error: `Erro HTTP ${resp.status}` }));
+        throw new Error(err.error || `Erro ao gerar imagem (${resp.status})`);
       }
 
       const data = await resp.json();
+
+      if (!data.imageUrl) {
+        throw new Error("Nenhuma imagem foi retornada pela API.");
+      }
+
       const hasAnalysis = data.analysis && referenceImages && referenceImages.length > 0;
 
-      // Show analysis panel if available
-      if (hasAnalysis) {
-        setMessages((prev) => [
-          ...prev,
-          {
+      // Remove the "generating" message and add the real results
+      setMessages((prev) => {
+        const withoutGenerating = prev.slice(0, -1); // remove "Gerando imagem…"
+        const result: Msg[] = [...withoutGenerating];
+
+        if (hasAnalysis) {
+          result.push({
             role: "assistant",
             content: "🔍 **Análise da imagem de referência concluída.**",
             analysis: data.analysis,
-          },
-        ]);
-      }
+          });
+        }
 
-      setMessages((prev) => [
-        ...prev,
-        {
+        result.push({
           role: "assistant",
-          content: `🎨 **Imagem gerada${hasAnalysis ? " usando sua referência" : ""}!**\n\n${data.revisedPrompt ? `> Prompt reforçado aplicado com dados da referência.` : ""}`,
+          content: `🎨 **Imagem gerada${hasAnalysis ? " usando sua referência" : ""}!**`,
           imageUrl: data.imageUrl,
-        },
-      ]);
+        });
+
+        return result;
+      });
     } catch (e: any) {
-      console.error(e);
-      setMessages((prev) => [
-        ...prev,
-        { role: "assistant", content: `❌ Não foi possível gerar a imagem: ${e.message}` },
-      ]);
+      console.error("[Chat] Image generation error:", e);
+      const errorMsg = e.name === "AbortError"
+        ? "⏱️ **Tempo limite atingido** (60s). A geração demorou demais."
+        : `❌ **Falha ao gerar a imagem:** ${e.message}`;
+
+      // Remove the "generating" message and add error with retry
+      setMessages((prev) => {
+        const withoutGenerating = prev[prev.length - 1]?.content?.includes("Gerando imagem")
+          ? prev.slice(0, -1)
+          : prev;
+        return [
+          ...withoutGenerating,
+          {
+            role: "assistant",
+            content: errorMsg,
+            retryPrompt: prompt,
+            retryRefs: referenceImages,
+          },
+        ];
+      });
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const retryImageGeneration = (prompt: string, refs?: string[]) => {
+    generateImage(prompt, refs);
   };
 
   const sendMessage = async (input: string, attachments?: ChatAttachment[]) => {
@@ -379,6 +416,17 @@ const Chat = () => {
             <div key={i}>
               <ChatMessage role={msg.role} content={msg.content} imageUrl={msg.imageUrl} attachments={msg.attachments} />
               {msg.analysis && <ReferenceAnalysis analysis={msg.analysis} />}
+              {msg.retryPrompt && (
+                <div className="mt-2 ml-11">
+                  <button
+                    onClick={() => retryImageGeneration(msg.retryPrompt!, msg.retryRefs)}
+                    disabled={isLoading}
+                    className="flex items-center gap-2 px-4 py-2 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 transition-colors disabled:opacity-50"
+                  >
+                    🔄 Tentar novamente
+                  </button>
+                </div>
+              )}
             </div>
           ))}
           {isLoading && !messages.some((m) => m.role === "assistant" && m === messages[messages.length - 1]) && (
