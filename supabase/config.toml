@@ -8,3 +8,6 @@ verify_jwt = false
 
 [functions.ai-generate]
 verify_jwt = false
+
+[functions.exchange-rates]
+verify_jwt = false
