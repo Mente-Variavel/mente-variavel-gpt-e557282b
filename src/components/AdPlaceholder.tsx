@@ -1,7 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Link } from "react-router-dom";
-import { Megaphone, MessageCircle } from "lucide-react";
+import { Megaphone, MessageCircle, ExternalLink } from "lucide-react";
 
 interface AdPlaceholderProps {
   format?: "banner" | "sidebar" | "inline" | "footer";
@@ -67,17 +67,30 @@ const AdPlaceholder = ({ format = "inline", slot, className = "" }: AdPlaceholde
         ) : (
           content
         )}
-        {ad.whatsapp_number && (
-          <a
-            href={`https://wa.me/${ad.whatsapp_number.replace(/\D/g, '')}?text=${encodeURIComponent('Olá! Vi seu anúncio no MenteVariável e gostaria de saber mais.')}`}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="w-full flex items-center justify-center gap-2 py-2 rounded-lg bg-[#25D366] hover:bg-[#20BD5A] text-white text-sm font-medium transition-colors"
-          >
-            <MessageCircle className="w-4 h-4" />
-            Falar no WhatsApp
-          </a>
-        )}
+        <div className="flex gap-2">
+          {ad.whatsapp_number && (
+            <a
+              href={`https://wa.me/${ad.whatsapp_number.replace(/\D/g, '')}?text=${encodeURIComponent('Olá! Vi seu anúncio no MenteVariável e gostaria de saber mais.')}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex-1 flex items-center justify-center gap-2 py-2 rounded-lg bg-[#25D366] hover:bg-[#20BD5A] text-white text-sm font-medium transition-colors"
+            >
+              <MessageCircle className="w-4 h-4" />
+              Falar no WhatsApp
+            </a>
+          )}
+          {ad.link_url && (
+            <a
+              href={ad.link_url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex-1 flex items-center justify-center gap-2 py-2 rounded-lg bg-primary hover:bg-primary/90 text-primary-foreground text-sm font-medium transition-colors"
+            >
+              <ExternalLink className="w-4 h-4" />
+              Visitar Site
+            </a>
+          )}
+        </div>
       </div>
     );
   }
