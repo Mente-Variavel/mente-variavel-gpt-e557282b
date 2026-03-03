@@ -1,5 +1,5 @@
 import { useRef, useEffect, useState } from "react";
-import { useNavigate, useLocation } from "react-router-dom";
+import { useLocation } from "react-router-dom";
 import { Plus, Trash2, Info, Gift, X } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import ChatMessage from "@/components/ChatMessage";
@@ -7,7 +7,6 @@ import ChatInput from "@/components/ChatInput";
 import type { ChatAttachment } from "@/components/ChatInput";
 import TypingIndicator from "@/components/TypingIndicator";
 import Navbar from "@/components/Navbar";
-import { useAuth } from "@/hooks/useAuth";
 import chatLogo from "@/assets/logo.png";
 
 import ReferenceAnalysis, { type AnalysisData } from "@/components/ReferenceAnalysis";
@@ -68,8 +67,6 @@ async function fileToBase64(file: File): Promise<string> {
 }
 
 const Chat = () => {
-  const { user, loading: authLoading } = useAuth();
-  const navigate = useNavigate();
   const location = useLocation();
   const [messages, setMessages] = useState<Msg[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -77,29 +74,23 @@ const Chat = () => {
   const scrollRef = useRef<HTMLDivElement>(null);
   const initialSent = useRef(false);
 
-  // Show welcome popup once per user
+  // Show welcome popup once
   useEffect(() => {
-    if (user) {
-      const key = `mv_welcome_${user.id}`;
-      if (!localStorage.getItem(key)) {
-        setShowWelcome(true);
-        localStorage.setItem(key, "true");
-      }
+    const key = "mv_welcome_shown";
+    if (!localStorage.getItem(key)) {
+      setShowWelcome(true);
+      localStorage.setItem(key, "true");
     }
-  }, [user]);
-
-  useEffect(() => {
-    if (!authLoading && !user) navigate("/auth");
-  }, [user, authLoading, navigate]);
+  }, []);
 
   useEffect(() => {
     const state = location.state as { initialMessage?: string } | null;
-    if (state?.initialMessage && !initialSent.current && user) {
+    if (state?.initialMessage && !initialSent.current) {
       initialSent.current = true;
       sendMessage(state.initialMessage);
       window.history.replaceState({}, document.title);
     }
-  }, [user, location.state]);
+  }, [location.state]);
 
   useEffect(() => {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
