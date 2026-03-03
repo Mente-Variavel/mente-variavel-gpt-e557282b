@@ -1,6 +1,6 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { motion } from "framer-motion";
-import { BookOpen, Calculator, HelpCircle, ChevronDown, ChevronUp, CheckCircle, XCircle } from "lucide-react";
+import { BookOpen, Calculator, HelpCircle, ChevronDown, ChevronUp, CheckCircle, XCircle, PiggyBank, TrendingUp, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -30,6 +30,12 @@ const quizQuestions = [
   { q: "Qual o primeiro passo para investir?", options: ["Comprar ações", "Fazer reserva de emergência", "Pedir empréstimo", "Apostar em cripto"], answer: 1 },
 ];
 
+const tips = [
+  { icon: PiggyBank, title: "Regra 50-30-20", desc: "Destine 50% da renda para necessidades, 30% para desejos e 20% para poupança/investimentos." },
+  { icon: TrendingUp, title: "Invista cedo", desc: "Quanto antes começar, maior o efeito dos juros compostos. Mesmo R$ 50/mês faz diferença em 10 anos." },
+  { icon: Calculator, title: "Controle seus gastos", desc: "Use nosso Controle de Gastos para acompanhar receitas e despesas mês a mês." },
+];
+
 export default function EducacaoFinanceira() {
   const [openArticle, setOpenArticle] = useState<number | null>(null);
   const [quizStarted, setQuizStarted] = useState(false);
@@ -38,12 +44,20 @@ export default function EducacaoFinanceira() {
   const [selected, setSelected] = useState<number | null>(null);
   const [quizDone, setQuizDone] = useState(false);
 
-  // Budget simulator
-  const [income, setIncome] = useState("");
-  const [needs, setNeeds] = useState("");
-  const [wants, setWants] = useState("");
+  // Simulador de investimento simples
+  const [investValue, setInvestValue] = useState("");
+  const [investMonths, setInvestMonths] = useState("");
+  const [investRate, setInvestRate] = useState("");
 
-  const savings = income ? (parseFloat(income) || 0) - (parseFloat(needs) || 0) - (parseFloat(wants) || 0) : 0;
+  const investResult = useMemo(() => {
+    const v = parseFloat(investValue) || 0;
+    const m = parseInt(investMonths) || 0;
+    const r = (parseFloat(investRate) || 0) / 100;
+    if (v <= 0 || m <= 0) return null;
+    const total = v * Math.pow(1 + r, m);
+    const lucro = total - v;
+    return { total, lucro };
+  }, [investValue, investMonths, investRate]);
 
   const handleAnswer = (idx: number) => {
     setSelected(idx);
@@ -65,48 +79,84 @@ export default function EducacaoFinanceira() {
         <div className="container mx-auto px-4 max-w-4xl">
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
             <h1 className="text-3xl font-bold mb-2">Educação Financeira</h1>
-            <p className="text-muted-foreground mb-10">Aprenda a gerenciar seu dinheiro com inteligência.</p>
+            <p className="text-muted-foreground mb-8">Aprenda a gerenciar seu dinheiro com inteligência.</p>
           </motion.div>
 
-          {/* Budget Simulator */}
+          {/* Dicas rápidas */}
+          <div className="grid sm:grid-cols-3 gap-4 mb-8">
+            {tips.map((tip, i) => (
+              <Card key={i}>
+                <CardContent className="pt-5 pb-4">
+                  <tip.icon className="w-6 h-6 text-primary mb-2" />
+                  <h3 className="font-semibold text-sm mb-1">{tip.title}</h3>
+                  <p className="text-xs text-muted-foreground leading-relaxed">{tip.desc}</p>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+
+          {/* Simulador de Investimento */}
           <Card className="mb-8">
             <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-lg"><Calculator className="w-5 h-5 text-primary" /> Simulador de Orçamento</CardTitle>
+              <CardTitle className="flex items-center gap-2 text-lg">
+                <Calculator className="w-5 h-5 text-primary" /> Simulador de Investimento
+              </CardTitle>
             </CardHeader>
             <CardContent>
+              <p className="text-sm text-muted-foreground mb-4">
+                Descubra quanto seu dinheiro pode render com juros compostos.
+              </p>
               <div className="grid sm:grid-cols-3 gap-4 mb-4">
                 <div>
-                  <label className="text-sm text-muted-foreground mb-1 block">Renda mensal (R$)</label>
-                  <Input type="number" placeholder="0,00" value={income} onChange={e => setIncome(e.target.value)} />
+                  <label className="text-xs text-muted-foreground mb-1 block">Valor investido (R$)</label>
+                  <Input type="number" min="0" placeholder="1000" value={investValue} onChange={e => setInvestValue(e.target.value)} />
                 </div>
                 <div>
-                  <label className="text-sm text-muted-foreground mb-1 block">Necessidades (R$)</label>
-                  <Input type="number" placeholder="0,00" value={needs} onChange={e => setNeeds(e.target.value)} />
+                  <label className="text-xs text-muted-foreground mb-1 block">Prazo (meses)</label>
+                  <Input type="number" min="1" placeholder="12" value={investMonths} onChange={e => setInvestMonths(e.target.value)} />
                 </div>
                 <div>
-                  <label className="text-sm text-muted-foreground mb-1 block">Desejos (R$)</label>
-                  <Input type="number" placeholder="0,00" value={wants} onChange={e => setWants(e.target.value)} />
+                  <label className="text-xs text-muted-foreground mb-1 block">Taxa mensal (%)</label>
+                  <Input type="number" min="0" step="0.01" placeholder="1.0" value={investRate} onChange={e => setInvestRate(e.target.value)} />
                 </div>
               </div>
-              <div className={`p-4 rounded-xl text-center font-semibold text-lg ${savings >= 0 ? "bg-accent/10 text-accent" : "bg-destructive/10 text-destructive"}`}>
-                {savings >= 0 ? "Sobra" : "Déficit"}: R$ {Math.abs(savings).toFixed(2)}
-              </div>
+              {investResult && (
+                <div className="grid sm:grid-cols-2 gap-3">
+                  <div className="p-4 rounded-xl bg-primary/10 text-center">
+                    <p className="text-xs text-muted-foreground mb-1">Montante final</p>
+                    <p className="text-xl font-bold text-primary">R$ {investResult.total.toFixed(2)}</p>
+                  </div>
+                  <div className="p-4 rounded-xl bg-green-500/10 text-center">
+                    <p className="text-xs text-muted-foreground mb-1">Lucro estimado</p>
+                    <p className="text-xl font-bold text-green-500">+ R$ {investResult.lucro.toFixed(2)}</p>
+                  </div>
+                </div>
+              )}
             </CardContent>
           </Card>
 
           {/* Quiz */}
           <Card className="mb-8">
             <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-lg"><HelpCircle className="w-5 h-5 text-primary" /> Quiz Financeiro</CardTitle>
+              <CardTitle className="flex items-center gap-2 text-lg">
+                <HelpCircle className="w-5 h-5 text-primary" /> Quiz Financeiro
+              </CardTitle>
             </CardHeader>
             <CardContent>
               {!quizStarted ? (
-                <Button onClick={() => setQuizStarted(true)}>Iniciar Quiz (10 perguntas)</Button>
+                <div>
+                  <p className="text-sm text-muted-foreground mb-3">Teste seus conhecimentos com 10 perguntas sobre finanças.</p>
+                  <Button onClick={() => setQuizStarted(true)}>Iniciar Quiz</Button>
+                </div>
               ) : quizDone ? (
                 <div className="text-center py-4">
-                  <p className="text-2xl font-bold mb-2">Sua pontuação: {score}/{quizQuestions.length}</p>
-                  <p className="text-muted-foreground mb-4">{score >= 7 ? "Excelente!" : score >= 4 ? "Bom, continue estudando!" : "Revise os artigos abaixo."}</p>
-                  <Button variant="outline" onClick={() => { setQuizStarted(false); setQuizDone(false); setCurrentQ(0); setScore(0); setSelected(null); }}>Refazer</Button>
+                  <p className="text-2xl font-bold mb-2">{score}/{quizQuestions.length} acertos</p>
+                  <p className="text-muted-foreground mb-4">
+                    {score >= 7 ? "🏆 Excelente! Você manda bem em finanças!" : score >= 4 ? "👍 Bom resultado! Continue estudando." : "📚 Revise os artigos abaixo para melhorar."}
+                  </p>
+                  <Button variant="outline" onClick={() => { setQuizStarted(false); setQuizDone(false); setCurrentQ(0); setScore(0); setSelected(null); }} className="gap-2">
+                    <RefreshCw className="w-4 h-4" /> Refazer Quiz
+                  </Button>
                 </div>
               ) : (
                 <div>
@@ -120,7 +170,7 @@ export default function EducacaoFinanceira() {
                         onClick={() => handleAnswer(i)}
                         className={`text-left px-4 py-3 rounded-xl border transition-all text-sm ${
                           selected === null ? "border-border hover:border-primary/50 hover:bg-primary/5" :
-                          i === quizQuestions[currentQ].answer ? "border-accent bg-accent/10 text-accent" :
+                          i === quizQuestions[currentQ].answer ? "border-green-500 bg-green-500/10 text-green-600" :
                           i === selected ? "border-destructive bg-destructive/10 text-destructive" : "border-border opacity-50"
                         }`}
                       >
@@ -139,7 +189,9 @@ export default function EducacaoFinanceira() {
 
           {/* Articles */}
           <div>
-            <h2 className="text-xl font-bold mb-4 flex items-center gap-2"><BookOpen className="w-5 h-5 text-primary" /> Artigos</h2>
+            <h2 className="text-xl font-bold mb-4 flex items-center gap-2">
+              <BookOpen className="w-5 h-5 text-primary" /> Artigos
+            </h2>
             <div className="space-y-3">
               {articles.map((a, i) => (
                 <div key={i} className="border border-border/50 rounded-xl overflow-hidden">
