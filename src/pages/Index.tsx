@@ -1,11 +1,12 @@
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { motion } from "framer-motion";
-import { ArrowRight, TrendingUp, Wand2, Layers, DollarSign, ImageOff, CreditCard, Sparkles, Send, MessageSquare } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
+import { ArrowRight, TrendingUp, Wand2, Layers, DollarSign, ImageOff, CreditCard, Sparkles, Send, MessageSquare, Mic, MicOff, Paperclip, X, FileText } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
+import { useSpeechRecognition } from "@/hooks/useSpeechRecognition";
+import AudioVisualizer from "@/components/AudioVisualizer";
 
 const tools = [
   { icon: TrendingUp, title: "Educação Financeira", desc: "Simuladores, quizzes e artigos para dominar suas finanças.", to: "/financas/educacao", color: "text-accent" },
@@ -22,15 +23,64 @@ const fadeUp = {
   visible: (i: number) => ({ opacity: 1, y: 0, transition: { delay: i * 0.08, duration: 0.5 } }),
 };
 
+interface HomeAttachment {
+  file: File;
+  preview: string;
+  type: "image" | "file";
+}
+
 export default function Index() {
   const [chatInput, setChatInput] = useState("");
+  const [attachments, setAttachments] = useState<HomeAttachment[]>([]);
   const navigate = useNavigate();
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const { isListening, transcript, isSupported, error: micError, mediaStream, startListening, stopListening, cancelListening } = useSpeechRecognition();
 
-  const handleChatSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!chatInput.trim()) return;
-    navigate("/assistente", { state: { initialMessage: chatInput.trim() } });
+  useEffect(() => {
+    if (transcript && transcript !== "Transcrevendo...") setChatInput(transcript);
+  }, [transcript]);
+
+  const handleChatSubmit = (e?: React.FormEvent) => {
+    e?.preventDefault();
+    if (!chatInput.trim() && attachments.length === 0) return;
+    if (isListening) stopListening();
+    navigate("/assistente", { state: { initialMessage: chatInput.trim(), attachments } });
     setChatInput("");
+    setAttachments([]);
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault();
+      handleChatSubmit();
+    }
+  };
+
+  const handleTextareaInput = () => {
+    const ta = textareaRef.current;
+    if (ta) { ta.style.height = "auto"; ta.style.height = Math.min(ta.scrollHeight, 100) + "px"; }
+  };
+
+  const toggleMic = () => { isListening ? stopListening() : startListening(); };
+
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files) return;
+    Array.from(files).forEach((file) => {
+      if (attachments.length >= 5) return;
+      const isImage = file.type.startsWith("image/");
+      setAttachments((prev) => [...prev, { file, preview: isImage ? URL.createObjectURL(file) : "", type: isImage ? "image" : "file" }]);
+    });
+    e.target.value = "";
+  };
+
+  const removeAttachment = (i: number) => {
+    setAttachments((prev) => {
+      const removed = prev[i];
+      if (removed.preview) URL.revokeObjectURL(removed.preview);
+      return prev.filter((_, idx) => idx !== i);
+    });
   };
 
   return (
@@ -65,14 +115,10 @@ export default function Index() {
           </div>
         </section>
 
-        {/* Chat rápido */}
+        {/* Chat rápido com mic + anexos */}
         <section className="py-10">
           <div className="container mx-auto px-4 max-w-2xl">
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-            >
+            <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
               <div className="glass rounded-2xl p-6 border border-primary/20">
                 <div className="flex items-center gap-2 mb-4">
                   <MessageSquare className="w-5 h-5 text-primary" />
@@ -81,14 +127,83 @@ export default function Index() {
                 <p className="text-sm text-muted-foreground mb-4">
                   Pergunte qualquer coisa, peça para gerar imagens ou obtenha ajuda com suas tarefas.
                 </p>
-                <form onSubmit={handleChatSubmit} className="flex gap-2">
-                  <Input
+
+                {/* Mic error */}
+                <AnimatePresence>
+                  {micError && (
+                    <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="text-xs text-destructive mb-2">
+                      {micError}
+                    </motion.p>
+                  )}
+                </AnimatePresence>
+
+                {/* Audio visualizer */}
+                <AnimatePresence>
+                  {isListening && (
+                    <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} exit={{ opacity: 0, height: 0 }} className="mb-3">
+                      <div className="flex items-center gap-2 mb-2">
+                        <span className="flex items-center gap-1.5 text-xs text-primary font-medium">
+                          <span className="w-2 h-2 rounded-full bg-primary animate-pulse" /> Ouvindo...
+                        </span>
+                        <button onClick={() => { cancelListening(); setChatInput(""); }} className="text-xs text-muted-foreground hover:text-destructive flex items-center gap-1">
+                          <X className="w-3 h-3" /> Cancelar
+                        </button>
+                      </div>
+                      <AudioVisualizer stream={mediaStream} isActive={isListening} barCount={32} className="rounded-lg" />
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+
+                {/* Attachment previews */}
+                <AnimatePresence>
+                  {attachments.length > 0 && (
+                    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="flex gap-2 mb-3 flex-wrap">
+                      {attachments.map((att, i) => (
+                        <div key={i} className="relative group">
+                          {att.type === "image" ? (
+                            <img src={att.preview} alt={att.file.name} className="w-14 h-14 rounded-lg object-cover border border-border/50" />
+                          ) : (
+                            <div className="w-14 h-14 rounded-lg border border-border/50 bg-secondary flex flex-col items-center justify-center gap-1 p-1">
+                              <FileText className="w-4 h-4 text-muted-foreground" />
+                              <span className="text-[7px] text-muted-foreground truncate w-full text-center">{att.file.name.split(".").pop()?.toUpperCase()}</span>
+                            </div>
+                          )}
+                          <button onClick={() => removeAttachment(i)} className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-destructive text-destructive-foreground flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                            <X className="w-2.5 h-2.5" />
+                          </button>
+                        </div>
+                      ))}
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+
+                {/* Input row */}
+                <input ref={fileInputRef} type="file" multiple accept="image/*,.pdf,.doc,.docx,.txt" onChange={handleFileSelect} className="hidden" />
+                <form onSubmit={handleChatSubmit} className="flex items-end gap-2">
+                  <button type="button" onClick={() => fileInputRef.current?.click()} className="p-2.5 rounded-lg bg-secondary text-muted-foreground hover:text-primary hover:bg-secondary/80 transition-all shrink-0" title="Anexar arquivo">
+                    <Paperclip className="w-4 h-4" />
+                  </button>
+                  <textarea
+                    ref={textareaRef}
                     value={chatInput}
                     onChange={(e) => setChatInput(e.target.value)}
+                    onKeyDown={handleKeyDown}
+                    onInput={handleTextareaInput}
                     placeholder="Digite sua pergunta..."
-                    className="flex-1"
+                    rows={1}
+                    className="flex-1 bg-secondary/50 rounded-lg resize-none outline-none text-sm text-foreground placeholder:text-muted-foreground px-3 py-2.5 max-h-[100px] border border-border/50 focus:border-primary/40 transition-colors"
                   />
-                  <Button type="submit" size="icon" disabled={!chatInput.trim()}>
+                  {isSupported && (
+                    <button
+                      type="button"
+                      onClick={toggleMic}
+                      className={`p-2.5 rounded-lg transition-all shrink-0 ${isListening ? "bg-destructive text-destructive-foreground animate-pulse" : "bg-secondary text-muted-foreground hover:text-primary hover:bg-secondary/80"}`}
+                      title={isListening ? "Parar de ouvir" : "Falar"}
+                    >
+                      {isListening ? <MicOff className="w-4 h-4" /> : <Mic className="w-4 h-4" />}
+                    </button>
+                  )}
+                  <Button type="submit" size="icon" disabled={!chatInput.trim() && attachments.length === 0} className="shrink-0">
                     <Send className="w-4 h-4" />
                   </Button>
                 </form>
@@ -100,28 +215,13 @@ export default function Index() {
         {/* Tools Grid */}
         <section id="ferramentas" className="py-20">
           <div className="container mx-auto px-4">
-            <motion.h2
-              initial={{ opacity: 0 }}
-              whileInView={{ opacity: 1 }}
-              viewport={{ once: true }}
-              className="text-2xl sm:text-3xl font-bold text-center mb-12"
-            >
+            <motion.h2 initial={{ opacity: 0 }} whileInView={{ opacity: 1 }} viewport={{ once: true }} className="text-2xl sm:text-3xl font-bold text-center mb-12">
               Nossas Ferramentas
             </motion.h2>
             <div className="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
               {tools.map((tool, i) => (
-                <motion.div
-                  key={tool.to}
-                  custom={i}
-                  variants={fadeUp}
-                  initial="hidden"
-                  whileInView="visible"
-                  viewport={{ once: true }}
-                >
-                  <Link
-                    to={tool.to}
-                    className="group block h-full p-6 rounded-2xl border border-border/50 bg-card/60 backdrop-blur-sm hover:border-primary/40 hover:shadow-lg hover:shadow-primary/5 transition-all duration-300"
-                  >
+                <motion.div key={tool.to} custom={i} variants={fadeUp} initial="hidden" whileInView="visible" viewport={{ once: true }}>
+                  <Link to={tool.to} className="group block h-full p-6 rounded-2xl border border-border/50 bg-card/60 backdrop-blur-sm hover:border-primary/40 hover:shadow-lg hover:shadow-primary/5 transition-all duration-300">
                     <tool.icon className={`w-8 h-8 mb-4 ${tool.color}`} />
                     <h3 className="text-base font-semibold mb-2 group-hover:text-primary transition-colors">{tool.title}</h3>
                     <p className="text-sm text-muted-foreground leading-relaxed">{tool.desc}</p>

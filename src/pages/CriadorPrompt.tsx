@@ -1,6 +1,6 @@
-import { useState, useEffect } from "react";
-import { motion } from "framer-motion";
-import { Wand2, Copy, Trash2, Clock, Sparkles, Loader2, Zap } from "lucide-react";
+import { useState, useEffect, useRef } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import { Wand2, Copy, Trash2, Clock, Sparkles, Loader2, Zap, Mic, MicOff, X, Globe } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -9,6 +9,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import { toast } from "sonner";
+import { useSpeechRecognition } from "@/hooks/useSpeechRecognition";
+import AudioVisualizer from "@/components/AudioVisualizer";
 
 const GENERATE_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/ai-generate`;
 
@@ -24,6 +26,21 @@ const frameworks = [
   { name: "PAIN", desc: "Problem, Action, Information, Next steps" },
   { name: "COAST", desc: "Context, Objective, Actions, Scenario, Task" },
   { name: "ROSES", desc: "Role, Objective, Scenario, Expected Solution, Steps" },
+];
+
+const languages = [
+  { code: "pt-BR", label: "Português (Brasil)" },
+  { code: "en", label: "English" },
+  { code: "es", label: "Español" },
+  { code: "fr", label: "Français" },
+  { code: "de", label: "Deutsch" },
+  { code: "it", label: "Italiano" },
+  { code: "ja", label: "日本語" },
+  { code: "ko", label: "한국어" },
+  { code: "zh", label: "中文" },
+  { code: "ar", label: "العربية" },
+  { code: "ru", label: "Русский" },
+  { code: "hi", label: "हिन्दी" },
 ];
 
 const quickSuggestions = [
@@ -49,11 +66,9 @@ async function callAI(messages: { role: string; content: string }[]): Promise<st
     },
     body: JSON.stringify({ messages }),
   });
-
   if (res.status === 429) throw new Error("Limite de requisições excedido. Tente novamente em instantes.");
   if (res.status === 402) throw new Error("Créditos insuficientes.");
   if (!res.ok) throw new Error("Erro ao conectar com o serviço de IA.");
-
   const data = await res.json();
   if (data.error) throw new Error(data.error);
   return data.content;
@@ -66,6 +81,7 @@ export default function CriadorPrompt() {
   const [tone, setTone] = useState("");
   const [format, setFormat] = useState("");
   const [restrictions, setRestrictions] = useState("");
+  const [language, setLanguage] = useState("pt-BR");
   const [generatedPrompt, setGeneratedPrompt] = useState("");
   const [loading, setLoading] = useState(false);
 
@@ -75,7 +91,35 @@ export default function CriadorPrompt() {
 
   const [history, setHistory] = useState<HistoryItem[]>(loadHistory);
 
+  // Mic for description field
+  const [micTarget, setMicTarget] = useState<"description" | "improve" | null>(null);
+  const { isListening, transcript, isSupported, error: micError, mediaStream, startListening, stopListening, cancelListening } = useSpeechRecognition();
+
+  useEffect(() => {
+    if (transcript && transcript !== "Transcrevendo...") {
+      if (micTarget === "description") setDescription(transcript);
+      else if (micTarget === "improve") setImproveInput(transcript);
+    }
+  }, [transcript, micTarget]);
+
   useEffect(() => { localStorage.setItem("mv_prompt_history", JSON.stringify(history)); }, [history]);
+
+  const toggleMic = (target: "description" | "improve") => {
+    if (isListening) {
+      stopListening();
+      setMicTarget(null);
+    } else {
+      setMicTarget(target);
+      startListening();
+    }
+  };
+
+  const handleCancelMic = () => {
+    cancelListening();
+    setMicTarget(null);
+  };
+
+  const getLangName = (code: string) => languages.find(l => l.code === code)?.label || "Português (Brasil)";
 
   const generatePrompt = async () => {
     if (!description) { toast.error("Descreva o que deseja criar."); return; }
@@ -83,6 +127,7 @@ export default function CriadorPrompt() {
     setGeneratedPrompt("");
     try {
       const frameworkInfo = frameworks.find(f => f.name === framework);
+      const langLabel = getLangName(language);
       const content = await callAI([{
         role: "user",
         content: `Você é um especialista em engenharia de prompts. Gere um prompt profissional e altamente estruturado usando o framework "${framework}" (${frameworkInfo?.desc || ""}).
@@ -95,7 +140,7 @@ ${restrictions ? `Restrições: ${restrictions}` : ""}
 
 INSTRUÇÕES:
 - Retorne APENAS o prompt final, pronto para copiar e colar.
-- O prompt deve ser em português do Brasil.
+- O prompt DEVE ser gerado no idioma: ${langLabel} (código: ${language}).
 - Estruture claramente seguindo o framework ${framework}.
 - Seja detalhado e específico.
 - NÃO inclua explicações sobre o framework, apenas o prompt gerado.`
@@ -116,6 +161,7 @@ INSTRUÇÕES:
     setImprovingLoading(true);
     setImprovedPrompt("");
     try {
+      const langLabel = getLangName(language);
       const content = await callAI([{
         role: "user",
         content: `Você é um especialista em engenharia de prompts. Melhore significativamente o prompt abaixo, tornando-o:
@@ -129,7 +175,7 @@ Prompt original:
 ${improveInput}
 """
 
-Retorne APENAS o prompt melhorado em português do Brasil, pronto para uso. Não inclua explicações.`
+Retorne APENAS o prompt melhorado no idioma ${langLabel}, pronto para uso. Não inclua explicações.`
       }]);
 
       setImprovedPrompt(content);
@@ -161,11 +207,29 @@ Retorne APENAS o prompt melhorado em português do Brasil, pronto para uso. Não
             <p className="text-muted-foreground text-lg">Crie prompts estruturados e profissionais em segundos.</p>
           </motion.div>
 
+          {/* Mic visualizer */}
+          <AnimatePresence>
+            {isListening && (
+              <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} exit={{ opacity: 0, height: 0 }} className="mb-4">
+                <div className="flex items-center gap-2 mb-2 px-1">
+                  <span className="flex items-center gap-1.5 text-xs text-primary font-medium">
+                    <span className="w-2 h-2 rounded-full bg-primary animate-pulse" /> Ouvindo ({micTarget === "description" ? "descrição" : "melhorar"})...
+                  </span>
+                  <button onClick={handleCancelMic} className="text-xs text-muted-foreground hover:text-destructive flex items-center gap-1">
+                    <X className="w-3 h-3" /> Cancelar
+                  </button>
+                </div>
+                <AudioVisualizer stream={mediaStream} isActive={isListening} barCount={32} className="rounded-lg" />
+              </motion.div>
+            )}
+          </AnimatePresence>
+          {micError && <p className="text-xs text-destructive mb-4 px-1">{micError}</p>}
+
           {/* Section 1: Generate */}
           <Card className="mb-8">
             <CardHeader><CardTitle className="flex items-center gap-2"><Wand2 className="w-5 h-5 text-primary" /> Gerar Prompt</CardTitle></CardHeader>
             <CardContent className="space-y-4">
-              <div className="grid sm:grid-cols-2 gap-4">
+              <div className="grid sm:grid-cols-3 gap-4">
                 <div>
                   <label className="text-xs text-muted-foreground mb-1 block">Framework</label>
                   <Select value={framework} onValueChange={setFramework}>
@@ -184,9 +248,27 @@ Retorne APENAS o prompt melhorado em português do Brasil, pronto para uso. Não
                   <label className="text-xs text-muted-foreground mb-1 block">Tom</label>
                   <Input value={tone} onChange={e => setTone(e.target.value)} placeholder="Profissional, casual, persuasivo..." />
                 </div>
+                <div>
+                  <label className="text-xs text-muted-foreground mb-1 block flex items-center gap-1"><Globe className="w-3 h-3" /> Idioma</label>
+                  <Select value={language} onValueChange={setLanguage}>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      {languages.map(l => (
+                        <SelectItem key={l.code} value={l.code}>{l.label}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
               <div>
-                <label className="text-xs text-muted-foreground mb-1 block">Descreva o que você deseja criar *</label>
+                <div className="flex items-center justify-between mb-1">
+                  <label className="text-xs text-muted-foreground">Descreva o que você deseja criar *</label>
+                  {isSupported && (
+                    <button onClick={() => toggleMic("description")} className={`p-1.5 rounded-md transition-all ${isListening && micTarget === "description" ? "bg-destructive text-destructive-foreground animate-pulse" : "text-muted-foreground hover:text-primary hover:bg-secondary"}`} title="Ditar com microfone">
+                      {isListening && micTarget === "description" ? <MicOff className="w-3.5 h-3.5" /> : <Mic className="w-3.5 h-3.5" />}
+                    </button>
+                  )}
+                </div>
                 <Textarea value={description} onChange={e => setDescription(e.target.value)} placeholder="Ex: Um artigo sobre produtividade com IA para empreendedores" rows={3} />
               </div>
               <div className="grid sm:grid-cols-3 gap-4">
@@ -221,7 +303,17 @@ Retorne APENAS o prompt melhorado em português do Brasil, pronto para uso. Não
           <Card className="mb-8">
             <CardHeader><CardTitle className="flex items-center gap-2"><Zap className="w-5 h-5 text-accent" /> Melhorar Prompt</CardTitle></CardHeader>
             <CardContent className="space-y-4">
-              <Textarea value={improveInput} onChange={e => setImproveInput(e.target.value)} placeholder="Cole seu prompt aqui para melhorar..." rows={4} />
+              <div>
+                <div className="flex items-center justify-between mb-1">
+                  <label className="text-xs text-muted-foreground">Cole seu prompt aqui para melhorar</label>
+                  {isSupported && (
+                    <button onClick={() => toggleMic("improve")} className={`p-1.5 rounded-md transition-all ${isListening && micTarget === "improve" ? "bg-destructive text-destructive-foreground animate-pulse" : "text-muted-foreground hover:text-primary hover:bg-secondary"}`} title="Ditar com microfone">
+                      {isListening && micTarget === "improve" ? <MicOff className="w-3.5 h-3.5" /> : <Mic className="w-3.5 h-3.5" />}
+                    </button>
+                  )}
+                </div>
+                <Textarea value={improveInput} onChange={e => setImproveInput(e.target.value)} placeholder="Cole seu prompt aqui para melhorar..." rows={4} />
+              </div>
               <Button onClick={improvePrompt} disabled={improvingLoading} variant="secondary" className="w-full">
                 {improvingLoading ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Melhorando...</> : <><Zap className="w-4 h-4 mr-2" /> Melhorar Prompt</>}
               </Button>
