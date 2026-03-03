@@ -14,7 +14,7 @@ import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
-import { LogIn, AlertTriangle, Clock, Plus, Sparkles, Trash2, Save, Mail, MailOpen, Eye, ChevronDown, ChevronUp } from "lucide-react";
+import { LogIn, AlertTriangle, Clock, Plus, Sparkles, Trash2, Save, Mail, MailOpen, Eye, ChevronDown, ChevronUp, Users } from "lucide-react";
 
 const SLOT_LABELS: Record<string, string> = {
   banner_top: "🔝 Banner Topo",
@@ -87,7 +87,21 @@ const AdminAds = () => {
   });
 
   const [showMessages, setShowMessages] = useState(true);
+  const [showUsers, setShowUsers] = useState(false);
   const [expandedMessage, setExpandedMessage] = useState<string | null>(null);
+
+  const { data: registeredUsers } = useQuery({
+    queryKey: ["admin-users"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("*")
+        .order("created_at", { ascending: false });
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!user,
+  });
 
   const updateMutation = useMutation({
     mutationFn: async (ad: {
@@ -343,6 +357,55 @@ const AdminAds = () => {
             </div>
           )}
         </div>
+
+        {/* Registered Users Section */}
+        <div className="mb-8">
+          <button
+            onClick={() => setShowUsers(!showUsers)}
+            className="flex items-center gap-2 font-display text-xl md:text-2xl font-bold text-foreground mb-4 hover:text-primary transition-colors"
+          >
+            <Users className="w-5 h-5 text-primary" />
+            Usuários Cadastrados
+            {registeredUsers && (
+              <Badge className="ml-2">{registeredUsers.length}</Badge>
+            )}
+            {showUsers ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+          </button>
+
+          {showUsers && (
+            <div className="space-y-3">
+              {!registeredUsers || registeredUsers.length === 0 ? (
+                <p className="text-sm text-muted-foreground">Nenhum usuário cadastrado.</p>
+              ) : (
+                <div className="glass rounded-xl border border-border/50 overflow-hidden">
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-sm">
+                      <thead>
+                        <tr className="border-b border-border/50 bg-muted/30">
+                          <th className="text-left px-4 py-3 font-medium text-muted-foreground">Nome</th>
+                          <th className="text-left px-4 py-3 font-medium text-muted-foreground">Email</th>
+                          <th className="text-left px-4 py-3 font-medium text-muted-foreground">Cadastro</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {registeredUsers.map((u) => (
+                          <tr key={u.id} className="border-b border-border/30 last:border-0 hover:bg-muted/20 transition-colors">
+                            <td className="px-4 py-3 text-foreground">{u.full_name || "—"}</td>
+                            <td className="px-4 py-3 text-muted-foreground">{u.email || "—"}</td>
+                            <td className="px-4 py-3 text-muted-foreground">
+                              {new Date(u.created_at).toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit", year: "2-digit", hour: "2-digit", minute: "2-digit" })}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+
 
         {allAlerts.length > 0 && (
           <div className="mb-6 space-y-2">
