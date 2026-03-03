@@ -1,10 +1,8 @@
 import { Link, useLocation } from "react-router-dom";
-import { Menu, X, LogOut, LogIn, Megaphone, Settings, Sun, Moon } from "lucide-react";
+import { Menu, X, Megaphone, Sun, Moon } from "lucide-react";
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { useAuth } from "@/hooks/useAuth";
 import { useTheme } from "@/hooks/useTheme";
-import { useUserRole } from "@/hooks/useUserRole";
 import logo from "@/assets/logo.png";
 
 const navItems = [
@@ -20,9 +18,7 @@ const navItems = [
 const Navbar = () => {
   const [open, setOpen] = useState(false);
   const location = useLocation();
-  const { user, signOut } = useAuth();
   const { theme, toggleTheme } = useTheme();
-  const { isAdmin } = useUserRole();
 
   return (
     <nav className="fixed top-0 left-0 right-0 z-50 glass border-b border-border/30">
@@ -66,32 +62,6 @@ const Navbar = () => {
           >
             {theme === "dark" ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
           </button>
-          {user ? (
-            <>
-              {isAdmin && (
-                <Link
-                  to="/admin/anuncios"
-                  className="ml-1 p-2 rounded-lg text-muted-foreground/40 hover:text-muted-foreground hover:bg-secondary transition-all"
-                  title="Admin"
-                >
-                  <Settings className="w-4 h-4" />
-                </Link>
-              )}
-              <button
-                onClick={() => signOut()}
-                className="ml-1 px-3 py-2 rounded-lg text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-secondary transition-all flex items-center gap-1.5"
-              >
-                <LogOut className="w-4 h-4" /> Sair
-              </button>
-            </>
-          ) : (
-            <Link
-              to="/auth"
-              className="ml-2 px-4 py-2 rounded-lg text-sm font-medium bg-primary text-primary-foreground hover:bg-primary/90 transition-all flex items-center gap-1.5"
-            >
-              <LogIn className="w-4 h-4" /> Entrar
-            </Link>
-          )}
         </div>
 
         {/* Mobile toggle */}
@@ -145,33 +115,6 @@ const Navbar = () => {
                 {theme === "dark" ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
                 {theme === "dark" ? "Modo claro" : "Modo escuro"}
               </button>
-              {user ? (
-                <>
-                  {isAdmin && (
-                    <Link
-                      to="/admin/anuncios"
-                      onClick={() => setOpen(false)}
-                      className="px-4 py-3 rounded-lg text-sm font-medium text-muted-foreground/40 hover:text-muted-foreground hover:bg-secondary transition-all flex items-center gap-1.5"
-                    >
-                      <Settings className="w-4 h-4" /> Admin
-                    </Link>
-                  )}
-                  <button
-                    onClick={() => { signOut(); setOpen(false); }}
-                    className="px-4 py-3 rounded-lg text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-secondary transition-all text-left flex items-center gap-1.5"
-                  >
-                    <LogOut className="w-4 h-4" /> Sair
-                  </button>
-                </>
-              ) : (
-                <Link
-                  to="/auth"
-                  onClick={() => setOpen(false)}
-                  className="px-4 py-3 rounded-lg text-sm font-medium bg-primary text-primary-foreground hover:bg-primary/90 transition-all flex items-center gap-1.5"
-                >
-                  <LogIn className="w-4 h-4" /> Entrar
-                </Link>
-              )}
             </div>
           </motion.div>
         )}
