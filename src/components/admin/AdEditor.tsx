@@ -7,6 +7,31 @@ import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import { Save, Upload, X, Image, AlertTriangle, Clock, CheckCircle } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+
+// Preços por slot (mensal)
+const SLOT_PRICES: Record<string, number> = {
+  ferramentas_topo: 189.90,
+  ferramentas_rodape: 99.90,
+  blog_topo: 169.90,
+  blog_inline: 129.90,
+  blog_sidebar: 109.90,
+  blog_rodape: 89.90,
+  guias_topo: 159.90,
+  guias_inline: 119.90,
+  guias_rodape: 89.90,
+  banner_top: 189.90,
+  inline_1: 129.90,
+  footer: 89.90,
+};
+
+const PLAN_OPTIONS = [
+  { value: "mensal", label: "Mensal", multiplier: 1 },
+  { value: "trimestral", label: "Trimestral (3 meses)", multiplier: 3 },
+  { value: "semestral", label: "Semestral (6 meses)", multiplier: 6 },
+  { value: "anual", label: "Anual (12 meses)", multiplier: 12 },
+  { value: "vitalicio", label: "Vitalício (36 meses)", multiplier: 36 },
+];
 
 interface AdEditorProps {
   ad: {
@@ -124,7 +149,25 @@ const AdEditor = ({ ad, label, planStatus, onSave, saving }: AdEditorProps) => {
           </div>
           <div>
             <Label className="text-xs text-muted-foreground">Plano</Label>
-            <Input value={planName} onChange={(e) => setPlanName(e.target.value)} placeholder="Ex: Premium" className="text-sm" />
+            <Select
+              value={planName}
+              onValueChange={(val) => {
+                setPlanName(val);
+                // Auto-preencher valor
+                const basePrice = SLOT_PRICES[ad.slot] || 0;
+                const plan = PLAN_OPTIONS.find(p => p.value === val);
+                if (plan && basePrice > 0) {
+                  setPlanValue((basePrice * plan.multiplier).toFixed(2));
+                }
+              }}
+            >
+              <SelectTrigger className="text-sm"><SelectValue placeholder="Selecione" /></SelectTrigger>
+              <SelectContent>
+                {PLAN_OPTIONS.map(p => (
+                  <SelectItem key={p.value} value={p.value}>{p.label}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
           <div>
             <Label className="text-xs text-muted-foreground">Início</Label>
@@ -132,7 +175,7 @@ const AdEditor = ({ ad, label, planStatus, onSave, saving }: AdEditorProps) => {
           </div>
           <div>
             <Label className="text-xs text-muted-foreground">Vencimento</Label>
-            {planName.toLowerCase().includes("vitalic") ? (
+            {planName === "vitalicio" ? (
               <Input type="text" value="Sem vencimento" disabled className="text-sm bg-muted" />
             ) : (
               <Input type="date" value={planEnd} onChange={(e) => setPlanEnd(e.target.value)} className="text-sm" />
@@ -198,7 +241,7 @@ const AdEditor = ({ ad, label, planStatus, onSave, saving }: AdEditorProps) => {
             title, description, image_url: imageUrl, link_url: linkUrl,
             whatsapp_number: whatsappNumber, is_active: isActive,
             plan_name: planName, plan_start: planStart,
-            plan_end: planName.toLowerCase().includes("vitalic") ? "" : planEnd,
+            plan_end: planName === "vitalicio" ? "" : planEnd,
             plan_value: planValue, client_name: clientName,
           })}
           disabled={saving}
