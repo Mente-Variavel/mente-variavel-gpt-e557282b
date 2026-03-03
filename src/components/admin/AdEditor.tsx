@@ -30,7 +30,7 @@ const PLAN_OPTIONS = [
   { value: "trimestral", label: "Trimestral (3 meses)", multiplier: 3 },
   { value: "semestral", label: "Semestral (6 meses)", multiplier: 6 },
   { value: "anual", label: "Anual (12 meses)", multiplier: 12 },
-  { value: "vitalicio", label: "Vitalício (36 meses)", multiplier: 36 },
+  { value: "vitalicio", label: "Vitalício", fixedPrice: 3499.90 },
 ];
 
 interface AdEditorProps {
@@ -154,10 +154,16 @@ const AdEditor = ({ ad, label, planStatus, onSave, saving }: AdEditorProps) => {
               onValueChange={(val) => {
                 setPlanName(val);
                 // Auto-preencher valor
-                const basePrice = SLOT_PRICES[ad.slot] || 0;
                 const plan = PLAN_OPTIONS.find(p => p.value === val);
-                if (plan && basePrice > 0) {
-                  setPlanValue((basePrice * plan.multiplier).toFixed(2));
+                if (plan) {
+                  if ('fixedPrice' in plan && plan.fixedPrice) {
+                    setPlanValue(plan.fixedPrice.toFixed(2));
+                  } else if ('multiplier' in plan) {
+                    const basePrice = SLOT_PRICES[ad.slot] || 0;
+                    if (basePrice > 0) {
+                      setPlanValue((basePrice * (plan as any).multiplier).toFixed(2));
+                    }
+                  }
                 }
               }}
             >

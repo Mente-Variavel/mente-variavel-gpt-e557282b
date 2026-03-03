@@ -1,7 +1,9 @@
-import { Link } from "react-router-dom";
+import { useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { ArrowRight, TrendingUp, Wand2, Layers, DollarSign, ImageOff, CreditCard, Sparkles } from "lucide-react";
+import { ArrowRight, TrendingUp, Wand2, Layers, DollarSign, ImageOff, CreditCard, Sparkles, Send, MessageSquare } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 
@@ -21,6 +23,16 @@ const fadeUp = {
 };
 
 export default function Index() {
+  const [chatInput, setChatInput] = useState("");
+  const navigate = useNavigate();
+
+  const handleChatSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!chatInput.trim()) return;
+    navigate("/assistente", { state: { initialMessage: chatInput.trim() } });
+    setChatInput("");
+  };
+
   return (
     <div className="min-h-screen flex flex-col bg-background">
       <Navbar />
@@ -31,6 +43,9 @@ export default function Index() {
           <div className="absolute top-20 left-1/2 -translate-x-1/2 w-[600px] h-[600px] bg-primary/5 rounded-full blur-3xl" />
           <div className="container mx-auto px-4 relative z-10 text-center">
             <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6 }}>
+              <h2 className="text-xl sm:text-2xl font-bold text-primary text-glow-cyan mb-3">
+                Mente Variável GPT
+              </h2>
               <span className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-primary/10 border border-primary/20 text-primary text-xs font-medium mb-6">
                 <Sparkles className="w-3.5 h-3.5" /> Plataforma Inteligente
               </span>
@@ -46,6 +61,38 @@ export default function Index() {
                   Explorar Ferramentas <ArrowRight className="ml-2 w-4 h-4" />
                 </a>
               </Button>
+            </motion.div>
+          </div>
+        </section>
+
+        {/* Chat rápido */}
+        <section className="py-10">
+          <div className="container mx-auto px-4 max-w-2xl">
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+            >
+              <div className="glass rounded-2xl p-6 border border-primary/20">
+                <div className="flex items-center gap-2 mb-4">
+                  <MessageSquare className="w-5 h-5 text-primary" />
+                  <h3 className="font-semibold text-foreground">Assistente Inteligente</h3>
+                </div>
+                <p className="text-sm text-muted-foreground mb-4">
+                  Pergunte qualquer coisa, peça para gerar imagens ou obtenha ajuda com suas tarefas.
+                </p>
+                <form onSubmit={handleChatSubmit} className="flex gap-2">
+                  <Input
+                    value={chatInput}
+                    onChange={(e) => setChatInput(e.target.value)}
+                    placeholder="Digite sua pergunta..."
+                    className="flex-1"
+                  />
+                  <Button type="submit" size="icon" disabled={!chatInput.trim()}>
+                    <Send className="w-4 h-4" />
+                  </Button>
+                </form>
+              </div>
             </motion.div>
           </div>
         </section>
