@@ -1,8 +1,10 @@
 import { Link, useLocation } from "react-router-dom";
-import { Menu, X, Sun, Moon, ChevronDown } from "lucide-react";
+import { Menu, X, Sun, Moon, ChevronDown, Settings, MessageSquare } from "lucide-react";
 import { useState, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useTheme } from "@/hooks/useTheme";
+import { useAuth } from "@/hooks/useAuth";
+import { useUserRole } from "@/hooks/useUserRole";
 import logo from "@/assets/logo.png";
 
 const financasItems = [
@@ -23,6 +25,8 @@ const Navbar = () => {
   const [servicosOpen, setServicosOpen] = useState(false);
   const location = useLocation();
   const { theme, toggleTheme } = useTheme();
+  const { user } = useAuth();
+  const { isAdmin } = useUserRole();
   const financasRef = useRef<HTMLDivElement>(null);
   const servicosRef = useRef<HTMLDivElement>(null);
 
@@ -37,6 +41,11 @@ const Navbar = () => {
 
   const isActive = (path: string) => location.pathname === path;
   const isInSection = (prefix: string) => location.pathname.startsWith(prefix);
+
+  const navLinkClass = (path: string) =>
+    `px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
+      isActive(path) ? "text-primary bg-primary/10" : "text-muted-foreground hover:text-foreground hover:bg-secondary"
+    }`;
 
   const DropdownMenu = ({ items, isOpen, label, prefix, toggle, dropdownRef }: {
     items: typeof financasItems; isOpen: boolean; label: string; prefix: string;
@@ -92,13 +101,11 @@ const Navbar = () => {
 
         {/* Desktop */}
         <div className="hidden lg:flex items-center gap-0.5">
-          <Link
-            to="/"
-            className={`px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
-              isActive("/") ? "text-primary bg-primary/10" : "text-muted-foreground hover:text-foreground hover:bg-secondary"
-            }`}
-          >
-            Início
+          <Link to="/" className={navLinkClass("/")}>Início</Link>
+
+          <Link to="/assistente" className={`${navLinkClass("/assistente")} flex items-center gap-1`}>
+            <MessageSquare className="w-3.5 h-3.5" />
+            Assistente
           </Link>
 
           <DropdownMenu
@@ -119,23 +126,11 @@ const Navbar = () => {
             dropdownRef={servicosRef}
           />
 
-          <Link
-            to="/criador-prompt"
-            className={`px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
-              isActive("/criador-prompt") ? "text-primary bg-primary/10" : "text-muted-foreground hover:text-foreground hover:bg-secondary"
-            }`}
-          >
-            Criador de Prompt
-          </Link>
-
-          <Link
-            to="/contato"
-            className={`px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
-              isActive("/contato") ? "text-primary bg-primary/10" : "text-muted-foreground hover:text-foreground hover:bg-secondary"
-            }`}
-          >
-            Contato
-          </Link>
+          <Link to="/criador-prompt" className={navLinkClass("/criador-prompt")}>Criador de Prompt</Link>
+          <Link to="/blog" className={navLinkClass("/blog")}>Blog</Link>
+          <Link to="/guias" className={navLinkClass("/guias")}>Guias</Link>
+          <Link to="/anuncie" className={navLinkClass("/anuncie")}>Anuncie</Link>
+          <Link to="/contato" className={navLinkClass("/contato")}>Contato</Link>
 
           <button
             onClick={toggleTheme}
@@ -144,6 +139,16 @@ const Navbar = () => {
           >
             {theme === "dark" ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
           </button>
+
+          {user && isAdmin && (
+            <Link
+              to="/admin/anuncios"
+              className="ml-1 p-2 rounded-lg text-muted-foreground hover:text-foreground hover:bg-secondary transition-all"
+              title="Painel Admin"
+            >
+              <Settings className="w-4 h-4" />
+            </Link>
+          )}
         </div>
 
         {/* Mobile toggle */}
@@ -165,24 +170,48 @@ const Navbar = () => {
               <Link to="/" onClick={() => setOpen(false)} className={`px-4 py-3 rounded-lg text-sm font-medium transition-all ${isActive("/") ? "text-primary bg-primary/10" : "text-muted-foreground hover:text-foreground hover:bg-secondary"}`}>
                 Início
               </Link>
+              <Link to="/assistente" onClick={() => setOpen(false)} className={`px-4 py-3 rounded-lg text-sm font-medium transition-all flex items-center gap-1.5 ${isActive("/assistente") ? "text-primary bg-primary/10" : "text-muted-foreground hover:text-foreground hover:bg-secondary"}`}>
+                <MessageSquare className="w-4 h-4" />
+                Assistente Inteligente
+              </Link>
+
               <p className="px-4 pt-3 pb-1 text-xs font-bold text-muted-foreground uppercase tracking-wider">Finanças</p>
               {financasItems.map((item) => (
                 <Link key={item.to} to={item.to} onClick={() => setOpen(false)} className={`px-6 py-2.5 rounded-lg text-sm transition-all ${isActive(item.to) ? "text-primary bg-primary/10" : "text-muted-foreground hover:text-foreground hover:bg-secondary"}`}>
                   {item.label}
                 </Link>
               ))}
+
               <p className="px-4 pt-3 pb-1 text-xs font-bold text-muted-foreground uppercase tracking-wider">Serviços</p>
               {servicosItems.map((item) => (
                 <Link key={item.to} to={item.to} onClick={() => setOpen(false)} className={`px-6 py-2.5 rounded-lg text-sm transition-all ${isActive(item.to) ? "text-primary bg-primary/10" : "text-muted-foreground hover:text-foreground hover:bg-secondary"}`}>
                   {item.label}
                 </Link>
               ))}
+
               <Link to="/criador-prompt" onClick={() => setOpen(false)} className={`px-4 py-3 rounded-lg text-sm font-medium transition-all ${isActive("/criador-prompt") ? "text-primary bg-primary/10" : "text-muted-foreground hover:text-foreground hover:bg-secondary"}`}>
                 Criador de Prompt
+              </Link>
+              <Link to="/blog" onClick={() => setOpen(false)} className={`px-4 py-3 rounded-lg text-sm font-medium transition-all ${isActive("/blog") ? "text-primary bg-primary/10" : "text-muted-foreground hover:text-foreground hover:bg-secondary"}`}>
+                Blog
+              </Link>
+              <Link to="/guias" onClick={() => setOpen(false)} className={`px-4 py-3 rounded-lg text-sm font-medium transition-all ${isActive("/guias") ? "text-primary bg-primary/10" : "text-muted-foreground hover:text-foreground hover:bg-secondary"}`}>
+                Guias
+              </Link>
+              <Link to="/anuncie" onClick={() => setOpen(false)} className={`px-4 py-3 rounded-lg text-sm font-medium transition-all ${isActive("/anuncie") ? "text-primary bg-primary/10" : "text-muted-foreground hover:text-foreground hover:bg-secondary"}`}>
+                Anuncie
               </Link>
               <Link to="/contato" onClick={() => setOpen(false)} className={`px-4 py-3 rounded-lg text-sm font-medium transition-all ${isActive("/contato") ? "text-primary bg-primary/10" : "text-muted-foreground hover:text-foreground hover:bg-secondary"}`}>
                 Contato
               </Link>
+
+              {user && isAdmin && (
+                <Link to="/admin/anuncios" onClick={() => setOpen(false)} className={`px-4 py-3 rounded-lg text-sm font-medium transition-all flex items-center gap-1.5 ${isActive("/admin/anuncios") ? "text-primary bg-primary/10" : "text-muted-foreground hover:text-foreground hover:bg-secondary"}`}>
+                  <Settings className="w-4 h-4" />
+                  Painel Admin
+                </Link>
+              )}
+
               <button onClick={toggleTheme} className="px-4 py-3 rounded-lg text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-secondary transition-all text-left flex items-center gap-1.5">
                 {theme === "dark" ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
                 {theme === "dark" ? "Modo claro" : "Modo escuro"}
