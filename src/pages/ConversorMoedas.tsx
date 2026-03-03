@@ -18,8 +18,11 @@ const currencies = [
 ];
 
 const fallbackRates: Record<string, number> = {
-  BRL: 1, USD: 0.17, EUR: 0.16, GBP: 0.14, JPY: 25.5, BTC: 0.0000028
+  BRL: 1, USD: 0.193, EUR: 0.165, GBP: 0.144, JPY: 30.35, BTC: 0.0000023
 };
+
+// BTC is not available in the free exchange API, keep a separate estimate
+const BTC_RATE_IN_USD = 85000; // approximate BTC price in USD
 
 export default function ConversorMoedas() {
   const [from, setFrom] = useState("BRL");
@@ -37,7 +40,10 @@ export default function ConversorMoedas() {
       const res = await fetch("https://api.exchangerate-api.com/v4/latest/BRL");
       if (!res.ok) throw new Error();
       const data = await res.json();
-      setRates(data.rates);
+      // API doesn't include BTC, so calculate it from USD rate
+      const usdRate = data.rates?.USD || 0.193;
+      const btcRate = usdRate / BTC_RATE_IN_USD;
+      setRates({ ...data.rates, BTC: btcRate });
     } catch {
       setApiError(true);
     } finally {
