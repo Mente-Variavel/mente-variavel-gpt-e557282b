@@ -1,5 +1,5 @@
 import { Link, useLocation } from "react-router-dom";
-import { Menu, X, Sun, Moon, ChevronDown, Settings, MessageSquare } from "lucide-react";
+import { Menu, X, Sun, Moon, ChevronDown, Settings, MessageSquare, Megaphone } from "lucide-react";
 import { useState, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useTheme } from "@/hooks/useTheme";
@@ -129,7 +129,10 @@ const Navbar = () => {
           <Link to="/criador-prompt" className={navLinkClass("/criador-prompt")}>Criador de Prompt</Link>
           <Link to="/blog" className={navLinkClass("/blog")}>Blog</Link>
           <Link to="/guias" className={navLinkClass("/guias")}>Guias</Link>
-          <Link to="/anuncie" className={navLinkClass("/anuncie")}>Anuncie</Link>
+          <Link to="/anuncie" className={`${navLinkClass("/anuncie")} flex items-center gap-1.5`}>
+            <Megaphone className="w-4 h-4 text-green-500" />
+            Seja um anunciante
+          </Link>
           <Link to="/contato" className={navLinkClass("/contato")}>Contato</Link>
 
           <button
@@ -198,8 +201,9 @@ const Navbar = () => {
               <Link to="/guias" onClick={() => setOpen(false)} className={`px-4 py-3 rounded-lg text-sm font-medium transition-all ${isActive("/guias") ? "text-primary bg-primary/10" : "text-muted-foreground hover:text-foreground hover:bg-secondary"}`}>
                 Guias
               </Link>
-              <Link to="/anuncie" onClick={() => setOpen(false)} className={`px-4 py-3 rounded-lg text-sm font-medium transition-all ${isActive("/anuncie") ? "text-primary bg-primary/10" : "text-muted-foreground hover:text-foreground hover:bg-secondary"}`}>
-                Anuncie
+              <Link to="/anuncie" onClick={() => setOpen(false)} className={`px-4 py-3 rounded-lg text-sm font-medium transition-all flex items-center gap-1.5 ${isActive("/anuncie") ? "text-primary bg-primary/10" : "text-muted-foreground hover:text-foreground hover:bg-secondary"}`}>
+                <Megaphone className="w-4 h-4 text-green-500" />
+                Seja um anunciante
               </Link>
               <Link to="/contato" onClick={() => setOpen(false)} className={`px-4 py-3 rounded-lg text-sm font-medium transition-all ${isActive("/contato") ? "text-primary bg-primary/10" : "text-muted-foreground hover:text-foreground hover:bg-secondary"}`}>
                 Contato
