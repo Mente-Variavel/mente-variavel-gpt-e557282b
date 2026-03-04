@@ -93,14 +93,37 @@ export default function CriadorPrompt() {
 
   // Mic for description field
   const [micTarget, setMicTarget] = useState<"description" | "improve" | null>(null);
+  const [pendingMicAction, setPendingMicAction] = useState<"description" | "improve" | null>(null);
   const { isListening, transcript, isSupported, error: micError, mediaStream, startListening, stopListening, cancelListening } = useSpeechRecognition();
 
+  // When transcript arrives, set the field value and mark pending action
   useEffect(() => {
     if (transcript && transcript !== "Transcrevendo...") {
-      if (micTarget === "description") setDescription(transcript);
-      else if (micTarget === "improve") setImproveInput(transcript);
+      if (micTarget === "description") {
+        setDescription(transcript);
+        setPendingMicAction("description");
+      } else if (micTarget === "improve") {
+        setImproveInput(transcript);
+        setPendingMicAction("improve");
+      }
     }
   }, [transcript, micTarget]);
+
+  // Auto-trigger generation after voice transcription completes
+  const generatePromptRef = useRef<() => void>();
+  const improvePromptRef = useRef<() => void>();
+
+  useEffect(() => {
+    if (pendingMicAction === "description" && description && !loading) {
+      setPendingMicAction(null);
+      setMicTarget(null);
+      setTimeout(() => generatePromptRef.current?.(), 300);
+    } else if (pendingMicAction === "improve" && improveInput && !improvingLoading) {
+      setPendingMicAction(null);
+      setMicTarget(null);
+      setTimeout(() => improvePromptRef.current?.(), 300);
+    }
+  }, [pendingMicAction, description, improveInput, loading, improvingLoading]);
 
   useEffect(() => { localStorage.setItem("mv_prompt_history", JSON.stringify(history)); }, [history]);
 
@@ -186,6 +209,10 @@ Retorne APENAS o prompt melhorado no idioma ${langLabel}, pronto para uso. Não 
       setImprovingLoading(false);
     }
   };
+
+  // Keep refs updated for auto-trigger after mic
+  generatePromptRef.current = generatePrompt;
+  improvePromptRef.current = improvePrompt;
 
   const handleQuickSuggestion = (suggestion: string) => {
     setDescription(suggestion);
