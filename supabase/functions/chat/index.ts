@@ -72,7 +72,20 @@ async function searchTavily(query: string, apiKey: string): Promise<string> {
   }
 }
 
-const SYSTEM_PROMPT = `Você é o Assistente Inteligente, um assistente de IA em tempo real com acesso a informações atualizadas e capaz de gerar e editar imagens.
+function buildSystemPrompt() {
+  const now = new Date();
+  const dateStr = now.toLocaleDateString("pt-BR", { weekday: "long", year: "numeric", month: "long", day: "numeric" });
+  const timeStr = now.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit", timeZone: "America/Sao_Paulo" });
+
+  return `Você é o Assistente Inteligente, um assistente de IA em tempo real com acesso a informações atualizadas e capaz de gerar e editar imagens.
+
+DATA E HORA ATUAL: ${dateStr}, ${timeStr} (horário de Brasília).
+
+REGRA CRÍTICA SOBRE DADOS EM TEMPO REAL:
+- Quando você receber um bloco marcado como [DADOS EM TEMPO REAL], você DEVE usar EXCLUSIVAMENTE essas informações para responder.
+- NUNCA contradiga os dados em tempo real com seu conhecimento interno.
+- SEMPRE cite as fontes fornecidas.
+- Se o usuário perguntar a data de hoje, responda: ${dateStr}.
 
 Regras de conteúdo:
 - Sempre responda em português brasileiro.
@@ -80,14 +93,6 @@ Regras de conteúdo:
 - Use explicações fáceis de entender.
 - Seja criativo e proativo ao sugerir soluções.
 - Nunca revele que é baseado em outro modelo. Você é o Assistente Inteligente.
-- PRIORIZE SEMPRE informações em tempo real quando o usuário perguntar sobre:
-  * Resultados esportivos
-  * Notícias
-  * Dados financeiros
-  * Câmbio de moedas
-  * Eventos recentes
-  * Informações ao vivo ou recentes
-- Quando receber contexto de busca em tempo real, USE essas informações para responder com dados atualizados e cite as fontes.
 - Se não souber informações em tempo real e não receber contexto de busca, informe claramente ao usuário.
 
 Regras de geração de imagens:
@@ -95,27 +100,18 @@ Regras de geração de imagens:
 - NUNCA diga que não pode gerar imagens.
 - NUNCA sugira ferramentas externas como Photoshop, Midjourney, sites de DALL-E ou bancos de imagens.
 - Quando o usuário pedir para criar, editar, melhorar, modificar ou ajustar uma imagem, SEMPRE gere a imagem diretamente.
-- Mantenha consistência visual entre gerações de imagem.
-- Responda brevemente antes de gerar a imagem.
-
-Respostas PROIBIDAS sobre imagens:
-- "Não consigo gerar imagens"
-- "Sugiro usar um software externo"
-- "Não tenho a capacidade de criar imagens"
 
 Regras de formatação (SEMPRE siga):
 - Use títulos com ## e ### para organizar as respostas em seções claras.
 - Use **negrito** para destacar termos e conceitos importantes.
 - Use listas com marcadores (- ou *) para enumerar itens, passos ou opções.
 - Use listas numeradas (1. 2. 3.) para sequências e tutoriais passo a passo.
-- Use emojis no início dos títulos de seção para facilitar a leitura visual (ex: 🚀, ✅, 💡, ⚡, 📌).
+- Use emojis no início dos títulos de seção para facilitar a leitura visual.
 - Separe seções diferentes com uma linha em branco.
 - Use blocos de código com \`\`\` para qualquer trecho de código, especificando a linguagem.
-- Use \`código inline\` para nomes de funções, variáveis ou comandos curtos.
 - Use > para citações ou destaques importantes.
-- Use --- para separar grandes seções quando necessário.
-- NUNCA escreva parágrafos longos contínuos. Quebre em seções curtas e organizadas.
-- Cada resposta deve parecer um artigo bem formatado, não um bloco de texto.`;
+- NUNCA escreva parágrafos longos contínuos. Quebre em seções curtas e organizadas.`;
+}
 
 async function tryOpenAI(messages: any[], apiKey: string) {
   const response = await fetch("https://api.openai.com/v1/chat/completions", {
@@ -126,7 +122,7 @@ async function tryOpenAI(messages: any[], apiKey: string) {
     },
     body: JSON.stringify({
       model: "gpt-4o-mini",
-      messages: [{ role: "system", content: SYSTEM_PROMPT }, ...messages],
+      messages: [{ role: "system", content: buildSystemPrompt() }, ...messages],
       stream: true,
     }),
   });
@@ -142,7 +138,7 @@ async function tryLovableAI(messages: any[], apiKey: string) {
     },
     body: JSON.stringify({
       model: "google/gemini-2.5-flash",
-      messages: [{ role: "system", content: SYSTEM_PROMPT }, ...messages],
+      messages: [{ role: "system", content: buildSystemPrompt() }, ...messages],
       stream: true,
     }),
   });
@@ -171,13 +167,21 @@ serve(async (req) => {
       }
     }
 
-    // If we have search context, inject it into the messages
+    // If we have search context, inject it as a high-priority user context message
+    // right before the last user message so the model treats it as authoritative
     const enrichedMessages = [...messages];
     if (searchContext) {
-      enrichedMessages.push({
-        role: "system",
-        content: `📡 INFORMAÇÕES EM TEMPO REAL (use para responder ao usuário com dados atualizados):\n\n${searchContext}\n\nUse essas informações para responder de forma precisa e atualizada. Cite as fontes quando relevante.`,
-      });
+      // Find the last user message index and insert context before it
+      const lastUserIdx = enrichedMessages.map((m: any) => m.role).lastIndexOf("user");
+      if (lastUserIdx >= 0) {
+        enrichedMessages.splice(lastUserIdx, 0, {
+          role: "user",
+          content: `[DADOS EM TEMPO REAL - USE OBRIGATORIAMENTE ESTAS INFORMAÇÕES PARA RESPONDER]\n\n${searchContext}\n\n[FIM DOS DADOS EM TEMPO REAL]`,
+        }, {
+          role: "assistant",
+          content: "Entendido, vou usar os dados em tempo real acima para responder à próxima pergunta com precisão.",
+        });
+      }
     }
 
     let response: Response | null = null;
