@@ -138,8 +138,8 @@ export default function GeradorSlides() {
   useEffect(() => {
     const savedSlides = localStorage.getItem("mv_slides_data");
     const savedChapters = localStorage.getItem("mv_chapters_data");
-    if (savedSlides) try { setSlides(JSON.parse(savedSlides)); setStep(2); } catch {}
-    if (savedChapters) try { setChapters(JSON.parse(savedChapters)); setStep(2); } catch {}
+    if (savedSlides) try { setSlides(JSON.parse(savedSlides)); } catch {}
+    if (savedChapters) try { setChapters(JSON.parse(savedChapters)); } catch {}
   }, []);
 
   // Save data
