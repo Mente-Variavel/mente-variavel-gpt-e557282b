@@ -60,38 +60,39 @@ A letra deve combinar perfeitamente com o gênero ${genero} e o tema "${tema}". 
         headers: {
           "Content-Type": "application/json",
           "Authorization": `Bearer ${supabaseKey}`,
-          "apikey": supabaseKey,
         },
         body: JSON.stringify({ messages: [{ role: "user", content: prompt }] }),
       });
 
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      if (!res.ok || !res.body) throw new Error(`HTTP ${res.status}`);
 
-      const reader = res.body?.getReader();
-
-      if (!reader) throw new Error("No reader");
-
+      const reader = res.body.getReader();
       const decoder = new TextDecoder();
       let full = "";
+      let textBuffer = "";
 
       while (true) {
         const { done, value } = await reader.read();
         if (done) break;
-        const chunk = decoder.decode(value, { stream: true });
-        const lines = chunk.split("\n");
-        for (const line of lines) {
-          if (line.startsWith("data: ")) {
-            const data = line.slice(6);
-            if (data === "[DONE]") continue;
-            try {
-              const parsed = JSON.parse(data);
-              const content = parsed.choices?.[0]?.delta?.content;
-              if (content) {
-                full += content;
-                setLyrics(full);
-              }
-            } catch {}
-          }
+        textBuffer += decoder.decode(value, { stream: true });
+
+        let newlineIndex: number;
+        while ((newlineIndex = textBuffer.indexOf("\n")) !== -1) {
+          let line = textBuffer.slice(0, newlineIndex);
+          textBuffer = textBuffer.slice(newlineIndex + 1);
+          if (line.endsWith("\r")) line = line.slice(0, -1);
+          if (line.startsWith(":") || line.trim() === "") continue;
+          if (!line.startsWith("data: ")) continue;
+          const jsonStr = line.slice(6).trim();
+          if (jsonStr === "[DONE]") break;
+          try {
+            const parsed = JSON.parse(jsonStr);
+            const content = parsed.choices?.[0]?.delta?.content;
+            if (content) {
+              full += content;
+              setLyrics(full);
+            }
+          } catch {}
         }
       }
     } catch (err) {
