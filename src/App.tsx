@@ -49,6 +49,7 @@ function App() {
             <Route path="/servicos/removedor-fundo" element={<RemovedorFundo />} />
             <Route path="/servicos/gerador-slides" element={<GeradorSlides />} />
             <Route path="/servicos/criador-musica" element={<CriadorMusica />} />
+            <Route path="/servicos/criador-prompt" element={<CriadorPrompt />} />
             <Route path="/criador-prompt" element={<CriadorPrompt />} />
             <Route path="/blog" element={<Blog />} />
             <Route path="/blog/:slug" element={<BlogPost />} />
