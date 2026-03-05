@@ -315,18 +315,18 @@ A letra deve combinar perfeitamente com o gênero ${genero} e o tema "${tema}". 
                   </p>
 
                   <h4 className="font-display text-sm font-semibold text-foreground mb-2">Vantagens do Suno Pro</h4>
-                  <ul className="text-xs text-muted-foreground space-y-1 mb-6 list-none">
-                    <li>• Acesso ao modelo mais avançado de geração de músicas (v5)</li>
-                    <li>• 2.500 créditos por mês (até aproximadamente 500 músicas)</li>
-                    <li>• Direitos de uso comercial para novas músicas criadas</li>
-                    <li>• Recursos avançados como personas musicais e edição avançada</li>
-                    <li>• Separação da música em até 12 faixas (vocais e instrumentos)</li>
-                    <li>• Upload de até 8 minutos de áudio para remix ou continuação</li>
-                    <li>• Possibilidade de adicionar novos vocais ou instrumentos em músicas já existentes</li>
-                    <li>• Acesso antecipado a novos recursos da plataforma</li>
-                    <li>• Possibilidade de comprar créditos adicionais quando necessário</li>
-                    <li>• Fila prioritária para geração de músicas</li>
-                    <li>• Criação de até 10 músicas simultaneamente</li>
+                  <ul className="text-sm text-foreground space-y-1.5 mb-6 list-none font-medium">
+                    <li>• <strong>Acesso ao modelo mais avançado</strong> de geração de músicas (v5)</li>
+                    <li>• <strong>2.500 créditos por mês</strong> (até aproximadamente 500 músicas)</li>
+                    <li>• <strong>Direitos de uso comercial</strong> para novas músicas criadas</li>
+                    <li>• <strong>Recursos avançados</strong> como personas musicais e edição avançada</li>
+                    <li>• <strong>Separação da música</strong> em até 12 faixas (vocais e instrumentos)</li>
+                    <li>• <strong>Upload de até 8 minutos</strong> de áudio para remix ou continuação</li>
+                    <li>• <strong>Adicionar novos vocais ou instrumentos</strong> em músicas já existentes</li>
+                    <li>• <strong>Acesso antecipado</strong> a novos recursos da plataforma</li>
+                    <li>• <strong>Créditos adicionais</strong> disponíveis para compra quando necessário</li>
+                    <li>• <strong>Fila prioritária</strong> para geração de músicas</li>
+                    <li>• <strong>Criação de até 10 músicas</strong> simultaneamente</li>
                   </ul>
 
                   <div className="flex flex-wrap gap-3 mb-4">
