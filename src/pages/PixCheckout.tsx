@@ -1,6 +1,6 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { motion } from "framer-motion";
-import { QrCode, Copy, Trash2, CheckCircle, Zap } from "lucide-react";
+import { QrCode, Copy, Trash2, CheckCircle, Zap, Lock, Unlock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
@@ -22,14 +22,44 @@ const keyPlaceholder: Record<PixKeyType, string> = {
 };
 
 export default function PixCheckout() {
-  const [chave, setChave] = useState("");
-  const [keyType, setKeyType] = useState<PixKeyType>("evp");
-  const [nome, setNome] = useState("");
+  const [chave, setChave] = useState(() => localStorage.getItem("mv_pix_chave") || "");
+  const [keyType, setKeyType] = useState<PixKeyType>(() => (localStorage.getItem("mv_pix_keyType") as PixKeyType) || "evp");
+  const [nome, setNome] = useState(() => localStorage.getItem("mv_pix_nome") || "");
+  const [chaveLocked, setChaveLocked] = useState(() => !!localStorage.getItem("mv_pix_chave"));
+  const [nomeLocked, setNomeLocked] = useState(() => !!localStorage.getItem("mv_pix_nome"));
   const [cidade, setCidade] = useState("");
   const [valor, setValor] = useState("");
   const [descricao, setDescricao] = useState("");
   const [generated, setGenerated] = useState(false);
   const [copied, setCopied] = useState(false);
+
+  const toggleChaveLock = () => {
+    if (chaveLocked) {
+      localStorage.removeItem("mv_pix_chave");
+      localStorage.removeItem("mv_pix_keyType");
+      setChaveLocked(false);
+      toast("Chave Pix desafixada.");
+    } else {
+      if (!chave.trim()) { toast.error("Preencha a chave antes de fixar."); return; }
+      localStorage.setItem("mv_pix_chave", chave);
+      localStorage.setItem("mv_pix_keyType", keyType);
+      setChaveLocked(true);
+      toast.success("Chave Pix fixada!");
+    }
+  };
+
+  const toggleNomeLock = () => {
+    if (nomeLocked) {
+      localStorage.removeItem("mv_pix_nome");
+      setNomeLocked(false);
+      toast("Nome desafixado.");
+    } else {
+      if (!nome.trim()) { toast.error("Preencha o nome antes de fixar."); return; }
+      localStorage.setItem("mv_pix_nome", nome);
+      setNomeLocked(true);
+      toast.success("Nome fixado!");
+    }
+  };
 
   const pixPayload = useMemo(() => {
     if (!generated || !chave || !nome) return null;
@@ -67,8 +97,8 @@ export default function PixCheckout() {
   };
 
   const handleClear = () => {
-    setChave("");
-    setNome("");
+    if (!chaveLocked) setChave("");
+    if (!nomeLocked) setNome("");
     setCidade("");
     setValor("");
     setDescricao("");
@@ -115,21 +145,45 @@ export default function PixCheckout() {
 
                 <div>
                   <label className="text-xs text-muted-foreground mb-1 block">Chave Pix *</label>
-                  <Input
-                    value={chave}
-                    onChange={e => { setChave(e.target.value); setGenerated(false); }}
-                    placeholder={keyPlaceholder[keyType]}
-                  />
+                  <div className="flex gap-2">
+                    <Input
+                      value={chave}
+                      onChange={e => { setChave(e.target.value); setGenerated(false); }}
+                      placeholder={keyPlaceholder[keyType]}
+                      className="flex-1"
+                    />
+                    <Button
+                      type="button"
+                      size="icon"
+                      variant={chaveLocked ? "default" : "outline"}
+                      onClick={toggleChaveLock}
+                      title={chaveLocked ? "Desafixar chave" : "Fixar chave para uso recorrente"}
+                    >
+                      {chaveLocked ? <Lock className="w-4 h-4" /> : <Unlock className="w-4 h-4" />}
+                    </Button>
+                  </div>
                 </div>
 
                 <div>
                   <label className="text-xs text-muted-foreground mb-1 block">Nome do recebedor * (máx. 25 caracteres)</label>
-                  <Input
-                    value={nome}
-                    onChange={e => { setNome(e.target.value.slice(0, 25)); setGenerated(false); }}
-                    placeholder="Seu nome ou empresa"
-                    maxLength={25}
-                  />
+                  <div className="flex gap-2">
+                    <Input
+                      value={nome}
+                      onChange={e => { setNome(e.target.value.slice(0, 25)); setGenerated(false); }}
+                      placeholder="Seu nome ou empresa"
+                      maxLength={25}
+                      className="flex-1"
+                    />
+                    <Button
+                      type="button"
+                      size="icon"
+                      variant={nomeLocked ? "default" : "outline"}
+                      onClick={toggleNomeLock}
+                      title={nomeLocked ? "Desafixar nome" : "Fixar nome para uso recorrente"}
+                    >
+                      {nomeLocked ? <Lock className="w-4 h-4" /> : <Unlock className="w-4 h-4" />}
+                    </Button>
+                  </div>
                 </div>
 
                 <div>
