@@ -88,8 +88,13 @@ export default function Index() {
     <div className="min-h-screen flex flex-col bg-background">
       <Navbar />
       <main className="flex-1">
+        {/* Banner top ad */}
+        <div className="container mx-auto px-4 pt-20">
+          <AdPlaceholder placement="banner_top" className="mb-4" />
+        </div>
+
         {/* Hero */}
-        <section className="relative pt-32 pb-20 overflow-hidden">
+        <section className="relative pt-12 pb-20 overflow-hidden">
           <div className="absolute inset-0 bg-gradient-to-br from-primary/10 via-background to-accent/5" />
           <div className="absolute top-20 left-1/2 -translate-x-1/2 w-[600px] h-[600px] bg-primary/5 rounded-full blur-3xl" />
           <div className="container mx-auto px-4 relative z-10 text-center">
@@ -209,6 +214,11 @@ export default function Index() {
           </div>
         </section>
 
+        {/* Middle ad */}
+        <div className="container mx-auto px-4">
+          <AdPlaceholder placement="middle" className="my-4" />
+        </div>
+
         {/* Tools Grid */}
         <section id="ferramentas" className="py-20">
           <div className="container mx-auto px-4">
@@ -228,9 +238,15 @@ export default function Index() {
             </div>
           </div>
         </section>
-        {/* Ad between tools and CTA */}
+
+        {/* Between sections ad */}
         <div className="container mx-auto px-4">
-          <AdPlaceholder placement="middle" className="my-8" />
+          <AdPlaceholder placement="between_sections" className="my-4" />
+        </div>
+
+        {/* Sidebar ad */}
+        <div className="container mx-auto px-4">
+          <AdPlaceholder placement="sidebar" className="my-4" />
         </div>
 
         {/* CTA */}
@@ -249,6 +265,11 @@ export default function Index() {
             </div>
           </div>
         </section>
+
+        {/* Footer ad */}
+        <div className="container mx-auto px-4">
+          <AdPlaceholder placement="footer" className="mb-4" />
+        </div>
       </main>
       <Footer />
     </div>

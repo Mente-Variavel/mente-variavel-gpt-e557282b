@@ -5,30 +5,15 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
+import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "sonner";
-import { Save, Upload, X, Image, AlertTriangle, Clock, CheckCircle } from "lucide-react";
+import { Save, Upload, X, Image, AlertTriangle, Clock, CheckCircle, Lock } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-
-const SLOT_PRICES: Record<string, number> = {
-  ferramentas_topo: 189.90,
-  ferramentas_rodape: 99.90,
-  blog_topo: 169.90,
-  blog_inline: 129.90,
-  blog_sidebar: 109.90,
-  blog_rodape: 89.90,
-  guias_topo: 159.90,
-  guias_inline: 119.90,
-  guias_rodape: 89.90,
-  banner_top: 189.90,
-  inline_1: 129.90,
-  footer: 89.90,
-};
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 
 const PLAN_OPTIONS = [
-  { value: "mensal", label: "Mensal", multiplier: 1 },
-  { value: "trimestral", label: "Trimestral (3 meses)", multiplier: 3 },
-  { value: "semestral", label: "Semestral (6 meses)", multiplier: 6 },
-  { value: "anual", label: "Anual (12 meses)", multiplier: 12 },
+  { value: "basico", label: "Básico" },
+  { value: "padrao", label: "Padrão" },
   { value: "vitalicio", label: "Vitalício", fixedPrice: 3499.90 },
 ];
 
@@ -44,7 +29,33 @@ const PLACEMENTS = [
   { value: "sidebar", label: "📎 Barra lateral" },
   { value: "tools", label: "🛠️ Página de Ferramentas" },
   { value: "footer", label: "🔻 Rodapé" },
+  { value: "between_sections", label: "📑 Entre seções" },
 ];
+
+const PAGE_OPTIONS = [
+  { value: "all", label: "📌 Todas as páginas" },
+  { value: "home", label: "🏠 Home (/)" },
+  { value: "chat", label: "💬 Chat (/assistente)" },
+  { value: "blog", label: "📝 Blog (/blog/*)" },
+  { value: "guias", label: "📖 Guias (/guias/*)" },
+  { value: "ferramentas", label: "🛠️ Ferramentas" },
+  { value: "financas", label: "💰 Finanças (/financas/*)" },
+  { value: "servicos", label: "🔧 Serviços (/servicos/*)" },
+  { value: "anuncie", label: "📢 Seja um Anunciante" },
+];
+
+// Plan-based access rules
+const PLAN_ALLOWED_PLACEMENTS: Record<string, string[]> = {
+  basico: ["middle", "footer"],
+  padrao: ["banner_top", "middle", "sidebar", "footer"],
+  vitalicio: PLACEMENTS.map(p => p.value),
+};
+
+const PLAN_ALLOWED_PAGES: Record<string, string[]> = {
+  basico: ["home"],
+  padrao: ["home", "blog", "guias", "ferramentas"],
+  vitalicio: PAGE_OPTIONS.map(p => p.value),
+};
 
 interface AdEditorProps {
   ad: {
@@ -63,6 +74,7 @@ interface AdEditorProps {
     client_name: string | null;
     ad_format?: string;
     placement?: string;
+    page_targets?: string[];
   };
   label: string;
   planStatus: "active" | "expiring" | "expired" | null;
@@ -72,6 +84,7 @@ interface AdEditorProps {
     plan_name: string; plan_start: string; plan_end: string;
     plan_value: string; client_name: string;
     ad_format: string; placement: string;
+    page_targets: string[];
   }) => void;
   saving: boolean;
 }
@@ -89,13 +102,14 @@ const AdEditor = ({ ad, label, planStatus, onSave, saving }: AdEditorProps) => {
   const [linkUrl, setLinkUrl] = useState(ad.link_url || "");
   const [whatsappNumber, setWhatsappNumber] = useState(ad.whatsapp_number || "");
   const [isActive, setIsActive] = useState(ad.is_active);
-  const [planName, setPlanName] = useState(ad.plan_name || "");
+  const [planName, setPlanName] = useState(ad.plan_name || "basico");
   const [planStart, setPlanStart] = useState(ad.plan_start || "");
   const [planEnd, setPlanEnd] = useState(ad.plan_end || "");
   const [planValue, setPlanValue] = useState(ad.plan_value?.toString() || "");
   const [clientName, setClientName] = useState(ad.client_name || "");
   const [adFormat, setAdFormat] = useState(ad.ad_format || "horizontal");
   const [placement, setPlacement] = useState(ad.placement || "banner_top");
+  const [pageTargets, setPageTargets] = useState<string[]>(ad.page_targets || []);
   const [uploading, setUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -106,13 +120,14 @@ const AdEditor = ({ ad, label, planStatus, onSave, saving }: AdEditorProps) => {
     setLinkUrl(ad.link_url || "");
     setWhatsappNumber(ad.whatsapp_number || "");
     setIsActive(ad.is_active);
-    setPlanName(ad.plan_name || "");
+    setPlanName(ad.plan_name || "basico");
     setPlanStart(ad.plan_start || "");
     setPlanEnd(ad.plan_end || "");
     setPlanValue(ad.plan_value?.toString() || "");
     setClientName(ad.client_name || "");
     setAdFormat(ad.ad_format || "horizontal");
     setPlacement(ad.placement || "banner_top");
+    setPageTargets(ad.page_targets || []);
   }, [ad]);
 
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -139,6 +154,29 @@ const AdEditor = ({ ad, label, planStatus, onSave, saving }: AdEditorProps) => {
     }
   };
 
+  const allowedPlacements = PLAN_ALLOWED_PLACEMENTS[planName] || PLAN_ALLOWED_PLACEMENTS.basico;
+  const allowedPages = PLAN_ALLOWED_PAGES[planName] || PLAN_ALLOWED_PAGES.basico;
+
+  // Auto-correct placement if plan changed and current is not allowed
+  useEffect(() => {
+    if (!allowedPlacements.includes(placement)) {
+      setPlacement(allowedPlacements[0] || "middle");
+    }
+    setPageTargets(prev => prev.filter(p => allowedPages.includes(p)));
+  }, [planName]);
+
+  const togglePageTarget = (value: string) => {
+    if (!allowedPages.includes(value)) return;
+    if (value === "all") {
+      setPageTargets(pageTargets.includes("all") ? [] : ["all"]);
+      return;
+    }
+    setPageTargets(prev => {
+      const filtered = prev.filter(p => p !== "all");
+      return filtered.includes(value) ? filtered.filter(p => p !== value) : [...filtered, value];
+    });
+  };
+
   const badge = planStatus ? statusBadge[planStatus] : null;
   const selectedFormat = AD_FORMATS.find(f => f.value === adFormat);
 
@@ -160,40 +198,6 @@ const AdEditor = ({ ad, label, planStatus, onSave, saving }: AdEditorProps) => {
         </div>
       </div>
 
-      {/* Format & Placement */}
-      <div className="mb-4 p-4 rounded-lg border border-primary/20 bg-primary/5">
-        <h4 className="text-sm font-semibold text-foreground mb-3">🎨 Formato e Posição</h4>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div>
-            <Label className="text-xs text-muted-foreground">Formato do Anúncio</Label>
-            <Select value={adFormat} onValueChange={setAdFormat}>
-              <SelectTrigger className="text-sm"><SelectValue /></SelectTrigger>
-              <SelectContent>
-                {AD_FORMATS.map(f => (
-                  <SelectItem key={f.value} value={f.value}>
-                    {f.label} — <span className="text-muted-foreground">{f.desc}</span>
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            {selectedFormat && (
-              <p className="text-xs text-muted-foreground mt-1">📐 {selectedFormat.desc}</p>
-            )}
-          </div>
-          <div>
-            <Label className="text-xs text-muted-foreground">Onde exibir</Label>
-            <Select value={placement} onValueChange={setPlacement}>
-              <SelectTrigger className="text-sm"><SelectValue /></SelectTrigger>
-              <SelectContent>
-                {PLACEMENTS.map(p => (
-                  <SelectItem key={p.value} value={p.value}>{p.label}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-        </div>
-      </div>
-
       {/* Plan section */}
       <div className="mb-4 p-4 rounded-lg border border-border/50 bg-card/30">
         <h4 className="text-sm font-semibold text-foreground mb-3">📋 Dados do Plano</h4>
@@ -204,23 +208,13 @@ const AdEditor = ({ ad, label, planStatus, onSave, saving }: AdEditorProps) => {
           </div>
           <div>
             <Label className="text-xs text-muted-foreground">Plano</Label>
-            <Select
-              value={planName}
-              onValueChange={(val) => {
-                setPlanName(val);
-                const plan = PLAN_OPTIONS.find(p => p.value === val);
-                if (plan) {
-                  if ('fixedPrice' in plan && plan.fixedPrice) {
-                    setPlanValue(plan.fixedPrice.toFixed(2));
-                  } else if ('multiplier' in plan) {
-                    const basePrice = SLOT_PRICES[ad.slot] || 0;
-                    if (basePrice > 0) {
-                      setPlanValue((basePrice * (plan as any).multiplier).toFixed(2));
-                    }
-                  }
-                }
-              }}
-            >
+            <Select value={planName} onValueChange={(val) => {
+              setPlanName(val);
+              const plan = PLAN_OPTIONS.find(p => p.value === val);
+              if (plan && 'fixedPrice' in plan && plan.fixedPrice) {
+                setPlanValue(plan.fixedPrice.toFixed(2));
+              }
+            }}>
               <SelectTrigger className="text-sm"><SelectValue placeholder="Selecione" /></SelectTrigger>
               <SelectContent>
                 {PLAN_OPTIONS.map(p => (
@@ -244,6 +238,93 @@ const AdEditor = ({ ad, label, planStatus, onSave, saving }: AdEditorProps) => {
           <div>
             <Label className="text-xs text-muted-foreground">Valor (R$)</Label>
             <Input type="number" step="0.01" value={planValue} onChange={(e) => setPlanValue(e.target.value)} placeholder="0,00" className="text-sm" />
+          </div>
+        </div>
+      </div>
+
+      {/* Format & Placement & Pages */}
+      <div className="mb-4 p-4 rounded-lg border border-primary/20 bg-primary/5">
+        <h4 className="text-sm font-semibold text-foreground mb-3">🎨 Formato, Posição e Páginas</h4>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+          <div>
+            <Label className="text-xs text-muted-foreground">Formato do Anúncio</Label>
+            <Select value={adFormat} onValueChange={setAdFormat}>
+              <SelectTrigger className="text-sm"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                {AD_FORMATS.map(f => (
+                  <SelectItem key={f.value} value={f.value}>
+                    {f.label} — <span className="text-muted-foreground">{f.desc}</span>
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            {selectedFormat && (
+              <p className="text-xs text-muted-foreground mt-1">📐 {selectedFormat.desc}</p>
+            )}
+          </div>
+          <div>
+            <Label className="text-xs text-muted-foreground">Onde exibir (posição)</Label>
+            <Select value={placement} onValueChange={(v) => {
+              if (allowedPlacements.includes(v)) setPlacement(v);
+            }}>
+              <SelectTrigger className="text-sm"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                {PLACEMENTS.map(p => {
+                  const locked = !allowedPlacements.includes(p.value);
+                  return (
+                    <SelectItem key={p.value} value={p.value} disabled={locked}>
+                      <span className="flex items-center gap-2">
+                        {p.label}
+                        {locked && <Lock className="w-3 h-3 text-muted-foreground" />}
+                      </span>
+                    </SelectItem>
+                  );
+                })}
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
+
+        {/* Page Targets */}
+        <div>
+          <Label className="text-xs text-muted-foreground mb-2 block">Em quais páginas exibir</Label>
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+            {PAGE_OPTIONS.map(page => {
+              const locked = !allowedPages.includes(page.value);
+              const checked = pageTargets.includes(page.value) || (page.value !== "all" && pageTargets.includes("all"));
+
+              if (locked) {
+                return (
+                  <Tooltip key={page.value}>
+                    <TooltipTrigger asChild>
+                      <label className="flex items-center gap-2 px-3 py-2 rounded-md border border-border/30 bg-muted/30 cursor-not-allowed opacity-50 text-xs">
+                        <Lock className="w-3 h-3 text-muted-foreground" />
+                        <span className="text-muted-foreground">{page.label}</span>
+                      </label>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      Disponível apenas no plano {planName === "basico" ? "Padrão ou Vitalício" : "Vitalício"}
+                    </TooltipContent>
+                  </Tooltip>
+                );
+              }
+
+              return (
+                <label
+                  key={page.value}
+                  className={`flex items-center gap-2 px-3 py-2 rounded-md border cursor-pointer text-xs transition-colors ${
+                    checked ? "border-primary/50 bg-primary/10 text-foreground" : "border-border/30 bg-card/30 text-muted-foreground hover:border-primary/30"
+                  }`}
+                >
+                  <Checkbox
+                    checked={checked}
+                    onCheckedChange={() => togglePageTarget(page.value)}
+                    className="h-3.5 w-3.5"
+                  />
+                  {page.label}
+                </label>
+              );
+            })}
           </div>
         </div>
       </div>
@@ -297,14 +378,21 @@ const AdEditor = ({ ad, label, planStatus, onSave, saving }: AdEditorProps) => {
       </div>
       <div className="flex justify-end mt-4">
         <Button
-          onClick={() => onSave({
-            title, description, image_url: imageUrl, link_url: linkUrl,
-            whatsapp_number: whatsappNumber, is_active: isActive,
-            plan_name: planName, plan_start: planStart,
-            plan_end: planName === "vitalicio" ? "" : planEnd,
-            plan_value: planValue, client_name: clientName,
-            ad_format: adFormat, placement,
-          })}
+          onClick={() => {
+            // Enforce plan rules before saving
+            const safePlacement = allowedPlacements.includes(placement) ? placement : allowedPlacements[0];
+            const safePages = pageTargets.filter(p => allowedPages.includes(p));
+
+            onSave({
+              title, description, image_url: imageUrl, link_url: linkUrl,
+              whatsapp_number: whatsappNumber, is_active: isActive,
+              plan_name: planName, plan_start: planStart,
+              plan_end: planName === "vitalicio" ? "" : planEnd,
+              plan_value: planValue, client_name: clientName,
+              ad_format: adFormat, placement: safePlacement,
+              page_targets: safePages,
+            });
+          }}
           disabled={saving}
           className="gap-2"
         >
