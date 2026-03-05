@@ -6,6 +6,7 @@ import { useNavigate } from "react-router-dom";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import AdEditor from "@/components/admin/AdEditor";
+import PixConfigAdmin from "@/components/admin/PixConfigAdmin";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -625,6 +626,11 @@ const AdminAds = () => {
             onSave={() => { saveTool.mutate(newTool); setNewTool(emptyTool); }}
             saving={saveTool.isPending}
           />
+        </div>
+
+        {/* Pix Checkout Config */}
+        <div className="mt-10">
+          <PixConfigAdmin />
         </div>
       </main>
       <Footer />
