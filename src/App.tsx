@@ -21,7 +21,7 @@ import GuideArticle from "./pages/GuideArticle";
 import Anuncie from "./pages/Anuncie";
 import About from "./pages/About";
 import Contact from "./pages/Contact";
-import Auth from "./pages/Auth";
+
 import AdminAds from "./pages/AdminAds";
 import Privacy from "./pages/Privacy";
 import Terms from "./pages/Terms";
@@ -57,7 +57,7 @@ function App() {
             <Route path="/anuncie" element={<Anuncie />} />
             <Route path="/sobre" element={<About />} />
             <Route path="/contato" element={<Contact />} />
-            <Route path="/auth" element={<Auth />} />
+            
             <Route path="/admin/anuncios" element={<AdminAds />} />
             <Route path="/privacidade" element={<Privacy />} />
             <Route path="/termos" element={<Terms />} />
