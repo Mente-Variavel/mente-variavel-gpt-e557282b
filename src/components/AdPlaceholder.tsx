@@ -95,18 +95,8 @@ const AdPlaceholder = ({ format = "inline", slot, className = "" }: AdPlaceholde
     );
   }
 
-  // CTA padrão: "Anuncie aqui"
-  return (
-    <Link
-      to="/anuncie"
-      className={`w-full ${sizeMap[format]} rounded-xl border border-dashed border-primary/30 bg-card/30 flex items-center justify-center gap-3 hover:border-primary/60 hover:bg-card/50 transition-all group cursor-pointer ${className}`}
-    >
-      <Megaphone className="w-5 h-5 text-primary/50 group-hover:text-primary transition-colors" />
-      <span className="text-sm text-muted-foreground/60 group-hover:text-primary/80 transition-colors font-medium">
-        Anuncie sua empresa aqui
-      </span>
-    </Link>
-  );
+  // No active ad — render nothing
+  return null;
 };
 
 export default AdPlaceholder;

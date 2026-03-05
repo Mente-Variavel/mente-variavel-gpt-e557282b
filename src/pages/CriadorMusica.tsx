@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Music, Copy, ExternalLink, Sparkles, Loader2, Lightbulb } from "lucide-react";
+import { Music, Copy, ExternalLink, Sparkles, Loader2, Lightbulb, RotateCcw } from "lucide-react";
 import { motion } from "framer-motion";
 import { toast } from "sonner";
 
@@ -272,10 +272,22 @@ A letra deve combinar perfeitamente com o gênero ${genero} e o tema "${tema}". 
                   <label className="text-sm text-muted-foreground mb-1.5 block">Estilo ou inspiração (opcional)</label>
                   <Input value={estilo} onChange={e => setEstilo(e.target.value)} placeholder="Ex: sertanejo moderno com voz grave, pop acústico..." />
                 </div>
-                <Button onClick={generateLyrics} disabled={loading} className="w-full gap-2">
-                  {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Music className="w-4 h-4" />}
-                  {loading ? "Gerando letra..." : "Gerar letra de música"}
-                </Button>
+                <div className="flex gap-3">
+                  <Button onClick={generateLyrics} disabled={loading} className="flex-1 gap-2">
+                    {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Music className="w-4 h-4" />}
+                    {loading ? "Gerando letra..." : "Gerar letra de música"}
+                  </Button>
+                  {(lyrics || titulo || genero || tema || estilo) && (
+                    <Button
+                      onClick={() => { setTitulo(""); setGenero(""); setTema(""); setEstilo(""); setLyrics(""); setSunoPrompt(""); setShowSunoPrompt(false); }}
+                      variant="outline"
+                      className="gap-2"
+                      disabled={loading}
+                    >
+                      <RotateCcw className="w-4 h-4" /> Limpar
+                    </Button>
+                  )}
+                </div>
               </CardContent>
             </Card>
           </motion.div>
