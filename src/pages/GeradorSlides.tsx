@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import {
   Layers, Plus, Trash2, Copy, ChevronDown, ChevronUp, Loader2, Download,
   ImageIcon, Check, BookOpen, Presentation, Sparkles,
-  FileText, RotateCcw, ArrowRight, ArrowLeft, Zap, CreditCard
+  FileText, RotateCcw, ArrowRight, ArrowLeft, Zap, CreditCard, Eraser, WandSparkles
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -13,6 +13,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
+import MicInput from "@/components/MicInput";
 import { toast } from "sonner";
 import { useSearchParams } from "react-router-dom";
 
@@ -76,6 +77,26 @@ function extractJson(text: string): any {
   return JSON.parse(cleaned);
 }
 
+// Helper: Input with mic
+function InputWithMic({ value, onChange, placeholder, className = "", ...props }: React.ComponentProps<"input"> & { value: string; onChange: (e: React.ChangeEvent<HTMLInputElement>) => void }) {
+  return (
+    <div className="relative flex items-center">
+      <Input value={value} onChange={onChange} placeholder={placeholder} className={`pr-9 ${className}`} {...props} />
+      <MicInput onTranscript={(t) => onChange({ target: { value: value ? `${value} ${t}` : t } } as any)} className="absolute right-1" />
+    </div>
+  );
+}
+
+// Helper: Textarea with mic
+function TextareaWithMic({ value, onChange, placeholder, rows, className = "" }: { value: string; onChange: (e: React.ChangeEvent<HTMLTextAreaElement>) => void; placeholder?: string; rows?: number; className?: string }) {
+  return (
+    <div className="relative">
+      <Textarea value={value} onChange={onChange} placeholder={placeholder} rows={rows} className={`pr-9 ${className}`} />
+      <MicInput onTranscript={(t) => onChange({ target: { value: value ? `${value} ${t}` : t } } as any)} className="absolute right-1 top-1" />
+    </div>
+  );
+}
+
 export default function GeradorSlides() {
   const [searchParams] = useSearchParams();
   const [step, setStep] = useState(1);
@@ -96,6 +117,11 @@ export default function GeradorSlides() {
   const [paymentLoading, setPaymentLoading] = useState(false);
   const [generatingAllImages, setGeneratingAllImages] = useState(false);
 
+  // Free cover preview state
+  const [coverUrl, setCoverUrl] = useState<string | null>(null);
+  const [coverLoading, setCoverLoading] = useState(false);
+  const [optimizePrompt, setOptimizePrompt] = useState(false);
+
   // Generate project ID on mount
   useEffect(() => {
     const saved = localStorage.getItem("mv_project_id");
@@ -112,15 +138,18 @@ export default function GeradorSlides() {
   useEffect(() => {
     const savedSlides = localStorage.getItem("mv_slides_data");
     const savedChapters = localStorage.getItem("mv_chapters_data");
+    const savedCover = localStorage.getItem("mv_cover_url");
     if (savedSlides) try { setSlides(JSON.parse(savedSlides)); setStep(2); } catch {}
     if (savedChapters) try { setChapters(JSON.parse(savedChapters)); setStep(2); } catch {}
+    if (savedCover) setCoverUrl(savedCover);
   }, []);
 
   // Save data
   useEffect(() => { if (slides.length) localStorage.setItem("mv_slides_data", JSON.stringify(slides)); }, [slides]);
   useEffect(() => { if (chapters.length) localStorage.setItem("mv_chapters_data", JSON.stringify(chapters)); }, [chapters]);
+  useEffect(() => { if (coverUrl) localStorage.setItem("mv_cover_url", coverUrl); }, [coverUrl]);
 
-  // Handle payment return — after successful payment, auto-generate all images
+  // Handle payment return
   useEffect(() => {
     const payment = searchParams.get("payment");
     const returnProject = searchParams.get("project");
@@ -129,10 +158,7 @@ export default function GeradorSlides() {
       localStorage.setItem("mv_project_id", returnProject);
       setIsPaid(true);
       toast.success("Pagamento confirmado! Gerando todas as imagens...");
-      // Auto-generate images after payment
-      setTimeout(() => {
-        generateAllImages();
-      }, 500);
+      setTimeout(() => { generateAllImages(); }, 500);
     }
   }, [searchParams]);
 
@@ -157,12 +183,30 @@ export default function GeradorSlides() {
 
   useEffect(() => { if (projectId) verifyPayment(); }, [projectId, verifyPayment]);
 
+  // Free cover generation
+  const generateFreeCover = async () => {
+    if (!title || !tema) { toast.error("Preencha título e tema primeiro."); return; }
+    setCoverLoading(true);
+    try {
+      let prompt = `Professional ${tipo === "Slides" ? "presentation" : "e-book"} cover image for: "${title}". Theme: ${tema}. Style: photorealistic, premium, modern.`;
+      if (optimizePrompt) {
+        prompt = `Ultra high quality, award-winning ${tipo === "Slides" ? "presentation" : "e-book"} cover design for: "${title}". Theme: ${tema}. Target audience: ${publico || "general"}. Tone: ${tom}. Style: photorealistic, premium, modern, cinematic lighting, editorial quality, 4K.`;
+      }
+      const url = await generateProjectImage(prompt, projectId, true);
+      setCoverUrl(url);
+      toast.success("Capa gerada com sucesso!");
+    } catch (err: any) {
+      toast.error(err.message || "Erro ao gerar capa.");
+    } finally {
+      setCoverLoading(false);
+    }
+  };
+
   const handlePayment = async () => {
     setPaymentLoading(true);
     try {
       const sessionId = localStorage.getItem("mv_session_id") || crypto.randomUUID();
       localStorage.setItem("mv_session_id", sessionId);
-
       const res = await fetch(PAYMENT_URL, {
         method: "POST",
         headers: {
@@ -184,7 +228,7 @@ export default function GeradorSlides() {
     }
   };
 
-  // Generate all images sequentially for items that don't have one yet
+  // Generate all images sequentially
   const generateAllImages = async () => {
     const isSlides = tipo === "Slides";
     const items = isSlides ? slides : chapters;
@@ -197,7 +241,7 @@ export default function GeradorSlides() {
 
     for (let idx = 0; idx < items.length; idx++) {
       const item = items[idx] as any;
-      if (item.imageUrl) continue; // already has image
+      if (item.imageUrl) continue;
 
       setter((prev: any[]) => prev.map((i: any, j: number) =>
         j === idx ? { ...i, imageLoading: true } : i
@@ -205,6 +249,15 @@ export default function GeradorSlides() {
 
       try {
         const isCover = idx === 0;
+        // If cover already generated for free, use that URL
+        if (isCover && coverUrl) {
+          setter((prev: any[]) => prev.map((i: any, j: number) =>
+            j === 0 ? { ...i, imageUrl: coverUrl, imageLoading: false } : i
+          ));
+          count++;
+          setImagesGenerated(count);
+          continue;
+        }
         const prompt = isSlides
           ? isCover
             ? `Professional presentation cover image for: "${title}". Theme: ${tema}. Style: photorealistic, premium, modern.`
@@ -255,7 +308,7 @@ export default function GeradorSlides() {
       ));
       setImagesGenerated(prev => prev + 1);
       toast.success("Ilustração gerada!");
-    } catch (err: any) {
+    } catch {
       setter((prev: any[]) => prev.map((i: any) =>
         i.id === id ? { ...i, imageLoading: false } : i
       ));
@@ -263,17 +316,13 @@ export default function GeradorSlides() {
     }
   };
 
-  // Main action: generate structure, then trigger payment for images
+  // Main action: generate structure then trigger payment for images
   const handleMainAction = async () => {
     if (!title || !tema) { toast.error("Preencha pelo menos título e tema."); return; }
-
-    // If already paid, generate structure + images directly
     if (isPaid) {
       await generateStructure();
       return;
     }
-
-    // Otherwise, generate structure first, then trigger payment
     await generateStructure();
   };
 
@@ -282,7 +331,6 @@ export default function GeradorSlides() {
     setSlides([]);
     setChapters([]);
 
-    // New project ID for each generation
     const newId = crypto.randomUUID();
     setProjectId(newId);
     localStorage.setItem("mv_project_id", newId);
@@ -389,15 +437,10 @@ ${tipo === "Slides"
     </div>`).join("")
 }
 </body></html>`;
-
     const blob = new Blob([htmlContent], { type: "text/html" });
     const url = URL.createObjectURL(blob);
     const printWindow = window.open(url, "_blank");
-    if (printWindow) {
-      printWindow.onload = () => {
-        printWindow.print();
-      };
-    }
+    if (printWindow) { printWindow.onload = () => { printWindow.print(); }; }
     toast.success("PDF pronto para impressão!");
   };
 
@@ -422,13 +465,25 @@ ${tipo === "Slides"
     setTom("Profissional");
     setNumSlides("");
     setStep(1);
+    setCoverUrl(null);
+    setCoverLoading(false);
+    setOptimizePrompt(false);
     localStorage.removeItem("mv_slides_data");
     localStorage.removeItem("mv_chapters_data");
+    localStorage.removeItem("mv_cover_url");
     const newId = crypto.randomUUID();
     setProjectId(newId);
     localStorage.setItem("mv_project_id", newId);
     setImagesGenerated(0);
     setIsPaid(false);
+  };
+
+  const clearFields = () => {
+    setTitle("");
+    setTema("");
+    setPublico("");
+    setObjetivo("");
+    setNumSlides("");
   };
 
   const hasContent = slides.length > 0 || chapters.length > 0;
@@ -466,9 +521,7 @@ ${tipo === "Slides"
                 return (
                   <div key={s.id} className="flex items-center">
                     <button
-                      onClick={() => {
-                        if (s.id === 1 || hasContent) setStep(s.id);
-                      }}
+                      onClick={() => { if (s.id === 1 || hasContent) setStep(s.id); }}
                       className={`flex flex-col items-center gap-1.5 transition-all ${
                         isActive ? "text-primary" : isDone ? "text-primary/60" : "text-muted-foreground/40"
                       }`}
@@ -507,18 +560,10 @@ ${tipo === "Slides"
                   <CardContent className="space-y-5">
                     {/* Type selector */}
                     <div className="flex gap-3">
-                      <Button
-                        variant={tipo === "Slides" ? "default" : "outline"}
-                        onClick={() => setTipo("Slides")}
-                        className="flex-1 gap-2"
-                      >
+                      <Button variant={tipo === "Slides" ? "default" : "outline"} onClick={() => setTipo("Slides")} className="flex-1 gap-2">
                         <Presentation className="w-4 h-4" /> Slides
                       </Button>
-                      <Button
-                        variant={tipo === "E-book" ? "default" : "outline"}
-                        onClick={() => setTipo("E-book")}
-                        className="flex-1 gap-2"
-                      >
+                      <Button variant={tipo === "E-book" ? "default" : "outline"} onClick={() => setTipo("E-book")} className="flex-1 gap-2">
                         <BookOpen className="w-4 h-4" /> E-book
                       </Button>
                     </div>
@@ -526,21 +571,21 @@ ${tipo === "Slides"
                     <div className="grid sm:grid-cols-2 gap-4">
                       <div>
                         <label className="text-xs text-muted-foreground mb-1.5 block font-medium">Título *</label>
-                        <Input value={title} onChange={e => setTitle(e.target.value)} placeholder="Ex: Marketing Digital 2026" className="bg-secondary/30 border-border/50" />
+                        <InputWithMic value={title} onChange={e => setTitle(e.target.value)} placeholder="Ex: Marketing Digital 2026" className="bg-secondary/30 border-border/50" />
                       </div>
                       <div>
                         <label className="text-xs text-muted-foreground mb-1.5 block font-medium">Tema *</label>
-                        <Input value={tema} onChange={e => setTema(e.target.value)} placeholder="Ex: Estratégias de crescimento" className="bg-secondary/30 border-border/50" />
+                        <InputWithMic value={tema} onChange={e => setTema(e.target.value)} placeholder="Ex: Estratégias de crescimento" className="bg-secondary/30 border-border/50" />
                       </div>
                     </div>
                     <div className="grid sm:grid-cols-3 gap-4">
                       <div>
                         <label className="text-xs text-muted-foreground mb-1.5 block font-medium">Público-alvo</label>
-                        <Input value={publico} onChange={e => setPublico(e.target.value)} placeholder="Ex: Empreendedores" className="bg-secondary/30 border-border/50" />
+                        <InputWithMic value={publico} onChange={e => setPublico(e.target.value)} placeholder="Ex: Empreendedores" className="bg-secondary/30 border-border/50" />
                       </div>
                       <div>
                         <label className="text-xs text-muted-foreground mb-1.5 block font-medium">Objetivo</label>
-                        <Input value={objetivo} onChange={e => setObjetivo(e.target.value)} placeholder="Ex: Educar e vender" className="bg-secondary/30 border-border/50" />
+                        <InputWithMic value={objetivo} onChange={e => setObjetivo(e.target.value)} placeholder="Ex: Educar e vender" className="bg-secondary/30 border-border/50" />
                       </div>
                       <div>
                         <label className="text-xs text-muted-foreground mb-1.5 block font-medium">Tom</label>
@@ -556,6 +601,61 @@ ${tipo === "Slides"
                         <Input type="number" value={numSlides} onChange={e => setNumSlides(e.target.value)} placeholder="8" className="bg-secondary/30 border-border/50" />
                       </div>
                     )}
+
+                    {/* Free cover preview */}
+                    <div className="rounded-xl border border-border/40 bg-secondary/10 p-4 space-y-3">
+                      <div className="flex items-center justify-between flex-wrap gap-2">
+                        <h3 className="text-sm font-semibold flex items-center gap-2">
+                          <ImageIcon className="w-4 h-4 text-primary" />
+                          Prévia gratuita da capa
+                        </h3>
+                        <div className="flex items-center gap-2">
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => setOptimizePrompt(!optimizePrompt)}
+                            className={`gap-1.5 text-xs h-7 ${optimizePrompt ? "text-primary bg-primary/10" : "text-muted-foreground"}`}
+                          >
+                            <WandSparkles className="w-3 h-3" />
+                            Otimizar prompt
+                          </Button>
+                        </div>
+                      </div>
+
+                      {coverUrl ? (
+                        <div className="space-y-3">
+                          <div className="relative rounded-lg overflow-hidden border border-border/30 max-w-sm">
+                            <img src={coverUrl} alt="Prévia da capa" className="w-full aspect-[4/3] object-cover" />
+                            <Badge className="absolute top-2 left-2 bg-primary/80 text-primary-foreground text-[10px]">CAPA</Badge>
+                          </div>
+                          <div className="flex gap-2">
+                            <Button variant="outline" size="sm" onClick={generateFreeCover} disabled={coverLoading} className="gap-1.5">
+                              {coverLoading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <RotateCcw className="w-3.5 h-3.5" />}
+                              Refazer capa
+                            </Button>
+                          </div>
+                          <p className="text-xs text-muted-foreground italic">
+                            A capa é grátis para você visualizar o resultado. Para gerar o e-book completo + todas as imagens, é necessário confirmar o pagamento.
+                          </p>
+                        </div>
+                      ) : (
+                        <div className="space-y-2">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={generateFreeCover}
+                            disabled={coverLoading || !title || !tema}
+                            className="gap-1.5"
+                          >
+                            {coverLoading ? <><Loader2 className="w-3.5 h-3.5 animate-spin" /> Gerando capa...</> : <><ImageIcon className="w-3.5 h-3.5" /> Gerar capa grátis</>}
+                          </Button>
+                          <p className="text-xs text-muted-foreground">
+                            Visualize como ficará a capa do seu projeto gratuitamente.
+                          </p>
+                        </div>
+                      )}
+                    </div>
 
                     {/* Payment info */}
                     <div className="rounded-xl border border-primary/20 bg-primary/5 p-4">
@@ -579,11 +679,11 @@ ${tipo === "Slides"
                       </div>
                     </div>
 
-                    <div className="flex gap-3 pt-2">
+                    <div className="flex gap-3 pt-2 flex-wrap">
                       <Button
                         onClick={handleMainAction}
                         disabled={loading || paymentLoading || !title || !tema}
-                        className="flex-1 gap-2 h-12 text-base"
+                        className="flex-1 min-w-[200px] gap-2 h-12 text-base"
                       >
                         {loading ? (
                           <><Loader2 className="w-5 h-5 animate-spin" /> Gerando estrutura...</>
@@ -593,8 +693,11 @@ ${tipo === "Slides"
                           <><Zap className="w-5 h-5" /> Gerar E-book ou Slides</>
                         )}
                       </Button>
-                      <Button variant="outline" onClick={resetProject} className="gap-2">
-                        <RotateCcw className="w-4 h-4" /> Limpar
+                      <Button variant="outline" onClick={clearFields} className="gap-2" title="Limpar campos">
+                        <Eraser className="w-4 h-4" /> Limpar
+                      </Button>
+                      <Button variant="outline" onClick={resetProject} className="gap-2" title="Resetar projeto inteiro">
+                        <RotateCcw className="w-4 h-4" /> Novo
                       </Button>
                     </div>
                   </CardContent>
@@ -622,6 +725,17 @@ ${tipo === "Slides"
                   </div>
                 </div>
 
+                {/* Cover preview in structure step */}
+                {coverUrl && (
+                  <div className="mb-4 rounded-lg border border-primary/20 bg-primary/5 p-3 flex items-center gap-3">
+                    <img src={coverUrl} alt="Capa" className="w-16 h-12 object-cover rounded" />
+                    <div className="flex-1">
+                      <p className="text-xs font-medium">Capa do projeto</p>
+                      <p className="text-[10px] text-muted-foreground">Esta imagem será usada como capa.</p>
+                    </div>
+                  </div>
+                )}
+
                 {/* Slides list */}
                 {tipo === "Slides" && (
                   <div className="space-y-3">
@@ -630,7 +744,7 @@ ${tipo === "Slides"
                         <CardHeader className="pb-2 px-4 pt-4">
                           <div className="flex items-center gap-2">
                             <Badge variant="secondary" className="text-[10px] font-mono px-2 py-0.5">#{idx + 1}</Badge>
-                            <Input
+                            <InputWithMic
                               value={slide.title}
                               onChange={e => updateSlide(slide.id, "title", e.target.value)}
                               className="text-sm font-semibold border-none bg-transparent p-0 h-auto focus-visible:ring-0"
@@ -643,16 +757,16 @@ ${tipo === "Slides"
                         <CardContent className="space-y-3 px-4 pb-4">
                           <div>
                             <label className="text-xs text-muted-foreground font-medium">Tópicos</label>
-                            <Textarea value={slide.bullets.join("\n")} onChange={e => updateSlide(slide.id, "bullets", e.target.value.split("\n"))} rows={3} className="text-sm bg-secondary/20" />
+                            <TextareaWithMic value={slide.bullets.join("\n")} onChange={e => updateSlide(slide.id, "bullets", e.target.value.split("\n"))} rows={3} className="text-sm bg-secondary/20" />
                           </div>
                           <div className="grid sm:grid-cols-2 gap-3">
                             <div>
                               <label className="text-xs text-muted-foreground font-medium">🎨 Ideia visual</label>
-                              <Input value={slide.visual} onChange={e => updateSlide(slide.id, "visual", e.target.value)} className="text-sm bg-secondary/20" />
+                              <InputWithMic value={slide.visual} onChange={e => updateSlide(slide.id, "visual", e.target.value)} className="text-sm bg-secondary/20" />
                             </div>
                             <div>
                               <label className="text-xs text-muted-foreground font-medium">📝 Notas</label>
-                              <Input value={slide.notes} onChange={e => updateSlide(slide.id, "notes", e.target.value)} className="text-sm bg-secondary/20" />
+                              <InputWithMic value={slide.notes} onChange={e => updateSlide(slide.id, "notes", e.target.value)} className="text-sm bg-secondary/20" />
                             </div>
                           </div>
                         </CardContent>
@@ -712,7 +826,7 @@ ${tipo === "Slides"
                     </Button>
                   ) : (
                     <Button onClick={handlePayment} disabled={paymentLoading} className="gap-2">
-                      {paymentLoading ? <><Loader2 className="w-4 h-4 animate-spin" /> Processando...</> : <><CreditCard className="w-4 h-4" /> Desbloquear Imagens — US$ 1</>}
+                      {paymentLoading ? <><Loader2 className="w-4 h-4 animate-spin" /> Processando...</> : <><CreditCard className="w-4 h-4" /> Gerar E-book/Slides Completo — US$ 1</>}
                     </Button>
                   )}
                 </div>
@@ -753,7 +867,6 @@ ${tipo === "Slides"
                 <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
                   {items.map((item: any, idx: number) => {
                     const isCoverSlot = idx === 0;
-
                     return (
                       <Card key={item.id} className="overflow-hidden border-border/30">
                         <div className="relative aspect-[4/3] bg-secondary/20">
