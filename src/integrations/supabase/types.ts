@@ -24,6 +24,7 @@ export type Database = {
           image_url: string | null
           is_active: boolean
           link_url: string | null
+          page_targets: string[]
           placement: string
           plan_end: string | null
           plan_name: string | null
@@ -43,6 +44,7 @@ export type Database = {
           image_url?: string | null
           is_active?: boolean
           link_url?: string | null
+          page_targets?: string[]
           placement?: string
           plan_end?: string | null
           plan_name?: string | null
@@ -62,6 +64,7 @@ export type Database = {
           image_url?: string | null
           is_active?: boolean
           link_url?: string | null
+          page_targets?: string[]
           placement?: string
           plan_end?: string | null
           plan_name?: string | null

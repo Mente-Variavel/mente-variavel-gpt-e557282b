@@ -14,14 +14,7 @@ import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
-import { LogIn, AlertTriangle, Clock, Plus, Sparkles, Trash2, Save, Mail, MailOpen, Eye, ChevronDown, ChevronUp, Users } from "lucide-react";
-
-const SLOT_LABELS: Record<string, string> = {
-  banner_top: "🔝 Banner Topo",
-  inline_1: "📄 Inline 1 (meio da página)",
-  inline_2: "📄 Inline 2 (meio da página)",
-  footer: "🔻 Rodapé",
-};
+import { LogIn, AlertTriangle, Clock, Plus, Sparkles, Trash2, Save, Mail, MailOpen, Eye, ChevronDown, ChevronUp, Users, Bug } from "lucide-react";
 
 const getAdStatus = (planEnd: string | null) => {
   if (!planEnd) return null;
@@ -88,6 +81,7 @@ const AdminAds = () => {
 
   const [showMessages, setShowMessages] = useState(true);
   const [showUsers, setShowUsers] = useState(false);
+  const [showDebug, setShowDebug] = useState(false);
   const [expandedMessage, setExpandedMessage] = useState<string | null>(null);
 
   const { data: registeredUsers } = useQuery({
@@ -110,6 +104,7 @@ const AdminAds = () => {
       plan_name: string; plan_start: string; plan_end: string;
       plan_value: string; client_name: string;
       ad_format: string; placement: string;
+      page_targets: string[];
     }) => {
       const { error } = await supabase.from("ads").update({
         title: ad.title, description: ad.description, image_url: ad.image_url,
@@ -118,6 +113,7 @@ const AdminAds = () => {
         plan_end: ad.plan_end || null, plan_value: ad.plan_value ? parseFloat(ad.plan_value) : null,
         client_name: ad.client_name || null,
         ad_format: ad.ad_format, placement: ad.placement,
+        page_targets: ad.page_targets,
       }).eq("id", ad.id);
       if (error) throw error;
     },
@@ -234,6 +230,13 @@ const AdminAds = () => {
     ...expiringTools.map((t) => ({ ...t, type: "tool" as const, label: t.client_name || t.name })),
   ];
 
+  // Debug info
+  const activeAds = ads?.filter(a => a.is_active) || [];
+  const placementCounts: Record<string, number> = {};
+  activeAds.forEach(a => {
+    placementCounts[a.placement] = (placementCounts[a.placement] || 0) + 1;
+  });
+
   const ToolForm = ({ value, onChange, onSave, onDelete, saving }: {
     value: typeof emptyTool;
     onChange: (v: typeof emptyTool) => void;
@@ -290,6 +293,45 @@ const AdminAds = () => {
         <h1 className="font-display text-2xl md:text-3xl font-bold text-foreground mb-4">
           Gerenciar Anúncios
         </h1>
+
+        {/* Debug Panel */}
+        <div className="mb-6">
+          <button
+            onClick={() => setShowDebug(!showDebug)}
+            className="flex items-center gap-2 text-xs font-medium text-muted-foreground hover:text-primary transition-colors mb-2"
+          >
+            <Bug className="w-3.5 h-3.5" />
+            Debug / Diagnóstico
+            {showDebug ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
+          </button>
+          {showDebug && (
+            <div className="p-4 rounded-lg border border-border/50 bg-card/30 text-xs space-y-2">
+              <p><strong>Total de anúncios:</strong> {ads?.length || 0}</p>
+              <p><strong>Anúncios ativos:</strong> {activeAds.length}</p>
+              <p><strong>Por posição:</strong></p>
+              {Object.entries(placementCounts).map(([k, v]) => (
+                <p key={k} className="ml-4">• {k}: {v} anúncio(s)</p>
+              ))}
+              {activeAds.length === 0 && (
+                <p className="text-yellow-500">⚠ Nenhum anúncio ativo. Ative pelo menos um para exibir no site.</p>
+              )}
+              {activeAds.map(ad => {
+                const targets = (ad as any).page_targets as string[] || [];
+                return (
+                  <div key={ad.id} className="ml-4 border-l-2 border-primary/30 pl-3 py-1">
+                    <p>✅ <strong>{ad.client_name || ad.title || ad.slot}</strong></p>
+                    <p className="text-muted-foreground">Posição: {ad.placement} | Formato: {ad.ad_format} | Páginas: {targets.length === 0 ? "todas (padrão)" : targets.join(", ")}</p>
+                  </div>
+                );
+              })}
+              {ads?.filter(a => !a.is_active).map(ad => (
+                <div key={ad.id} className="ml-4 border-l-2 border-muted/30 pl-3 py-1 opacity-50">
+                  <p>❌ <strong>{ad.client_name || ad.title || ad.slot}</strong> — desativado</p>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
 
         {/* Contact Messages Section */}
         <div className="mb-8">
@@ -408,7 +450,6 @@ const AdminAds = () => {
           )}
         </div>
 
-
         {allAlerts.length > 0 && (
           <div className="mb-6 space-y-2">
             {allAlerts.map((item) => {
@@ -455,8 +496,11 @@ const AdminAds = () => {
           {ads?.map((ad) => (
             <AdEditor
               key={ad.id}
-              ad={ad}
-              label={SLOT_LABELS[ad.slot] || ad.slot}
+              ad={{
+                ...ad,
+                page_targets: (ad as any).page_targets || [],
+              }}
+              label={ad.client_name || ad.title || ad.slot}
               planStatus={getAdStatus(ad.plan_end)}
               onSave={(updated) => updateMutation.mutate({ ...updated, id: ad.id })}
               saving={updateMutation.isPending}

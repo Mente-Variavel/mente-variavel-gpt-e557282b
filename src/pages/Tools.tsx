@@ -74,6 +74,7 @@ const Tools = () => {
             </p>
           </motion.div>
 
+          <AdPlaceholder placement="banner_top" className="mb-8" />
           <AdPlaceholder placement="tools" className="mb-8" />
 
           <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">

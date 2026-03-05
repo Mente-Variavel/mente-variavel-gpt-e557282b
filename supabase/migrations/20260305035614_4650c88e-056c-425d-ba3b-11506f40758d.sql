@@ -1,0 +1,1 @@
+ALTER TABLE public.ads ADD COLUMN IF NOT EXISTS page_targets text[] NOT NULL DEFAULT '{}'::text[];
