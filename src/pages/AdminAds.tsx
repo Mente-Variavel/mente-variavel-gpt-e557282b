@@ -109,6 +109,7 @@ const AdminAds = () => {
       link_url: string; whatsapp_number: string; is_active: boolean;
       plan_name: string; plan_start: string; plan_end: string;
       plan_value: string; client_name: string;
+      ad_format: string; placement: string;
     }) => {
       const { error } = await supabase.from("ads").update({
         title: ad.title, description: ad.description, image_url: ad.image_url,
@@ -116,12 +117,13 @@ const AdminAds = () => {
         plan_name: ad.plan_name || null, plan_start: ad.plan_start || null,
         plan_end: ad.plan_end || null, plan_value: ad.plan_value ? parseFloat(ad.plan_value) : null,
         client_name: ad.client_name || null,
+        ad_format: ad.ad_format, placement: ad.placement,
       }).eq("id", ad.id);
       if (error) throw error;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["admin-ads"] });
-      queryClient.invalidateQueries({ queryKey: ["ad"] });
+      queryClient.invalidateQueries({ queryKey: ["ads-by-placement"] });
       toast.success("Anúncio salvo com sucesso!");
     },
     onError: () => toast.error("Erro ao salvar anúncio"),

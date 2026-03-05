@@ -47,18 +47,18 @@ const GuideArticle = () => {
               </h1>
               <p className="text-foreground/70 mb-8">{guide.description}</p>
 
-              <AdPlaceholder format="inline" className="mb-8" />
+              <AdPlaceholder placement="middle" className="mb-8" />
 
               <div className="prose prose-invert prose-sm max-w-none [&_h2]:font-display [&_h2]:text-xl [&_h2]:font-bold [&_h2]:text-foreground [&_h2]:mt-10 [&_h2]:mb-4 [&_h3]:font-display [&_h3]:text-base [&_h3]:font-semibold [&_h3]:text-foreground [&_h3]:mt-8 [&_h3]:mb-3 [&_h4]:font-display [&_h4]:text-sm [&_h4]:font-semibold [&_h4]:text-foreground [&_h4]:mt-6 [&_h4]:mb-2 [&_p]:text-foreground/75 [&_p]:leading-relaxed [&_p]:mb-4 [&_li]:text-foreground/75 [&_strong]:text-foreground [&_ul]:mb-4 [&_ol]:mb-4">
                 <ReactMarkdown>{guide.content}</ReactMarkdown>
               </div>
 
-              <AdPlaceholder format="inline" className="mt-10" />
+              <AdPlaceholder placement="middle" className="mt-10" />
             </motion.article>
 
             {/* Sidebar */}
             <aside className="lg:w-72 shrink-0 space-y-6">
-              <AdPlaceholder format="sidebar" />
+              <AdPlaceholder placement="sidebar" />
               <div className="glass rounded-xl p-5">
                 <h3 className="font-display text-xs font-bold text-foreground mb-3 uppercase tracking-wider">Outros Guias</h3>
                 <div className="space-y-2">
@@ -73,7 +73,7 @@ const GuideArticle = () => {
                   ))}
                 </div>
               </div>
-              <AdPlaceholder format="sidebar" />
+              <AdPlaceholder placement="sidebar" />
             </aside>
           </div>
         </div>

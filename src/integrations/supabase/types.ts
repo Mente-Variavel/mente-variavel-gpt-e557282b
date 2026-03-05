@@ -16,6 +16,7 @@ export type Database = {
     Tables: {
       ads: {
         Row: {
+          ad_format: string
           client_name: string | null
           created_at: string
           description: string | null
@@ -23,6 +24,7 @@ export type Database = {
           image_url: string | null
           is_active: boolean
           link_url: string | null
+          placement: string
           plan_end: string | null
           plan_name: string | null
           plan_start: string | null
@@ -33,6 +35,7 @@ export type Database = {
           whatsapp_number: string | null
         }
         Insert: {
+          ad_format?: string
           client_name?: string | null
           created_at?: string
           description?: string | null
@@ -40,6 +43,7 @@ export type Database = {
           image_url?: string | null
           is_active?: boolean
           link_url?: string | null
+          placement?: string
           plan_end?: string | null
           plan_name?: string | null
           plan_start?: string | null
@@ -50,6 +54,7 @@ export type Database = {
           whatsapp_number?: string | null
         }
         Update: {
+          ad_format?: string
           client_name?: string | null
           created_at?: string
           description?: string | null
@@ -57,6 +62,7 @@ export type Database = {
           image_url?: string | null
           is_active?: boolean
           link_url?: string | null
+          placement?: string
           plan_end?: string | null
           plan_name?: string | null
           plan_start?: string | null
