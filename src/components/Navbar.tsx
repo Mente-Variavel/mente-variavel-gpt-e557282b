@@ -14,6 +14,7 @@ const financasItems = [
 ];
 
 const servicosItems = [
+  { to: "/servicos/criador-prompt", label: "Criador de Prompt" },
   { to: "/servicos/removedor-fundo", label: "Removedor de Fundo" },
   { to: "/servicos/gerador-slides", label: "Gerador de Slides & E-book" },
 ];
