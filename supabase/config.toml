@@ -11,3 +11,12 @@ verify_jwt = false
 
 [functions.exchange-rates]
 verify_jwt = false
+
+[functions.create-image-payment]
+verify_jwt = false
+
+[functions.verify-image-payment]
+verify_jwt = false
+
+[functions.generate-project-image]
+verify_jwt = false

@@ -176,6 +176,45 @@ export type Database = {
         }
         Relationships: []
       }
+      project_image_unlocks: {
+        Row: {
+          created_at: string
+          id: string
+          images_generated: number
+          is_paid: boolean
+          max_images: number
+          project_id: string
+          session_id: string | null
+          stripe_session_id: string | null
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          images_generated?: number
+          is_paid?: boolean
+          max_images?: number
+          project_id: string
+          session_id?: string | null
+          stripe_session_id?: string | null
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          images_generated?: number
+          is_paid?: boolean
+          max_images?: number
+          project_id?: string
+          session_id?: string | null
+          stripe_session_id?: string | null
+          updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       site_settings: {
         Row: {
           key: string
