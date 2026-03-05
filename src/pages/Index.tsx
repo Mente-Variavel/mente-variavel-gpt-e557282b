@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import AdPlaceholder from "@/components/AdPlaceholder";
 import { motion, AnimatePresence } from "framer-motion";
 import { ArrowRight, TrendingUp, Wand2, Layers, DollarSign, ImageOff, Music, Sparkles, Send, MessageSquare, Mic, MicOff, Paperclip, X, FileText } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -227,6 +228,10 @@ export default function Index() {
             </div>
           </div>
         </section>
+        {/* Ad between tools and CTA */}
+        <div className="container mx-auto px-4">
+          <AdPlaceholder format="inline" slot="home_inline" className="my-8" />
+        </div>
 
         {/* CTA */}
         <section className="py-16">
