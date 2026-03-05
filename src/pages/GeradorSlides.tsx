@@ -865,20 +865,28 @@ ${tipo === "Slides"
 
                 {/* Image Grid */}
                 <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {items.map((item: any, idx: number) => {
+                {items.map((item: any, idx: number) => {
                     const isCoverSlot = idx === 0;
+                    const coverImage = isCoverSlot && coverUrl ? coverUrl : item.imageUrl;
+                    const isCoverLoading2 = isCoverSlot && coverLoading;
                     return (
                       <Card key={item.id} className="overflow-hidden border-border/30">
                         <div className="relative aspect-[4/3] bg-secondary/20">
-                          {item.imageLoading ? (
+                          {(item.imageLoading || isCoverLoading2) ? (
                             <div className="absolute inset-0 flex flex-col items-center justify-center gap-2">
                               <Loader2 className="w-6 h-6 animate-spin text-primary" />
                               <span className="text-xs text-muted-foreground">Gerando...</span>
                             </div>
-                          ) : item.imageUrl ? (
+                          ) : coverImage ? (
                             <div className="relative group h-full">
-                              <img src={item.imageUrl} alt={item.title} className="w-full h-full object-cover" />
-                              {isPaid && (
+                              <img src={coverImage} alt={item.title} className="w-full h-full object-cover" />
+                              {isCoverSlot ? (
+                                <div className="absolute inset-0 bg-background/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                                  <Button size="sm" variant="secondary" onClick={generateFreeCover} disabled={coverLoading} className="gap-1.5">
+                                    <RotateCcw className="w-3.5 h-3.5" /> Refazer capa
+                                  </Button>
+                                </div>
+                              ) : isPaid && (
                                 <div className="absolute inset-0 bg-background/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
                                   <Button size="sm" variant="secondary" onClick={() => generateSingleImage(item.id)} className="gap-1.5">
                                     <RotateCcw className="w-3.5 h-3.5" /> Regerar
@@ -886,9 +894,18 @@ ${tipo === "Slides"
                                 </div>
                               )}
                               {isCoverSlot && (
-                                <Badge className="absolute top-2 left-2 bg-primary/80 text-primary-foreground text-[10px]">CAPA</Badge>
+                                <Badge className="absolute top-2 left-2 bg-primary/80 text-primary-foreground text-[10px]">CAPA · GRÁTIS</Badge>
                               )}
                             </div>
+                          ) : isCoverSlot ? (
+                            <button
+                              onClick={generateFreeCover}
+                              disabled={coverLoading || !title || !tema}
+                              className="absolute inset-0 flex flex-col items-center justify-center gap-2 text-primary hover:bg-primary/5 transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                            >
+                              <ImageIcon className="w-7 h-7" />
+                              <span className="text-xs font-medium">Gerar capa grátis</span>
+                            </button>
                           ) : (
                             <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 text-muted-foreground">
                               <ImageIcon className="w-6 h-6" />
@@ -899,7 +916,7 @@ ${tipo === "Slides"
                         <div className="px-3 py-2">
                           <p className="text-xs font-medium truncate">{item.title}</p>
                           <p className="text-[10px] text-muted-foreground">
-                            {tipo === "Slides" ? `Slide ${idx + 1}` : `Capítulo ${idx + 1}`}
+                            {isCoverSlot ? "Capa (grátis)" : tipo === "Slides" ? `Slide ${idx + 1}` : `Capítulo ${idx + 1}`}
                           </p>
                         </div>
                       </Card>
