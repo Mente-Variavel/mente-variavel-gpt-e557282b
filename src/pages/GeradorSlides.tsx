@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import {
   Layers, Plus, Trash2, Copy, ChevronDown, ChevronUp, Loader2, Download,
   ImageIcon, Check, BookOpen, Presentation, Sparkles,
-  FileText, RotateCcw, ArrowRight, ArrowLeft, Zap, CreditCard, Eraser, WandSparkles
+  FileText, RotateCcw, ArrowRight, ArrowLeft, Zap, Lock, Unlock, Eraser, WandSparkles, Mail
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -16,11 +16,10 @@ import Footer from "@/components/Footer";
 import MicInput from "@/components/MicInput";
 import { toast } from "sonner";
 import { useSearchParams } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
 
 const GENERATE_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/ai-generate`;
 const PROJECT_IMAGE_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/generate-project-image`;
-const PAYMENT_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/create-image-payment`;
-const VERIFY_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/verify-image-payment`;
 
 type Slide = { id: string; title: string; bullets: string[]; visual: string; notes: string; imageUrl?: string; imageLoading?: boolean };
 type EbookChapter = { id: string; title: string; content: string; subchapters: string[]; imageUrl?: string; imageLoading?: boolean };
@@ -114,8 +113,9 @@ export default function GeradorSlides() {
   const [projectId, setProjectId] = useState<string>("");
   const [isPaid, setIsPaid] = useState(false);
   const [imagesGenerated, setImagesGenerated] = useState(0);
-  const [paymentLoading, setPaymentLoading] = useState(false);
   const [generatingAllImages, setGeneratingAllImages] = useState(false);
+  const [picCheckoutLink, setPicCheckoutLink] = useState<string>("");
+  const [userEmail, setUserEmail] = useState("");
 
   // Free cover preview state
   const [coverUrl, setCoverUrl] = useState<string | null>(null);
@@ -149,39 +149,42 @@ export default function GeradorSlides() {
   useEffect(() => { if (chapters.length) localStorage.setItem("mv_chapters_data", JSON.stringify(chapters)); }, [chapters]);
   useEffect(() => { if (coverUrl) localStorage.setItem("mv_cover_url", coverUrl); }, [coverUrl]);
 
-  // Handle payment return
+  // Handle payment return from PicCheckout
   useEffect(() => {
-    const payment = searchParams.get("payment");
-    const returnProject = searchParams.get("project");
-    if (payment === "success" && returnProject) {
-      setProjectId(returnProject);
-      localStorage.setItem("mv_project_id", returnProject);
+    const payment = searchParams.get("paid");
+    if (payment === "true") {
       setIsPaid(true);
+      localStorage.setItem("mv_ebook_paid", "true");
       toast.success("Pagamento confirmado! Gerando todas as imagens...");
       setTimeout(() => { generateAllImages(); }, 500);
     }
   }, [searchParams]);
 
-  // Verify payment status
-  const verifyPayment = useCallback(async (pid?: string) => {
-    const id = pid || projectId;
-    if (!id) return;
-    try {
-      const res = await fetch(VERIFY_URL, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
-        },
-        body: JSON.stringify({ projectId: id }),
-      });
-      const data = await res.json();
-      setIsPaid(data.isPaid || false);
-      setImagesGenerated(data.imagesGenerated || 0);
-    } catch {}
-  }, [projectId]);
+  // Check saved payment status
+  useEffect(() => {
+    const paid = localStorage.getItem("mv_ebook_paid");
+    if (paid === "true") setIsPaid(true);
+  }, []);
 
-  useEffect(() => { if (projectId) verifyPayment(); }, [projectId, verifyPayment]);
+  // Fetch PicCheckout link from site_settings
+  useEffect(() => {
+    const fetchLink = async () => {
+      const { data } = await supabase
+        .from("site_settings")
+        .select("value")
+        .eq("key", "piccheckout_link")
+        .maybeSingle();
+      if (data?.value) setPicCheckoutLink(data.value);
+    };
+    fetchLink();
+  }, []);
+
+  // Save project metadata for download page
+  useEffect(() => {
+    if (title) localStorage.setItem("mv_project_title", title);
+    if (tema) localStorage.setItem("mv_project_tema", tema);
+    if (tom) localStorage.setItem("mv_project_tom", tom);
+  }, [title, tema, tom]);
 
   // Free cover generation
   const generateFreeCover = async () => {
@@ -202,30 +205,15 @@ export default function GeradorSlides() {
     }
   };
 
-  const handlePayment = async () => {
-    setPaymentLoading(true);
-    try {
-      const sessionId = localStorage.getItem("mv_session_id") || crypto.randomUUID();
-      localStorage.setItem("mv_session_id", sessionId);
-      const res = await fetch(PAYMENT_URL, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
-        },
-        body: JSON.stringify({ projectId, sessionId }),
-      });
-      const data = await res.json();
-      if (data.url) {
-        window.location.href = data.url;
-      } else {
-        toast.error("Erro ao iniciar pagamento.");
-      }
-    } catch {
-      toast.error("Erro ao processar pagamento.");
-    } finally {
-      setPaymentLoading(false);
+  const handlePicCheckout = () => {
+    if (!picCheckoutLink) {
+      toast.error("Link de pagamento não configurado.");
+      return;
     }
+    if (userEmail) {
+      localStorage.setItem("mv_user_email", userEmail);
+    }
+    window.open(picCheckoutLink, "_blank");
   };
 
   // Generate all images sequentially
@@ -505,7 +493,7 @@ ${tipo === "Slides"
                   Gerador de E-books e Slides com IA
                 </h1>
                 <p className="text-sm text-muted-foreground">
-                  O pagamento libera a geração de todas as imagens necessárias para o seu e-book ou apresentação.
+Gere seu e-book ou apresentação com IA. Pagamento rápido via Pix para desbloquear todas as imagens.
                 </p>
               </div>
             </div>
@@ -657,18 +645,18 @@ ${tipo === "Slides"
                       )}
                     </div>
 
-                    {/* Payment info */}
+                    {/* Payment info - PicCheckout */}
                     <div className="rounded-xl border border-primary/20 bg-primary/5 p-4">
                       <div className="flex items-start gap-3">
                         <div className="p-2 rounded-lg bg-primary/10">
-                          <CreditCard className="w-5 h-5 text-primary" />
+                          <Lock className="w-5 h-5 text-primary" />
                         </div>
                         <div>
                           <p className="text-sm font-medium text-foreground">
-                            Pagamento único de US$ 1
+                            Pagamento via Pix
                           </p>
                           <p className="text-xs text-muted-foreground mt-1">
-                            O pagamento cobre a geração de todas as imagens do seu {tipo === "Slides" ? "conjunto de slides" : "e-book"}, incluindo capa e ilustrações dos capítulos.
+                            Pagamento rápido e seguro via Pix. Após o pagamento, o download do {tipo === "Slides" ? "conjunto de slides" : "e-book"} será liberado.
                           </p>
                         </div>
                         {isPaid && (
@@ -679,16 +667,29 @@ ${tipo === "Slides"
                       </div>
                     </div>
 
+                    {/* Optional email */}
+                    <div>
+                      <label className="text-xs text-muted-foreground mb-1.5 block font-medium">
+                        <Mail className="w-3.5 h-3.5 inline mr-1" />
+                        Digite seu e-mail para receber o e-book (opcional)
+                      </label>
+                      <Input
+                        type="email"
+                        value={userEmail}
+                        onChange={e => setUserEmail(e.target.value)}
+                        placeholder="seu@email.com"
+                        className="bg-secondary/30 border-border/50"
+                      />
+                    </div>
+
                     <div className="flex gap-3 pt-2 flex-wrap">
                       <Button
                         onClick={handleMainAction}
-                        disabled={loading || paymentLoading || !title || !tema}
+                        disabled={loading || !title || !tema}
                         className="flex-1 min-w-[200px] gap-2 h-12 text-base"
                       >
                         {loading ? (
                           <><Loader2 className="w-5 h-5 animate-spin" /> Gerando estrutura...</>
-                        ) : paymentLoading ? (
-                          <><Loader2 className="w-5 h-5 animate-spin" /> Processando...</>
                         ) : (
                           <><Zap className="w-5 h-5" /> Gerar E-book ou Slides</>
                         )}
@@ -825,8 +826,8 @@ ${tipo === "Slides"
                       {generatingAllImages ? <><Loader2 className="w-4 h-4 animate-spin" /> Gerando imagens...</> : <>Gerar Imagens <ArrowRight className="w-4 h-4" /></>}
                     </Button>
                   ) : (
-                    <Button onClick={handlePayment} disabled={paymentLoading} className="gap-2">
-                      {paymentLoading ? <><Loader2 className="w-4 h-4 animate-spin" /> Processando...</> : <><CreditCard className="w-4 h-4" /> Gerar E-book/Slides Completo — US$ 1</>}
+                    <Button onClick={handlePicCheckout} className="gap-2">
+                      <Unlock className="w-4 h-4" /> 🔓 Desbloquear E-book
                     </Button>
                   )}
                 </div>
@@ -856,19 +857,24 @@ ${tipo === "Slides"
 
                 {!isPaid && !generatingAllImages && (
                   <Card className="mb-6 border-amber-500/20 bg-amber-500/5">
-                    <CardContent className="py-4 flex flex-col sm:flex-row items-start sm:items-center gap-3">
-                      <div className="flex-1">
-                        <p className="text-sm font-medium text-foreground">💰 US$ 1 libera a geração de todas as imagens do seu projeto.</p>
-                        <p className="text-xs text-muted-foreground mt-1">A capa acima é grátis. O pagamento desbloqueia as demais ilustrações de uma só vez.</p>
+                    <CardContent className="py-4 space-y-3">
+                      <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
+                        <div className="flex-1">
+                          <p className="text-sm font-medium text-foreground flex items-center gap-2">
+                            <Lock className="w-4 h-4" /> Conteúdo bloqueado
+                          </p>
+                          <p className="text-xs text-muted-foreground mt-1">A capa acima é grátis. Desbloqueie para gerar todas as ilustrações.</p>
+                        </div>
                       </div>
-                      <Button size="sm" onClick={handlePayment} disabled={paymentLoading} className="gap-1.5 shrink-0">
-                        {paymentLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <CreditCard className="w-4 h-4" />}
-                        Desbloquear imagens
+                      <Button onClick={handlePicCheckout} className="w-full sm:w-auto gap-2">
+                        <Unlock className="w-4 h-4" /> 🔓 Desbloquear E-book
                       </Button>
+                      <p className="text-xs text-muted-foreground">
+                        Pagamento rápido e seguro via Pix. Após o pagamento, o download do e-book será liberado.
+                      </p>
                     </CardContent>
                   </Card>
                 )}
-
                 {generatingAllImages && (
                   <Card className="mb-6 border-primary/20 bg-primary/5">
                     <CardContent className="py-4 flex items-center gap-3">
@@ -894,7 +900,18 @@ ${tipo === "Slides"
                             </div>
                           ) : coverImage ? (
                             <div className="relative group h-full">
-                              <img src={coverImage} alt={item.title} className="w-full h-full object-cover" />
+                              <img
+                                src={coverImage}
+                                alt={item.title}
+                                className={`w-full h-full object-cover ${!isCoverSlot && !isPaid ? "blur-md" : ""}`}
+                              />
+                              {/* Lock overlay for non-cover unpaid images */}
+                              {!isCoverSlot && !isPaid && (
+                                <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 bg-background/40">
+                                  <Lock className="w-6 h-6 text-muted-foreground" />
+                                  <span className="text-xs font-medium text-muted-foreground">Conteúdo bloqueado</span>
+                                </div>
+                              )}
                               {isCoverSlot ? (
                                 <div className="absolute inset-0 bg-background/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
                                   <Button size="sm" variant="secondary" onClick={generateFreeCover} disabled={coverLoading} className="gap-1.5">
@@ -922,9 +939,9 @@ ${tipo === "Slides"
                               <span className="text-xs font-medium">Gerar capa grátis</span>
                             </button>
                           ) : (
-                            <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 text-muted-foreground">
-                              <ImageIcon className="w-6 h-6" />
-                              <span className="text-xs">Aguardando geração</span>
+                            <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 text-muted-foreground bg-secondary/40">
+                              <Lock className="w-6 h-6" />
+                              <span className="text-xs font-medium">Conteúdo bloqueado</span>
                             </div>
                           )}
                         </div>

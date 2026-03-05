@@ -1,0 +1,1 @@
+INSERT INTO public.site_settings (key, value) VALUES ('piccheckout_link', 'https://example-piccheckout-link.com') ON CONFLICT (key) DO NOTHING;
