@@ -464,6 +464,7 @@ ${tipo === "Slides"
     localStorage.setItem("mv_project_id", newId);
     setImagesGenerated(0);
     setIsPaid(false);
+    localStorage.removeItem("mv_ebook_paid");
   };
 
   const clearFields = () => {
