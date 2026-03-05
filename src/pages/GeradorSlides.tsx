@@ -854,6 +854,21 @@ ${tipo === "Slides"
                   </div>
                 </div>
 
+                {!isPaid && !generatingAllImages && (
+                  <Card className="mb-6 border-amber-500/20 bg-amber-500/5">
+                    <CardContent className="py-4 flex flex-col sm:flex-row items-start sm:items-center gap-3">
+                      <div className="flex-1">
+                        <p className="text-sm font-medium text-foreground">💰 US$ 1 libera a geração de todas as imagens do seu projeto.</p>
+                        <p className="text-xs text-muted-foreground mt-1">A capa acima é grátis. O pagamento desbloqueia as demais ilustrações de uma só vez.</p>
+                      </div>
+                      <Button size="sm" onClick={handlePayment} disabled={paymentLoading} className="gap-1.5 shrink-0">
+                        {paymentLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <CreditCard className="w-4 h-4" />}
+                        Desbloquear imagens
+                      </Button>
+                    </CardContent>
+                  </Card>
+                )}
+
                 {generatingAllImages && (
                   <Card className="mb-6 border-primary/20 bg-primary/5">
                     <CardContent className="py-4 flex items-center gap-3">
