@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Music, Copy, ExternalLink, Sparkles, Loader2, AlertTriangle, Lightbulb } from "lucide-react";
+import { Music, Copy, ExternalLink, Sparkles, Loader2, Lightbulb } from "lucide-react";
 import { motion } from "framer-motion";
 import { toast } from "sonner";
 
@@ -65,17 +65,30 @@ function sanitizeArtistReferences(text: string): string {
     return "estilo característico com elementos vocais e instrumentais marcantes";
   });
 
-  // Final pass: remove any remaining capitalized proper names (2+ words starting uppercase)
-  // that look like artist/band names and weren't caught above
-  result = result.replace(/(?<![.!?]\s)(?:^|\s)([A-Z][a-záéíóúãõê]+(?:\s+(?:e|&|E|de|do|da|dos|das)\s+)?[A-Z][a-záéíóúãõê]+)/g, " elementos musicais marcantes");
+  // Remove any remaining proper names: capitalized words not in safe list
+  const safeWords = new Set([
+    "portuguese", "full", "style", "title", "verso", "refrão", "ponte",
+    "intro", "outro", "chorus", "bridge", "verse", "pop", "rock", "funk",
+    "trap", "mpb", "gospel", "sertanejo", "rap", "hip", "hop",
+    "jazz", "blues", "reggae", "reggaeton", "country", "folk", "indie",
+    "metal", "punk", "soul", "disco", "house", "techno", "eletrônica",
+    "acústico", "acústica", "romântico", "romântica", "emocional",
+    "melancólico", "melancólica", "animado", "animada", "dramático",
+    "dramática", "moderno", "moderna", "clássico", "clássica",
+  ]);
 
-  // Also catch single capitalized words that aren't common Portuguese words
-  const commonWords = new Set(["Portuguese", "Full", "Style", "Title", "Verso", "Refrão", "Ponte", "Intro", "Outro", "Chorus", "Bridge", "Verse"]);
-  result = result.replace(/\b([A-Z][a-záéíóúãõê]{2,})\b/g, (match) => {
-    if (commonWords.has(match)) return match;
-    // If it looks like a proper noun in the middle of text, remove it
-    return match;
+  // Strip any word that starts uppercase and isn't a safe/musical term
+  result = result.replace(/\b([A-Z][a-záéíóúãõêâîôûàèìòùäëïöü]+)\b/g, (match) => {
+    if (safeWords.has(match.toLowerCase())) return match;
+    return "";
   });
+
+  // Strip patterns like "DJ X", "MC Y", "@name"
+  result = result.replace(/\b(?:DJ|MC|Mc|Dj)\s+\S+/gi, "");
+  result = result.replace(/@\S+/g, "");
+
+  // Clean up extra spaces
+  result = result.replace(/\s{2,}/g, " ").trim();
 
   return result;
 }
@@ -331,10 +344,6 @@ A letra deve combinar perfeitamente com o gênero ${genero} e o tema "${tema}". 
                     <CardContent>
                       <div className="bg-secondary/50 rounded-lg p-4 text-sm text-foreground mb-3 font-mono break-all">{sunoPrompt}</div>
                       <p className="text-xs text-muted-foreground mb-3">{sunoPrompt.length}/1000 caracteres</p>
-                      <div className="flex items-center gap-2 text-xs text-muted-foreground mb-4 bg-secondary/30 rounded-lg p-3">
-                        <AlertTriangle className="w-4 h-4 shrink-0 text-yellow-500" />
-                        <span>⚠️ Prompt para Suno: máximo 1000 caracteres. Evite nomes de artistas — use apenas características do estilo.</span>
-                      </div>
                       <Button onClick={copySunoPrompt} variant="outline" className="gap-2">
                         <Copy className="w-4 h-4" /> Copiar prompt
                       </Button>
