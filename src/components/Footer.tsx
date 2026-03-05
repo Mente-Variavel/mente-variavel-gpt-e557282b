@@ -41,9 +41,11 @@ const Footer = () => (
       </div>
       <div className="border-t border-border/30 pt-6 flex flex-col md:flex-row items-center justify-between gap-4">
         <p className="text-xs text-muted-foreground">© 2026 Mente Variável. Todos os direitos reservados.</p>
-        <div className="flex items-center gap-4 text-xs text-muted-foreground">
+        <div className="flex flex-wrap items-center justify-center gap-4 text-xs text-muted-foreground">
           <Link to="/privacidade" className="hover:text-primary transition-colors">Política de Privacidade</Link>
           <Link to="/termos" className="hover:text-primary transition-colors">Termos de Uso</Link>
+          <Link to="/sobre" className="hover:text-primary transition-colors">Sobre o Projeto</Link>
+          <Link to="/contato" className="hover:text-primary transition-colors">Contato</Link>
         </div>
       </div>
       <p className="text-xs text-muted-foreground/60 text-center mt-4 max-w-lg mx-auto">
