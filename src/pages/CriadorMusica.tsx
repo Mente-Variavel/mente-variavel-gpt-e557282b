@@ -314,7 +314,7 @@ A letra deve combinar perfeitamente com o gênero ${genero} e o tema "${tema}". 
                     Com o Suno é possível gerar vocais realistas, escolher diferentes estilos musicais e criar músicas completas em poucos segundos.
                   </p>
 
-                  <h4 className="font-display text-sm font-semibold text-foreground mb-2">Vantagens do Suno Pro</h4>
+                  <h4 className="font-display text-base font-bold text-primary mb-2">Vantagens do Suno Pro</h4>
                   <ul className="text-sm text-foreground space-y-1.5 mb-6 list-none font-medium">
                     <li>• <strong>Acesso ao modelo mais avançado</strong> de geração de músicas (v5)</li>
                     <li>• <strong>2.500 créditos por mês</strong> (até aproximadamente 500 músicas)</li>
