@@ -52,15 +52,22 @@ A letra deve seguir esta estrutura:
 A letra deve combinar perfeitamente com o gênero ${genero} e o tema "${tema}". Use linguagem natural, rimas e emoção. Escreva apenas a letra, sem explicações.`;
 
     try {
-      const res = await supabase.functions.invoke("chat", {
-        body: { messages: [{ role: "user", content: prompt }] },
+      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+      const supabaseKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
+
+      const res = await fetch(`${supabaseUrl}/functions/v1/chat`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${supabaseKey}`,
+          "apikey": supabaseKey,
+        },
+        body: JSON.stringify({ messages: [{ role: "user", content: prompt }] }),
       });
 
-      if (res.error) throw res.error;
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
 
-      const reader = res.data instanceof ReadableStream
-        ? res.data.getReader()
-        : new Response(res.data).body?.getReader();
+      const reader = res.body?.getReader();
 
       if (!reader) throw new Error("No reader");
 
