@@ -2,20 +2,18 @@ import { useState, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Layers, Plus, Trash2, Copy, ChevronDown, ChevronUp, Loader2, Download,
-  ImageIcon, Lock, CreditCard, Check, BookOpen, Presentation, Sparkles,
-  FileText, RotateCcw, ArrowRight, ArrowLeft, Zap
+  ImageIcon, Check, BookOpen, Presentation, Sparkles,
+  FileText, RotateCcw, ArrowRight, ArrowLeft, Zap, CreditCard
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import { toast } from "sonner";
-import { supabase } from "@/integrations/supabase/client";
 import { useSearchParams } from "react-router-dom";
 
 const GENERATE_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/ai-generate`;
@@ -62,9 +60,6 @@ async function generateProjectImage(prompt: string, projectId: string, isCover: 
     body: JSON.stringify({ prompt, projectId, isCover }),
   });
   const data = await res.json();
-  if (res.status === 402 && data.error === "PAYMENT_REQUIRED") {
-    throw new Error("PAYMENT_REQUIRED");
-  }
   if (!res.ok) throw new Error(data.error || "Erro ao gerar imagem");
   return data.imageUrl || "";
 }
@@ -98,8 +93,8 @@ export default function GeradorSlides() {
   const [projectId, setProjectId] = useState<string>("");
   const [isPaid, setIsPaid] = useState(false);
   const [imagesGenerated, setImagesGenerated] = useState(0);
-  const [coverGenerated, setCoverGenerated] = useState(false);
   const [paymentLoading, setPaymentLoading] = useState(false);
+  const [generatingAllImages, setGeneratingAllImages] = useState(false);
 
   // Generate project ID on mount
   useEffect(() => {
@@ -125,15 +120,19 @@ export default function GeradorSlides() {
   useEffect(() => { if (slides.length) localStorage.setItem("mv_slides_data", JSON.stringify(slides)); }, [slides]);
   useEffect(() => { if (chapters.length) localStorage.setItem("mv_chapters_data", JSON.stringify(chapters)); }, [chapters]);
 
-  // Handle payment return
+  // Handle payment return — after successful payment, auto-generate all images
   useEffect(() => {
     const payment = searchParams.get("payment");
     const returnProject = searchParams.get("project");
     if (payment === "success" && returnProject) {
       setProjectId(returnProject);
       localStorage.setItem("mv_project_id", returnProject);
-      verifyPayment(returnProject);
-      toast.success("Pagamento confirmado! Imagens desbloqueadas.");
+      setIsPaid(true);
+      toast.success("Pagamento confirmado! Gerando todas as imagens...");
+      // Auto-generate images after payment
+      setTimeout(() => {
+        generateAllImages();
+      }, 500);
     }
   }, [searchParams]);
 
@@ -174,7 +173,7 @@ export default function GeradorSlides() {
       });
       const data = await res.json();
       if (data.url) {
-        window.open(data.url, "_blank");
+        window.location.href = data.url;
       } else {
         toast.error("Erro ao iniciar pagamento.");
       }
@@ -185,37 +184,51 @@ export default function GeradorSlides() {
     }
   };
 
-  const generateCover = async () => {
-    if (coverGenerated && !isPaid) return;
-    const items = tipo === "Slides" ? slides : chapters;
+  // Generate all images sequentially for items that don't have one yet
+  const generateAllImages = async () => {
+    const isSlides = tipo === "Slides";
+    const items = isSlides ? slides : chapters;
     if (items.length === 0) return;
 
-    const firstItem = items[0];
-    const setter = tipo === "Slides" ? setSlides : setChapters;
+    setGeneratingAllImages(true);
+    setStep(3);
+    const setter = isSlides ? setSlides : setChapters;
+    let count = imagesGenerated;
 
-    setter((prev: any[]) => prev.map((item: any, i: number) =>
-      i === 0 ? { ...item, imageLoading: true } : item
-    ));
+    for (let idx = 0; idx < items.length; idx++) {
+      const item = items[idx] as any;
+      if (item.imageUrl) continue; // already has image
 
-    try {
-      const coverPrompt = `Professional ${tipo === "Slides" ? "presentation" : "e-book"} cover image for: "${title}". Theme: ${tema}. Style: photorealistic, premium, modern, professional lighting.`;
-      const url = await generateProjectImage(coverPrompt, projectId, true);
-      setter((prev: any[]) => prev.map((item: any, i: number) =>
-        i === 0 ? { ...item, imageUrl: url, imageLoading: false } : item
+      setter((prev: any[]) => prev.map((i: any, j: number) =>
+        j === idx ? { ...i, imageLoading: true } : i
       ));
-      setCoverGenerated(true);
-      setImagesGenerated(prev => prev + 1);
-      toast.success("Imagem de capa gerada!");
-    } catch (err: any) {
-      setter((prev: any[]) => prev.map((item: any, i: number) =>
-        i === 0 ? { ...item, imageLoading: false } : item
-      ));
-      if (err.message === "PAYMENT_REQUIRED") {
-        toast.error("Limite gratuito atingido. Desbloqueie para gerar mais imagens.");
-      } else {
-        toast.error("Erro ao gerar capa.");
+
+      try {
+        const isCover = idx === 0;
+        const prompt = isSlides
+          ? isCover
+            ? `Professional presentation cover image for: "${title}". Theme: ${tema}. Style: photorealistic, premium, modern.`
+            : `Professional presentation slide illustration for: "${(item as Slide).title}". Topics: ${(item as Slide).bullets.join(", ")}. Visual: ${(item as Slide).visual}.`
+          : isCover
+            ? `Professional e-book cover image for: "${title}". Theme: ${tema}. Style: photorealistic, premium, modern.`
+            : `Professional e-book chapter illustration for: "${(item as EbookChapter).title}". Content: ${(item as EbookChapter).content.slice(0, 200)}.`;
+
+        const url = await generateProjectImage(prompt, projectId, isCover);
+        setter((prev: any[]) => prev.map((i: any, j: number) =>
+          j === idx ? { ...i, imageUrl: url, imageLoading: false } : i
+        ));
+        count++;
+        setImagesGenerated(count);
+      } catch (err: any) {
+        setter((prev: any[]) => prev.map((i: any, j: number) =>
+          j === idx ? { ...i, imageLoading: false } : i
+        ));
+        console.error(`Error generating image for item ${idx}:`, err);
       }
     }
+
+    setGeneratingAllImages(false);
+    toast.success("Todas as imagens foram geradas!");
   };
 
   const generateSingleImage = async (id: string) => {
@@ -224,17 +237,19 @@ export default function GeradorSlides() {
     const setter = isSlides ? setSlides : setChapters;
     const item = items.find((i: any) => i.id === id);
     if (!item) return;
+    const idx = items.findIndex((i: any) => i.id === id);
 
     setter((prev: any[]) => prev.map((i: any) =>
       i.id === id ? { ...i, imageLoading: true } : i
     ));
 
     try {
+      const isCover = idx === 0;
       const prompt = isSlides
         ? `Professional presentation slide illustration for: "${(item as Slide).title}". Topics: ${(item as Slide).bullets.join(", ")}. Visual: ${(item as Slide).visual}.`
         : `Professional e-book chapter illustration for: "${(item as EbookChapter).title}". Content: ${(item as EbookChapter).content.slice(0, 200)}.`;
 
-      const url = await generateProjectImage(prompt, projectId, false);
+      const url = await generateProjectImage(prompt, projectId, isCover);
       setter((prev: any[]) => prev.map((i: any) =>
         i.id === id ? { ...i, imageUrl: url, imageLoading: false } : i
       ));
@@ -244,20 +259,28 @@ export default function GeradorSlides() {
       setter((prev: any[]) => prev.map((i: any) =>
         i.id === id ? { ...i, imageLoading: false } : i
       ));
-      if (err.message === "PAYMENT_REQUIRED") {
-        toast.error("Desbloqueie imagens adicionais por US$ 1");
-      } else {
-        toast.error("Erro ao gerar ilustração.");
-      }
+      toast.error("Erro ao gerar ilustração.");
     }
   };
 
-  const generate = async () => {
+  // Main action: generate structure, then trigger payment for images
+  const handleMainAction = async () => {
     if (!title || !tema) { toast.error("Preencha pelo menos título e tema."); return; }
+
+    // If already paid, generate structure + images directly
+    if (isPaid) {
+      await generateStructure();
+      return;
+    }
+
+    // Otherwise, generate structure first, then trigger payment
+    await generateStructure();
+  };
+
+  const generateStructure = async () => {
     setLoading(true);
     setSlides([]);
     setChapters([]);
-    setCoverGenerated(false);
 
     // New project ID for each generation
     const newId = crypto.randomUUID();
@@ -271,27 +294,7 @@ export default function GeradorSlides() {
         const slideCount = numSlides ? parseInt(numSlides) : 8;
         const content = await callAI([{
           role: "user",
-          content: `Gere uma apresentação de slides com exatamente ${slideCount} slides.
-Título: ${title}
-Tema: ${tema}
-Público-alvo: ${publico || "Geral"}
-Objetivo: ${objetivo || "Informar e engajar"}
-Tom: ${tom}
-
-ESTRUTURA OBRIGATÓRIA:
-- Slide 1: Capa (título principal e subtítulo)
-- Slide 2: Agenda/Sumário
-- Slides 3 a ${slideCount - 2}: Desenvolvimento do conteúdo
-- Slide ${slideCount - 1}: Conclusão
-- Slide ${slideCount}: CTA (chamada para ação)
-
-Retorne APENAS um JSON array válido, sem markdown. Cada elemento deve ter:
-{
-  "title": "Título do slide",
-  "bullets": ["Tópico 1", "Tópico 2", "Tópico 3"],
-  "visual": "Descrição detalhada da imagem ilustrativa sugerida para este slide",
-  "notes": "Notas do apresentador"
-}`
+          content: `Gere uma apresentação de slides com exatamente ${slideCount} slides.\nTítulo: ${title}\nTema: ${tema}\nPúblico-alvo: ${publico || "Geral"}\nObjetivo: ${objetivo || "Informar e engajar"}\nTom: ${tom}\n\nESTRUTURA OBRIGATÓRIA:\n- Slide 1: Capa (título principal e subtítulo)\n- Slide 2: Agenda/Sumário\n- Slides 3 a ${slideCount - 2}: Desenvolvimento do conteúdo\n- Slide ${slideCount - 1}: Conclusão\n- Slide ${slideCount}: CTA (chamada para ação)\n\nRetorne APENAS um JSON array válido, sem markdown. Cada elemento deve ter:\n{\n  "title": "Título do slide",\n  "bullets": ["Tópico 1", "Tópico 2", "Tópico 3"],\n  "visual": "Descrição detalhada da imagem ilustrativa sugerida para este slide",\n  "notes": "Notas do apresentador"\n}`
         }]);
         const parsed = extractJson(content);
         const newSlides = parsed.map((s: any, i: number) => ({
@@ -305,26 +308,7 @@ Retorne APENAS um JSON array válido, sem markdown. Cada elemento deve ter:
       } else {
         const content = await callAI([{
           role: "user",
-          content: `Gere a estrutura de um e-book completo.
-Título: ${title}
-Tema: ${tema}
-Público-alvo: ${publico || "Geral"}
-Objetivo: ${objetivo || "Educar"}
-Tom: ${tom}
-
-ESTRUTURA OBRIGATÓRIA:
-- Capa
-- Sumário
-- 5 a 8 capítulos com conteúdo detalhado
-- Conclusão
-- CTA final
-
-Retorne APENAS um JSON array válido, sem markdown. Cada elemento:
-{
-  "title": "Título do capítulo",
-  "content": "Conteúdo detalhado do capítulo com pelo menos 3 parágrafos",
-  "subchapters": ["Subtópico 1", "Subtópico 2"]
-}`
+          content: `Gere a estrutura de um e-book completo.\nTítulo: ${title}\nTema: ${tema}\nPúblico-alvo: ${publico || "Geral"}\nObjetivo: ${objetivo || "Educar"}\nTom: ${tom}\n\nESTRUTURA OBRIGATÓRIA:\n- Capa\n- Sumário\n- 5 a 8 capítulos com conteúdo detalhado\n- Conclusão\n- CTA final\n\nRetorne APENAS um JSON array válido, sem markdown. Cada elemento:\n{\n  "title": "Título do capítulo",\n  "content": "Conteúdo detalhado do capítulo com pelo menos 3 parágrafos",\n  "subchapters": ["Subtópico 1", "Subtópico 2"]\n}`
         }]);
         const parsed = extractJson(content);
         const newChapters = parsed.map((c: any) => ({
@@ -356,17 +340,14 @@ Retorne APENAS um JSON array válido, sem markdown. Cada elemento:
   const deleteSlide = (id: string) => setSlides(prev => prev.filter(s => s.id !== id));
 
   const copyAll = () => {
-    const items = tipo === "Slides" ? slides : chapters;
     const text = tipo === "Slides"
       ? slides.map((s, i) => `## Slide ${i + 1}: ${s.title}\n${s.bullets.map(b => `- ${b}`).join("\n")}\n_Visual: ${s.visual}_\n_Notas: ${s.notes}_`).join("\n\n---\n\n")
-      : chapters.map((c, i) => `## ${c.title}\n\n${c.content}\n\n${c.subchapters.map(sc => `- ${sc}`).join("\n")}`).join("\n\n---\n\n");
+      : chapters.map((c) => `## ${c.title}\n\n${c.content}\n\n${c.subchapters.map(sc => `- ${sc}`).join("\n")}`).join("\n\n---\n\n");
     navigator.clipboard.writeText(text);
     toast.success("Copiado!");
   };
 
   const exportPDF = async () => {
-    const items = tipo === "Slides" ? slides : chapters;
-    // Build HTML content for PDF
     const htmlContent = `
 <!DOCTYPE html>
 <html><head><meta charset="UTF-8">
@@ -399,7 +380,7 @@ ${tipo === "Slides"
       ${s.visual ? `<p class="visual">🎨 ${s.visual}</p>` : ""}
       ${s.notes ? `<div class="notes">📝 ${s.notes}</div>` : ""}
     </div>`).join("")
-  : chapters.map((c, i) => `
+  : chapters.map((c) => `
     <div class="chapter">
       <h2>${c.title}</h2>
       ${c.imageUrl ? `<img src="${c.imageUrl}" alt="${c.title}" />` : ""}
@@ -440,7 +421,6 @@ ${tipo === "Slides"
     setObjetivo("");
     setTom("Profissional");
     setNumSlides("");
-    setCoverGenerated(false);
     setStep(1);
     localStorage.removeItem("mv_slides_data");
     localStorage.removeItem("mv_chapters_data");
@@ -453,8 +433,6 @@ ${tipo === "Slides"
 
   const hasContent = slides.length > 0 || chapters.length > 0;
   const items = tipo === "Slides" ? slides : chapters;
-  const freeImageUsed = imagesGenerated >= 1;
-  const canGenerateMore = isPaid || !freeImageUsed;
 
   return (
     <div className="min-h-screen flex flex-col bg-background">
@@ -469,9 +447,11 @@ ${tipo === "Slides"
               </div>
               <div>
                 <h1 className="text-2xl md:text-3xl font-display font-bold">
-                  Gerador de {tipo === "Slides" ? "Slides" : "E-book"} com IA
+                  Gerador de E-books e Slides com IA
                 </h1>
-                <p className="text-sm text-muted-foreground">Crie conteúdo profissional com ilustrações realistas</p>
+                <p className="text-sm text-muted-foreground">
+                  O pagamento libera a geração de todas as imagens necessárias para o seu e-book ou apresentação.
+                </p>
               </div>
             </div>
           </motion.div>
@@ -577,9 +557,41 @@ ${tipo === "Slides"
                       </div>
                     )}
 
+                    {/* Payment info */}
+                    <div className="rounded-xl border border-primary/20 bg-primary/5 p-4">
+                      <div className="flex items-start gap-3">
+                        <div className="p-2 rounded-lg bg-primary/10">
+                          <CreditCard className="w-5 h-5 text-primary" />
+                        </div>
+                        <div>
+                          <p className="text-sm font-medium text-foreground">
+                            Pagamento único de US$ 1
+                          </p>
+                          <p className="text-xs text-muted-foreground mt-1">
+                            O pagamento cobre a geração de todas as imagens do seu {tipo === "Slides" ? "conjunto de slides" : "e-book"}, incluindo capa e ilustrações dos capítulos.
+                          </p>
+                        </div>
+                        {isPaid && (
+                          <Badge className="bg-green-500/10 text-green-400 border-green-500/20 gap-1 ml-auto shrink-0">
+                            <Check className="w-3 h-3" /> Pago
+                          </Badge>
+                        )}
+                      </div>
+                    </div>
+
                     <div className="flex gap-3 pt-2">
-                      <Button onClick={generate} disabled={loading || !title || !tema} className="flex-1 gap-2 h-12 text-base">
-                        {loading ? <><Loader2 className="w-5 h-5 animate-spin" /> Gerando...</> : <><Zap className="w-5 h-5" /> Gerar Estrutura</>}
+                      <Button
+                        onClick={handleMainAction}
+                        disabled={loading || paymentLoading || !title || !tema}
+                        className="flex-1 gap-2 h-12 text-base"
+                      >
+                        {loading ? (
+                          <><Loader2 className="w-5 h-5 animate-spin" /> Gerando estrutura...</>
+                        ) : paymentLoading ? (
+                          <><Loader2 className="w-5 h-5 animate-spin" /> Processando...</>
+                        ) : (
+                          <><Zap className="w-5 h-5" /> Gerar E-book ou Slides</>
+                        )}
                       </Button>
                       <Button variant="outline" onClick={resetProject} className="gap-2">
                         <RotateCcw className="w-4 h-4" /> Limpar
@@ -694,9 +706,15 @@ ${tipo === "Slides"
                   <Button variant="outline" onClick={() => setStep(1)} className="gap-2">
                     <ArrowLeft className="w-4 h-4" /> Voltar
                   </Button>
-                  <Button onClick={() => { setStep(3); if (!coverGenerated) generateCover(); }} className="gap-2">
-                    Imagens <ArrowRight className="w-4 h-4" />
-                  </Button>
+                  {isPaid ? (
+                    <Button onClick={() => { setStep(3); generateAllImages(); }} disabled={generatingAllImages} className="gap-2">
+                      {generatingAllImages ? <><Loader2 className="w-4 h-4 animate-spin" /> Gerando imagens...</> : <>Gerar Imagens <ArrowRight className="w-4 h-4" /></>}
+                    </Button>
+                  ) : (
+                    <Button onClick={handlePayment} disabled={paymentLoading} className="gap-2">
+                      {paymentLoading ? <><Loader2 className="w-4 h-4 animate-spin" /> Processando...</> : <><CreditCard className="w-4 h-4" /> Desbloquear Imagens — US$ 1</>}
+                    </Button>
+                  )}
                 </div>
               </motion.div>
             )}
@@ -722,25 +740,11 @@ ${tipo === "Slides"
                   </div>
                 </div>
 
-                {/* Free/Paid Status Card */}
-                {!isPaid && (
-                  <Card className="mb-6 border-amber-500/20 bg-amber-500/5">
-                    <CardContent className="py-4 flex flex-col sm:flex-row items-start sm:items-center gap-4">
-                      <div className="flex-1">
-                        <p className="text-sm font-medium text-foreground">
-                          {!freeImageUsed
-                            ? "🎁 Você tem 1 imagem gratuita (capa do projeto)"
-                            : "🔒 Imagens adicionais requerem desbloqueio"
-                          }
-                        </p>
-                        <p className="text-xs text-muted-foreground mt-1">
-                          Desbloqueie todas as imagens do projeto por apenas US$ 1
-                        </p>
-                      </div>
-                      <Button onClick={handlePayment} disabled={paymentLoading} className="gap-2 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white border-0 shrink-0">
-                        {paymentLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <CreditCard className="w-4 h-4" />}
-                        Desbloquear por US$ 1
-                      </Button>
+                {generatingAllImages && (
+                  <Card className="mb-6 border-primary/20 bg-primary/5">
+                    <CardContent className="py-4 flex items-center gap-3">
+                      <Loader2 className="w-5 h-5 animate-spin text-primary" />
+                      <p className="text-sm text-foreground">Gerando todas as imagens automaticamente... Isso pode levar alguns minutos.</p>
                     </CardContent>
                   </Card>
                 )}
@@ -749,7 +753,6 @@ ${tipo === "Slides"
                 <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
                   {items.map((item: any, idx: number) => {
                     const isCoverSlot = idx === 0;
-                    const isLocked = !isCoverSlot && !isPaid && freeImageUsed;
 
                     return (
                       <Card key={item.id} className="overflow-hidden border-border/30">
@@ -762,33 +765,22 @@ ${tipo === "Slides"
                           ) : item.imageUrl ? (
                             <div className="relative group h-full">
                               <img src={item.imageUrl} alt={item.title} className="w-full h-full object-cover" />
-                              <div className="absolute inset-0 bg-background/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                                <Button size="sm" variant="secondary" onClick={() => generateSingleImage(item.id)} className="gap-1.5">
-                                  <RotateCcw className="w-3.5 h-3.5" /> Regerar
-                                </Button>
-                              </div>
+                              {isPaid && (
+                                <div className="absolute inset-0 bg-background/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                                  <Button size="sm" variant="secondary" onClick={() => generateSingleImage(item.id)} className="gap-1.5">
+                                    <RotateCcw className="w-3.5 h-3.5" /> Regerar
+                                  </Button>
+                                </div>
+                              )}
                               {isCoverSlot && (
                                 <Badge className="absolute top-2 left-2 bg-primary/80 text-primary-foreground text-[10px]">CAPA</Badge>
                               )}
                             </div>
-                          ) : isLocked ? (
-                            <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 bg-secondary/40 backdrop-blur-sm">
-                              <div className="w-12 h-12 rounded-full bg-muted/50 flex items-center justify-center">
-                                <Lock className="w-5 h-5 text-muted-foreground" />
-                              </div>
-                              <span className="text-xs text-muted-foreground text-center px-4">Desbloqueie para gerar</span>
-                              <Button size="sm" onClick={handlePayment} disabled={paymentLoading} className="gap-1.5 text-xs bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white border-0">
-                                <CreditCard className="w-3 h-3" /> US$ 1
-                              </Button>
-                            </div>
                           ) : (
-                            <button
-                              onClick={() => isCoverSlot ? generateCover() : generateSingleImage(item.id)}
-                              className="absolute inset-0 flex flex-col items-center justify-center gap-2 text-muted-foreground hover:text-primary transition-colors"
-                            >
+                            <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 text-muted-foreground">
                               <ImageIcon className="w-6 h-6" />
-                              <span className="text-xs">{isCoverSlot ? "Gerar capa" : "Gerar ilustração"}</span>
-                            </button>
+                              <span className="text-xs">Aguardando geração</span>
+                            </div>
                           )}
                         </div>
                         <div className="px-3 py-2">
