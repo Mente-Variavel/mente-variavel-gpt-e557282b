@@ -49,7 +49,10 @@ const Contact = () => {
       <Navbar />
       <main className="flex-1 pt-16">
         <div className="container mx-auto px-4 py-16 max-w-3xl">
-          <h1 className="font-display text-3xl font-bold text-primary text-glow-cyan mb-8">Contato</h1>
+          <h1 className="font-display text-3xl font-bold text-primary text-glow-cyan mb-4">Contato</h1>
+          <p className="text-sm text-muted-foreground mb-8">
+            Se você tiver dúvidas, sugestões ou quiser entrar em contato sobre parcerias ou anúncios, utilize o formulário abaixo. Responderemos o mais rápido possível.
+          </p>
           <div className="glass rounded-xl p-8 border border-border/50">
             <div className="flex items-center gap-3 mb-6">
               <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">

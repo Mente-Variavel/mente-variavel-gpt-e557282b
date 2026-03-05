@@ -3,16 +3,74 @@ import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Music, Copy, ExternalLink, Sparkles, Loader2 } from "lucide-react";
+import { Music, Copy, ExternalLink, Sparkles, Loader2, AlertTriangle, Lightbulb } from "lucide-react";
 import { motion } from "framer-motion";
 import { toast } from "sonner";
-import { supabase } from "@/integrations/supabase/client";
 
 const genres = ["Sertanejo", "Gospel", "Pop", "Rock", "Trap", "Funk", "MPB"];
 const themeSuggestions = ["amor", "superação", "história", "vida", "traição", "motivação"];
+
+const SUNO_REFERRAL = "https://suno.com/invite/@vibrantsaturation527";
+
+// Map known artist names to musical characteristics
+function sanitizeArtistReferences(text: string): string {
+  const artistMap: Record<string, string> = {
+    "gusttavo lima": "sertanejo moderno com voz masculina grave, violão forte e refrão marcante",
+    "adele": "voz feminina potente com piano emocional e crescendo dramático",
+    "marília mendonça": "sertanejo sofrência com voz feminina emocional e violão acústico",
+    "jorge e mateus": "sertanejo universitário com harmonia vocal dupla e batida animada",
+    "jorge & mateus": "sertanejo universitário com harmonia vocal dupla e batida animada",
+    "anavitória": "pop folk brasileiro com vocais femininos suaves e violão acústico",
+    "henrique e juliano": "sertanejo moderno com voz masculina marcante e arranjo eletrônico",
+    "henrique & juliano": "sertanejo moderno com voz masculina marcante e arranjo eletrônico",
+    "luísa sonza": "pop brasileiro dançante com vocais femininos e batida eletrônica",
+    "anitta": "pop funk brasileiro com vocais femininos sensuais e batida pesada",
+    "drake": "hip hop melódico com vocais masculinos suaves e produção atmosférica",
+    "taylor swift": "pop com narrativa lírica, vocais femininos claros e melodia cativante",
+    "ed sheeran": "pop acústico com voz masculina suave e violão fingerstyle",
+    "billie eilish": "pop alternativo minimalista com vocais sussurrados e graves profundos",
+    "the weeknd": "r&b synthwave com vocais masculinos altos e produção cinematográfica",
+    "bruno mars": "pop funk retrô com vocais masculinos vibrantes e groove dançante",
+    "coldplay": "rock alternativo com sintetizadores atmosféricos e vocais emotivos",
+    "linkin park": "rock alternativo com guitarras pesadas e vocais intensos",
+    "beyoncé": "r&b pop com voz feminina poderosa e arranjos elaborados",
+    "michael jackson": "pop dançante com vocais masculinos expressivos e groove irresistível",
+  };
+
+  let result = text;
+  for (const [artist, description] of Object.entries(artistMap)) {
+    const regex = new RegExp(`\\b${artist}\\b`, "gi");
+    result = result.replace(regex, description);
+  }
+  // Generic pattern: "estilo [Name]" or "inspirado em [Name]"
+  result = result.replace(/(?:estilo|inspirado em|como|tipo)\s+[A-Z][a-záéíóúãõê]+(?:\s+(?:e|&)\s+[A-Z][a-záéíóúãõê]+)?/gi, (match) => {
+    // If it wasn't already replaced by the map above, convert generically
+    if (Object.keys(artistMap).some(a => match.toLowerCase().includes(a))) return match;
+    return "estilo característico com elementos vocais e instrumentais marcantes";
+  });
+  return result;
+}
+
+function buildSunoPrompt(genero: string, tema: string, titulo: string, estilo: string): string {
+  const sanitizedEstilo = estilo ? sanitizeArtistReferences(estilo) : "";
+  
+  let prompt = `${genero}, ${tema}, emotional, Portuguese lyrics. Title: "${titulo}".`;
+  if (sanitizedEstilo) prompt += ` Style: ${sanitizedEstilo}.`;
+  prompt += ` Full band arrangement with verse-chorus-bridge structure.`;
+
+  // Compress if over 1000 chars
+  if (prompt.length > 1000) {
+    prompt = `${genero}, ${tema}, Portuguese. "${titulo}".`;
+    if (sanitizedEstilo && prompt.length + sanitizedEstilo.length + 10 < 1000) {
+      prompt += ` ${sanitizedEstilo}.`;
+    }
+    prompt += ` Full arrangement.`;
+  }
+
+  return prompt.slice(0, 1000);
+}
 
 export default function CriadorMusica() {
   const [titulo, setTitulo] = useState("");
@@ -38,7 +96,7 @@ export default function CriadorMusica() {
 Título: ${titulo}
 Gênero musical: ${genero}
 Tema: ${tema}
-${estilo ? `Estilo ou inspiração: ${estilo}` : ""}
+${estilo ? `Estilo ou inspiração: ${sanitizeArtistReferences(estilo)}` : ""}
 
 A letra deve seguir esta estrutura:
 [Título]
@@ -109,7 +167,7 @@ A letra deve combinar perfeitamente com o gênero ${genero} e o tema "${tema}". 
   };
 
   const generateSunoPrompt = () => {
-    const prompt = `${genero} song, ${tema}, emotional, Portuguese lyrics. Title: "${titulo}".${estilo ? ` Style: ${estilo}.` : ""} Full band arrangement.`;
+    const prompt = buildSunoPrompt(genero, tema, titulo, estilo);
     setSunoPrompt(prompt);
     setShowSunoPrompt(true);
   };
@@ -124,15 +182,16 @@ A letra deve combinar perfeitamente com o gênero ${genero} e o tema "${tema}". 
       <Navbar />
       <main className="flex-1 pt-24 pb-16">
         <div className="container mx-auto px-4 max-w-3xl">
+          {/* SEO intro */}
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="text-center mb-10">
             <div className="w-16 h-16 mx-auto mb-4 rounded-2xl bg-primary/10 flex items-center justify-center">
               <Music className="w-8 h-8 text-primary" />
             </div>
             <h1 className="font-display text-3xl md:text-4xl font-bold text-foreground mb-3">
-              Criador de <span className="text-primary text-glow-cyan">Letra de Música</span>
+              Gerador de Letras de <span className="text-primary text-glow-cyan">Música com IA</span>
             </h1>
-            <p className="text-muted-foreground max-w-xl mx-auto">
-              Gere letras completas com Inteligência Artificial. Escolha o gênero, tema e deixe a IA criar para você.
+            <p className="text-muted-foreground max-w-xl mx-auto text-sm leading-relaxed">
+              Crie letras de música rapidamente usando inteligência artificial. Escolha o gênero musical, defina o tema e gere uma letra completa em segundos. Depois utilize o prompt gerado para criar sua música no Suno.
             </p>
           </motion.div>
 
@@ -171,7 +230,7 @@ A letra deve combinar perfeitamente com o gênero ${genero} e o tema "${tema}". 
                 </div>
                 <div>
                   <label className="text-sm text-muted-foreground mb-1.5 block">Estilo ou inspiração (opcional)</label>
-                  <Input value={estilo} onChange={e => setEstilo(e.target.value)} placeholder="Ex: Jorge & Mateus, Anavitória..." />
+                  <Input value={estilo} onChange={e => setEstilo(e.target.value)} placeholder="Ex: sertanejo moderno com voz grave, pop acústico..." />
                 </div>
                 <Button onClick={generateLyrics} disabled={loading} className="w-full gap-2">
                   {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Music className="w-4 h-4" />}
@@ -189,28 +248,49 @@ A letra deve combinar perfeitamente com o gênero ${genero} e o tema "${tema}". 
                 </CardHeader>
                 <CardContent>
                   <pre className="whitespace-pre-wrap text-sm text-foreground leading-relaxed font-body">{lyrics}</pre>
-                  <div className="flex flex-wrap gap-3 mt-6">
+                </CardContent>
+              </Card>
+
+              {/* Suno CTA Card */}
+              <Card className="mb-6 border-primary/30 bg-gradient-to-br from-primary/5 to-accent/5">
+                <CardContent className="pt-6">
+                  <h3 className="font-display text-lg font-bold text-foreground mb-2">
+                    Transforme sua letra em uma música real usando Inteligência Artificial.
+                  </h3>
+                  <p className="text-sm text-muted-foreground mb-6">
+                    Com o Suno você pode gerar vocais realistas, escolher estilos musicais e criar músicas completas em segundos.
+                  </p>
+                  <div className="flex flex-wrap gap-3 mb-4">
+                    <Button onClick={() => window.open(SUNO_REFERRAL, "_blank")} className="gap-2">
+                      🎵 Criar Música no Suno
+                    </Button>
+                    <Button onClick={generateSunoPrompt} variant="outline" className="gap-2">
+                      ✨ Gerar Prompt para Suno
+                    </Button>
                     <Button onClick={copyLyrics} variant="outline" className="gap-2">
                       <Copy className="w-4 h-4" /> Copiar letra
                     </Button>
-                    <Button onClick={generateSunoPrompt} variant="outline" className="gap-2">
-                      <Sparkles className="w-4 h-4" /> Gerar prompt para Suno
-                    </Button>
-                    <Button onClick={() => window.open("https://suno.com", "_blank")} className="gap-2">
-                      <ExternalLink className="w-4 h-4" /> Criar música no Suno
-                    </Button>
                   </div>
+                  <p className="text-xs text-muted-foreground flex items-start gap-1.5">
+                    <Lightbulb className="w-3.5 h-3.5 mt-0.5 shrink-0 text-primary" />
+                    Dica: Com o plano Suno Pro você pode criar mais músicas, usar mais créditos e explorar todos os recursos avançados da plataforma.
+                  </p>
                 </CardContent>
               </Card>
 
               {showSunoPrompt && (
                 <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
-                  <Card>
+                  <Card className="mb-6">
                     <CardHeader>
                       <CardTitle className="text-lg">Prompt para Suno</CardTitle>
                     </CardHeader>
                     <CardContent>
-                      <div className="bg-secondary/50 rounded-lg p-4 text-sm text-foreground mb-4 font-mono">{sunoPrompt}</div>
+                      <div className="bg-secondary/50 rounded-lg p-4 text-sm text-foreground mb-3 font-mono break-all">{sunoPrompt}</div>
+                      <p className="text-xs text-muted-foreground mb-3">{sunoPrompt.length}/1000 caracteres</p>
+                      <div className="flex items-center gap-2 text-xs text-muted-foreground mb-4 bg-secondary/30 rounded-lg p-3">
+                        <AlertTriangle className="w-4 h-4 shrink-0 text-yellow-500" />
+                        <span>⚠️ Prompt para Suno: máximo 1000 caracteres. Evite nomes de artistas — use apenas características do estilo.</span>
+                      </div>
                       <Button onClick={copySunoPrompt} variant="outline" className="gap-2">
                         <Copy className="w-4 h-4" /> Copiar prompt
                       </Button>

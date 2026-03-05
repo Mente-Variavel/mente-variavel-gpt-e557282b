@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { ArrowRight, TrendingUp, Wand2, Layers, DollarSign, ImageOff, CreditCard, Sparkles, Send, MessageSquare, Mic, MicOff, Paperclip, X, FileText } from "lucide-react";
+import { ArrowRight, TrendingUp, Wand2, Layers, DollarSign, ImageOff, Music, Sparkles, Send, MessageSquare, Mic, MicOff, Paperclip, X, FileText } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
@@ -14,7 +14,7 @@ const tools = [
   { icon: Layers, title: "Conversor de Moedas", desc: "Converta entre BRL, USD, EUR, GBP, JPY e BTC em tempo real.", to: "/financas/conversor", color: "text-accent" },
   { icon: ImageOff, title: "Removedor de Fundo", desc: "Remova o fundo de qualquer imagem com um clique.", to: "/servicos/removedor-fundo", color: "text-primary" },
   { icon: Layers, title: "Gerador de Slides & E-book", desc: "Crie apresentações e e-books estruturados com IA.", to: "/servicos/gerador-slides", color: "text-accent" },
-  { icon: CreditCard, title: "Pix Checkout", desc: "Gere cobranças via Pix com QR Code e link compartilhável.", to: "/servicos/pix-checkout", color: "text-primary" },
+  { icon: Music, title: "Gerador de Letras de Música com IA", desc: "Crie letras completas com IA e gere prompts para o Suno.", to: "/servicos/criador-musica", color: "text-primary" },
   { icon: Wand2, title: "Criador de Prompt", desc: "Gere prompts profissionais com frameworks avançados.", to: "/criador-prompt", color: "text-accent" },
 ];
 
@@ -128,7 +128,6 @@ export default function Index() {
                   Pergunte qualquer coisa, peça para gerar imagens ou obtenha ajuda com suas tarefas.
                 </p>
 
-                {/* Mic error */}
                 <AnimatePresence>
                   {micError && (
                     <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="text-xs text-destructive mb-2">
@@ -137,7 +136,6 @@ export default function Index() {
                   )}
                 </AnimatePresence>
 
-                {/* Audio visualizer */}
                 <AnimatePresence>
                   {isListening && (
                     <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} exit={{ opacity: 0, height: 0 }} className="mb-3">
@@ -154,7 +152,6 @@ export default function Index() {
                   )}
                 </AnimatePresence>
 
-                {/* Attachment previews */}
                 <AnimatePresence>
                   {attachments.length > 0 && (
                     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="flex gap-2 mb-3 flex-wrap">
@@ -177,7 +174,6 @@ export default function Index() {
                   )}
                 </AnimatePresence>
 
-                {/* Input row */}
                 <input ref={fileInputRef} type="file" multiple accept="image/*,.pdf,.doc,.docx,.txt" onChange={handleFileSelect} className="hidden" />
                 <form onSubmit={handleChatSubmit} className="flex items-end gap-2">
                   <button type="button" onClick={() => fileInputRef.current?.click()} className="p-2.5 rounded-lg bg-secondary text-muted-foreground hover:text-primary hover:bg-secondary/80 transition-all shrink-0" title="Anexar arquivo">
