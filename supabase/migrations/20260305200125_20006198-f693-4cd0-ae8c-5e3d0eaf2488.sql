@@ -1,0 +1,1 @@
+UPDATE public.site_settings SET value = 'https://mentepix-checkout.lovable.app/p/9308', updated_at = now() WHERE key = 'piccheckout_link';
