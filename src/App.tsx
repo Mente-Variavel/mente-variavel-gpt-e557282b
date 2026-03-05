@@ -12,6 +12,7 @@ import ControleGastos from "./pages/ControleGastos";
 import ConversorMoedas from "./pages/ConversorMoedas";
 import RemovedorFundo from "./pages/RemovedorFundo";
 import GeradorSlides from "./pages/GeradorSlides";
+import EbookDownload from "./pages/EbookDownload";
 import CriadorMusica from "./pages/CriadorMusica";
 import CriadorPrompt from "./pages/CriadorPrompt";
 import Blog from "./pages/Blog";
@@ -48,6 +49,7 @@ function App() {
             <Route path="/financas/conversor" element={<ConversorMoedas />} />
             <Route path="/servicos/removedor-fundo" element={<RemovedorFundo />} />
             <Route path="/servicos/gerador-slides" element={<GeradorSlides />} />
+            <Route path="/ebook-download" element={<EbookDownload />} />
             <Route path="/servicos/criador-musica" element={<CriadorMusica />} />
             <Route path="/servicos/criador-prompt" element={<CriadorPrompt />} />
             <Route path="/criador-prompt" element={<CriadorPrompt />} />
