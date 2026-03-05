@@ -130,7 +130,7 @@ const AdminAds = () => {
   const [showUsers, setShowUsers] = useState(false);
   const [showDebug, setShowDebug] = useState(false);
   const [showStats, setShowStats] = useState(true);
-  const [showSettings, setShowSettings] = useState(false);
+  const [showSettings, setShowSettings] = useState(true);
   const [expandedMessage, setExpandedMessage] = useState<string | null>(null);
 
   const updateMutation = useMutation({

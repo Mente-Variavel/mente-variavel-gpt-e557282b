@@ -42,7 +42,7 @@ export default function PixCheckout() {
           pixKey: map["pix_key"] || "",
           receiverName: map["pix_receiver_name"] || "",
           receiverCity: map["pix_receiver_city"] || "",
-          amount: map["pix_amount"] || "",
+          amount: (map["pix_amount"] || "").replace(",", "."),
           description: map["pix_description"] || "",
           txid: map["pix_txid"] || "EBOOK",
         });
@@ -125,6 +125,11 @@ export default function PixCheckout() {
                 <p className="text-muted-foreground text-sm mt-2">
                   O administrador precisa configurar os dados do Pix no painel administrativo.
                 </p>
+                <ul className="text-xs text-muted-foreground mt-3 space-y-1">
+                  {!config.pixKey && <li>❌ Chave Pix não definida</li>}
+                  {!config.receiverName && <li>❌ Nome do recebedor não definido</li>}
+                  {!config.receiverCity && <li>❌ Cidade do recebedor não definida</li>}
+                </ul>
               </CardContent>
             </Card>
           ) : pixPayload ? (
