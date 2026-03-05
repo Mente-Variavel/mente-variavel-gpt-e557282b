@@ -77,6 +77,33 @@ export type Database = {
         }
         Relationships: []
       }
+      api_usage: {
+        Row: {
+          created_at: string
+          estimated_cost: number
+          id: string
+          ip_address: string | null
+          request_count: number
+          tool: string
+        }
+        Insert: {
+          created_at?: string
+          estimated_cost?: number
+          id?: string
+          ip_address?: string | null
+          request_count?: number
+          tool: string
+        }
+        Update: {
+          created_at?: string
+          estimated_cost?: number
+          id?: string
+          ip_address?: string | null
+          request_count?: number
+          tool?: string
+        }
+        Relationships: []
+      }
       contact_messages: {
         Row: {
           created_at: string
@@ -104,6 +131,24 @@ export type Database = {
         }
         Relationships: []
       }
+      image_rate_limits: {
+        Row: {
+          generated_at: string
+          id: string
+          ip_address: string
+        }
+        Insert: {
+          generated_at?: string
+          id?: string
+          ip_address: string
+        }
+        Update: {
+          generated_at?: string
+          id?: string
+          ip_address?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           avatar_url: string | null
@@ -128,6 +173,24 @@ export type Database = {
           full_name?: string | null
           id?: string
           user_id?: string
+        }
+        Relationships: []
+      }
+      site_settings: {
+        Row: {
+          key: string
+          updated_at: string
+          value: string
+        }
+        Insert: {
+          key: string
+          updated_at?: string
+          value?: string
+        }
+        Update: {
+          key?: string
+          updated_at?: string
+          value?: string
         }
         Relationships: []
       }
