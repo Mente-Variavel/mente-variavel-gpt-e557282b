@@ -1,74 +1,52 @@
 
 
-## Reorganizar pagina de Ferramentas e adicionar Ferramentas Patrocinadas
+## Plan: Update Mente Variável GPT
 
-### Resumo
+### 1. Remove Pix Checkout (temporary)
 
-Remover os anuncios inline (quadradinhos) da grade de ferramentas, mantendo apenas os banners horizontais (topo e rodape). Adicionar suporte a "ferramentas patrocinadas" -- empresas que pagam para ter seu servico/ferramenta listado junto com as ferramentas gratuitas, com um selo de "Parceiro" ou "Patrocinado".
+**Files to edit:**
+- `src/components/Navbar.tsx` — Remove `{ to: "/servicos/pix-checkout", label: "Pix Checkout" }` from `servicosItems`
+- `src/components/Footer.tsx` — Remove Pix Checkout link
+- `src/pages/Tools.tsx` — Remove Pix Checkout entry from `tools` array
+- `src/App.tsx` — Remove PixCheckout route (keep the file for future re-integration)
 
-### Mudancas
+### 2. New Tool: Criador de Letra de Música
 
-#### 1. Limpar a pagina de Ferramentas (`src/pages/Tools.tsx`)
+**New file: `src/pages/CriadorMusica.tsx`**
+- Form with fields: Título, Gênero (select with Sertanejo/Gospel/Pop/Rock/Trap/Funk/MPB), Tema, Estilo (optional)
+- On submit: call existing `supabase/functions/chat` edge function with a structured prompt requesting complete song lyrics (Verse 1 → Chorus → Verse 2 → Chorus → Bridge → Final Chorus)
+- Display result in a styled card
+- Buttons: "Copiar letra" (clipboard), "Gerar prompt para Suno" (generates a Suno-ready text prompt from lyrics+genre, shows in copyable block)
+- Button: "Criar música no Suno" → opens `https://suno.com` in new tab
 
-- Remover os `AdPlaceholder` inline (`ferramentas_inline_1` e `ferramentas_inline_2`) que ficam entre as ferramentas na grade
-- Manter apenas o banner topo (`ferramentas_topo`) e rodape (`ferramentas_rodape`)
-- Adicionar suporte para renderizar ferramentas patrocinadas vindas do banco de dados junto com as ferramentas fixas, com um selo visual "Parceiro" e estilo levemente diferenciado (borda com cor primaria sutil)
+**Files to edit:**
+- `src/App.tsx` — Add route `/servicos/criador-musica`
+- `src/components/Navbar.tsx` — Add to `servicosItems`: `{ to: "/servicos/criador-musica", label: "Criador de Música" }`
+- `src/components/Footer.tsx` — Add link under Serviços
 
-#### 2. Criar tabela no banco de dados para ferramentas patrocinadas
+### 3. Add "Gás de cozinha" category
 
-Nova tabela `sponsored_tools` com colunas:
-- `id` (uuid, PK)
-- `name` (text) -- nome da ferramenta
-- `description` (text) -- descricao curta
-- `url` (text) -- link externo
-- `icon_url` (text, nullable) -- icone/logo da empresa
-- `client_name` (text) -- nome do cliente
-- `is_active` (boolean, default false)
-- `plan_type` (text) -- "vitalicio" ou "mensal"
-- `plan_start` (date)
-- `plan_end` (date, nullable) -- null para vitalicio
-- `plan_value` (numeric)
-- `display_order` (integer, default 0) -- ordem de exibicao
-- `created_at`, `updated_at`
+**File: `src/pages/ControleGastos.tsx`**
+- Add `"Gás de cozinha"` to `expenseCategories` array
 
-RLS: leitura publica para ferramentas ativas, gerenciamento para usuarios autenticados.
+### 4. Update Footer with required links
 
-#### 3. Exibir ferramentas patrocinadas na pagina (`src/pages/Tools.tsx`)
+**File: `src/components/Footer.tsx`**
+- Ensure footer links include: Política de Privacidade (`/privacidade`), Termos de Uso (`/termos`), Sobre o Projeto (`/sobre`), Contato (`/contato`)
+- Replace Pix Checkout with Criador de Música in Serviços column
 
-- Buscar ferramentas patrocinadas ativas do banco via React Query
-- Renderizar na mesma grade das ferramentas gratuitas, apos as ferramentas fixas
-- Cada ferramenta patrocinada tera:
-  - Mesmo layout visual dos cards de ferramenta
-  - Um badge discreto "Parceiro" no canto superior
-  - Icone da empresa (ou icone generico se nao tiver)
-  - Link externo para o site da empresa
+### 5. Privacy, Terms, About, Contact pages
 
-#### 4. Atualizar pagina de anuncios (`src/pages/Anuncie.tsx`)
+These pages already exist (`Privacy.tsx`, `Terms.tsx`, `About.tsx`, `Contact.tsx`) and routes are already configured in `App.tsx`. No changes needed — they match the requirements.
 
-- Atualizar a tabela de precos da pagina Ferramentas: remover os slots inline 1 e inline 2, manter apenas Banner Topo e Rodape
-- Adicionar uma nova secao/card na tabela de precos para "Ferramenta Patrocinada" com:
-  - Descricao: "Sua ferramenta/servico listado junto com as ferramentas gratuitas do site"
-  - Opcao mensal e opcao vitalicia (valor equivalente a ~36 meses)
-  - Requisito: servico deve ser relacionado a tecnologia (mesmo criterio do plano vitalicio da barra de ferramentas)
+### Summary of files changed
 
-#### 5. Adicionar gestao de ferramentas patrocinadas no painel admin
+| File | Action |
+|------|--------|
+| `src/components/Navbar.tsx` | Remove Pix Checkout, add Criador de Música |
+| `src/components/Footer.tsx` | Remove Pix Checkout, add Criador de Música, ensure policy/terms/about/contact links |
+| `src/App.tsx` | Remove Pix route, add CriadorMusica route |
+| `src/pages/Tools.tsx` | Remove Pix Checkout from tools array |
+| `src/pages/ControleGastos.tsx` | Add "Gás de cozinha" category |
+| `src/pages/CriadorMusica.tsx` | **New** — Full music lyrics generator page |
 
-- Criar pagina ou secao em `/admin/anuncios` para gerenciar ferramentas patrocinadas
-- Formulario para adicionar/editar: nome, descricao, URL, icone, dados do plano
-- Ativar/desativar ferramentas
-- A Edge Function `deactivate-expired-ads` sera atualizada para tambem desativar ferramentas patrocinadas com `plan_end` expirado
-
-### Secao tecnica
-
-**Arquivos modificados:**
-- `src/pages/Tools.tsx` -- remover inline ads, adicionar query e renderizacao de ferramentas patrocinadas
-- `src/pages/Anuncie.tsx` -- atualizar slots da pagina Ferramentas, adicionar secao de ferramenta patrocinada
-- `src/pages/AdminAds.tsx` -- adicionar secao de gestao de ferramentas patrocinadas
-- `supabase/functions/deactivate-expired-ads/index.ts` -- incluir desativacao de ferramentas patrocinadas expiradas
-
-**Nova migracoes SQL:**
-- Criar tabela `sponsored_tools` com RLS
-- Politica SELECT publica para `is_active = true`
-- Politica ALL para usuarios autenticados
-
-**Icones:** Usar `lucide-react` (ex: `Sparkles` para o badge de parceiro, `ExternalLink` para o link)
