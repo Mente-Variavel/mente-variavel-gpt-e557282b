@@ -7,6 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Music, Copy, ExternalLink, Sparkles, Loader2, Lightbulb, RotateCcw } from "lucide-react";
 import { motion } from "framer-motion";
+import MicInput from "@/components/MicInput";
 import { toast } from "sonner";
 
 const genres = ["Sertanejo", "Gospel", "Pop", "Rock", "Trap", "Funk", "MPB"];
@@ -246,7 +247,10 @@ A letra deve combinar perfeitamente com o gênero ${genero} e o tema "${tema}". 
               <CardContent className="space-y-4">
                 <div>
                   <label className="text-sm text-muted-foreground mb-1.5 block">Título da música</label>
-                  <Input value={titulo} onChange={e => setTitulo(e.target.value)} placeholder="Ex: Coração de Aço" />
+                  <div className="relative">
+                    <Input value={titulo} onChange={e => setTitulo(e.target.value)} placeholder="Ex: Coração de Aço" className="pr-10" />
+                    <MicInput onTranscript={t => setTitulo(prev => prev ? prev + " " + t : t)} className="absolute right-1 top-1/2 -translate-y-1/2" />
+                  </div>
                 </div>
                 <div>
                   <label className="text-sm text-muted-foreground mb-1.5 block">Gênero musical</label>
@@ -259,7 +263,10 @@ A letra deve combinar perfeitamente com o gênero ${genero} e o tema "${tema}". 
                 </div>
                 <div>
                   <label className="text-sm text-muted-foreground mb-1.5 block">Tema da música</label>
-                  <Input value={tema} onChange={e => setTema(e.target.value)} placeholder="Ex: amor, superação, história, vida, traição, motivação" />
+                  <div className="relative">
+                    <Input value={tema} onChange={e => setTema(e.target.value)} placeholder="Ex: amor, superação, história, vida, traição, motivação" className="pr-10" />
+                    <MicInput onTranscript={t => setTema(prev => prev ? prev + " " + t : t)} className="absolute right-1 top-1/2 -translate-y-1/2" />
+                  </div>
                   <div className="flex flex-wrap gap-1.5 mt-2">
                     {themeSuggestions.map(t => (
                       <button key={t} onClick={() => setTema(t)} className="text-xs px-2.5 py-1 rounded-full bg-secondary text-muted-foreground hover:text-foreground hover:bg-secondary/80 transition-colors">
@@ -270,7 +277,10 @@ A letra deve combinar perfeitamente com o gênero ${genero} e o tema "${tema}". 
                 </div>
                 <div>
                   <label className="text-sm text-muted-foreground mb-1.5 block">Estilo ou inspiração (opcional)</label>
-                  <Input value={estilo} onChange={e => setEstilo(e.target.value)} placeholder="Ex: sertanejo moderno com voz grave, pop acústico..." />
+                  <div className="relative">
+                    <Input value={estilo} onChange={e => setEstilo(e.target.value)} placeholder="Ex: sertanejo moderno com voz grave, pop acústico..." className="pr-10" />
+                    <MicInput onTranscript={t => setEstilo(prev => prev ? prev + " " + t : t)} className="absolute right-1 top-1/2 -translate-y-1/2" />
+                  </div>
                 </div>
                 <div className="flex gap-3">
                   <Button onClick={generateLyrics} disabled={loading} className="flex-1 gap-2">
