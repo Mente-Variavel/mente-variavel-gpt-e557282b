@@ -277,16 +277,14 @@ A letra deve combinar perfeitamente com o gênero ${genero} e o tema "${tema}". 
                     {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Music className="w-4 h-4" />}
                     {loading ? "Gerando letra..." : "Gerar letra de música"}
                   </Button>
-                  {(lyrics || titulo || genero || tema || estilo) && (
-                    <Button
-                      onClick={() => { setTitulo(""); setGenero(""); setTema(""); setEstilo(""); setLyrics(""); setSunoPrompt(""); setShowSunoPrompt(false); }}
-                      variant="outline"
-                      className="gap-2"
-                      disabled={loading}
-                    >
-                      <RotateCcw className="w-4 h-4" /> Limpar
-                    </Button>
-                  )}
+                  <Button
+                    onClick={() => { setTitulo(""); setGenero(""); setTema(""); setEstilo(""); setLyrics(""); setSunoPrompt(""); setShowSunoPrompt(false); }}
+                    variant="outline"
+                    className="gap-2"
+                    disabled={loading}
+                  >
+                    <RotateCcw className="w-4 h-4" /> Limpar
+                  </Button>
                 </div>
               </CardContent>
             </Card>
