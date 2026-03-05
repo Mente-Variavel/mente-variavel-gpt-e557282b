@@ -17,12 +17,12 @@ const SUNO_REFERRAL = "https://suno.com/invite/@vibrantsaturation527";
 // Map known artist names to musical characteristics
 function sanitizeArtistReferences(text: string): string {
   const artistMap: Record<string, string> = {
-    "gusttavo lima": "sertanejo moderno com voz masculina grave, violão forte e refrão marcante",
-    "adele": "voz feminina potente com piano emocional e crescendo dramático",
-    "marília mendonça": "sertanejo sofrência com voz feminina emocional e violão acústico",
+    "gusttavo lima": "sertanejo moderno com voz masculina grave, violão marcante, batida rítmica e refrão emocional",
+    "adele": "voz feminina potente com piano emocional, crescendo dramático e atmosfera intensa",
+    "marília mendonça": "sertanejo sofrência com voz feminina emocional, violão acústico e letra de dor",
     "jorge e mateus": "sertanejo universitário com harmonia vocal dupla e batida animada",
     "jorge & mateus": "sertanejo universitário com harmonia vocal dupla e batida animada",
-    "anavitória": "pop folk brasileiro com vocais femininos suaves e violão acústico",
+    "anavitória": "pop folk brasileiro com vocais femininos suaves e violão acústico delicado",
     "henrique e juliano": "sertanejo moderno com voz masculina marcante e arranjo eletrônico",
     "henrique & juliano": "sertanejo moderno com voz masculina marcante e arranjo eletrônico",
     "luísa sonza": "pop brasileiro dançante com vocais femininos e batida eletrônica",
@@ -31,12 +31,28 @@ function sanitizeArtistReferences(text: string): string {
     "taylor swift": "pop com narrativa lírica, vocais femininos claros e melodia cativante",
     "ed sheeran": "pop acústico com voz masculina suave e violão fingerstyle",
     "billie eilish": "pop alternativo minimalista com vocais sussurrados e graves profundos",
-    "the weeknd": "r&b synthwave com vocais masculinos altos e produção cinematográfica",
+    "the weeknd": "pop moderno com influência synthwave, vocais masculinos suaves e atmosfera noturna",
     "bruno mars": "pop funk retrô com vocais masculinos vibrantes e groove dançante",
     "coldplay": "rock alternativo com sintetizadores atmosféricos e vocais emotivos",
     "linkin park": "rock alternativo com guitarras pesadas e vocais intensos",
     "beyoncé": "r&b pop com voz feminina poderosa e arranjos elaborados",
     "michael jackson": "pop dançante com vocais masculinos expressivos e groove irresistível",
+    "luan santana": "sertanejo romântico com voz masculina suave e melodia envolvente",
+    "zé neto e cristiano": "sertanejo sofrência com vocais masculinos emotivos e violão forte",
+    "maiara e maraisa": "sertanejo feminino com harmonia vocal dupla e letra emocional",
+    "alok": "eletrônica brasileira com batida envolvente e melodia cativante",
+    "post malone": "pop rock melódico com vocais masculinos rasgados e produção moderna",
+    "dua lipa": "pop dançante com vocais femininos fortes e batida disco moderna",
+    "ariana grande": "pop com vocais femininos agudos potentes e produção polida",
+    "kendrick lamar": "hip hop lírico com flow complexo e produção experimental",
+    "bad bunny": "reggaeton e trap latino com vocais masculinos e ritmo contagiante",
+    "rihanna": "pop r&b com vocais femininos versáteis e produção cinematográfica",
+    "eminem": "rap veloz com vocais masculinos intensos e letras complexas",
+    "lady gaga": "pop artístico com vocais femininos dramáticos e produção ousada",
+    "sia": "pop emocional com vocais femininos poderosos e melodia marcante",
+    "imagine dragons": "rock alternativo com percussão forte e refrão épico",
+    "maroon 5": "pop rock com vocais masculinos suaves e groove funk leve",
+    "sam smith": "pop emocional com vocais masculinos altos e arranjo minimalista",
   };
 
   let result = text;
@@ -44,9 +60,8 @@ function sanitizeArtistReferences(text: string): string {
     const regex = new RegExp(`\\b${artist}\\b`, "gi");
     result = result.replace(regex, description);
   }
-  // Generic pattern: "estilo [Name]" or "inspirado em [Name]"
+  // Catch remaining "estilo [Name]" / "inspirado em [Name]" / "como [Name]" / "tipo [Name]"
   result = result.replace(/(?:estilo|inspirado em|como|tipo)\s+[A-Z][a-záéíóúãõê]+(?:\s+(?:e|&)\s+[A-Z][a-záéíóúãõê]+)?/gi, (match) => {
-    // If it wasn't already replaced by the map above, convert generically
     if (Object.keys(artistMap).some(a => match.toLowerCase().includes(a))) return match;
     return "estilo característico com elementos vocais e instrumentais marcantes";
   });
