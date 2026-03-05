@@ -114,7 +114,7 @@ export default function GeradorSlides() {
   const [isPaid, setIsPaid] = useState(false);
   const [imagesGenerated, setImagesGenerated] = useState(0);
   const [generatingAllImages, setGeneratingAllImages] = useState(false);
-  const [picCheckoutLink, setPicCheckoutLink] = useState<string>("");
+  // picCheckoutLink removed — now uses internal /pix-checkout route
   const [userEmail, setUserEmail] = useState("");
 
   // Free cover preview state
@@ -164,18 +164,7 @@ export default function GeradorSlides() {
     if (paid === "true") setIsPaid(true);
   }, []);
 
-  // Fetch PicCheckout link from site_settings
-  useEffect(() => {
-    const fetchLink = async () => {
-      const { data } = await supabase
-        .from("site_settings")
-        .select("value")
-        .eq("key", "piccheckout_link")
-        .maybeSingle();
-      if (data?.value) setPicCheckoutLink(data.value);
-    };
-    fetchLink();
-  }, []);
+  // No longer fetching external PicCheckout link — using internal /pix-checkout
 
   // Save project metadata for download page
   useEffect(() => {
@@ -204,14 +193,10 @@ export default function GeradorSlides() {
   };
 
   const handlePicCheckout = () => {
-    if (!picCheckoutLink) {
-      toast.error("Link de pagamento não configurado.");
-      return;
-    }
     if (userEmail) {
       localStorage.setItem("mv_user_email", userEmail);
     }
-    window.open(picCheckoutLink, "_blank");
+    window.open("/pix-checkout", "_blank");
   };
 
   // Generate all images sequentially
