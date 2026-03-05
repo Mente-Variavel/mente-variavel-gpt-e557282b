@@ -254,15 +254,32 @@ A letra deve combinar perfeitamente com o gênero ${genero} e o tema "${tema}". 
               {/* Suno CTA Card */}
               <Card className="mb-6 border-primary/30 bg-gradient-to-br from-primary/5 to-accent/5">
                 <CardContent className="pt-6">
-                  <h3 className="font-display text-lg font-bold text-foreground mb-2">
-                    Transforme sua letra em uma música real usando Inteligência Artificial.
+                  <h3 className="font-display text-xl font-bold text-foreground mb-2">
+                    Transforme sua letra em uma música real
                   </h3>
-                  <p className="text-sm text-muted-foreground mb-6">
-                    Com o Suno você pode gerar vocais realistas, escolher estilos musicais e criar músicas completas em segundos.
+                  <p className="text-sm text-muted-foreground mb-4">
+                    Agora você pode transformar a letra criada em uma música completa utilizando Inteligência Artificial.
+                    Com o Suno é possível gerar vocais realistas, escolher diferentes estilos musicais e criar músicas completas em poucos segundos.
                   </p>
+
+                  <h4 className="font-display text-sm font-semibold text-foreground mb-2">Vantagens do Suno Pro</h4>
+                  <ul className="text-xs text-muted-foreground space-y-1 mb-6 list-none">
+                    <li>• Acesso ao modelo mais avançado de geração de músicas (v5)</li>
+                    <li>• 2.500 créditos por mês (até aproximadamente 500 músicas)</li>
+                    <li>• Direitos de uso comercial para novas músicas criadas</li>
+                    <li>• Recursos avançados como personas musicais e edição avançada</li>
+                    <li>• Separação da música em até 12 faixas (vocais e instrumentos)</li>
+                    <li>• Upload de até 8 minutos de áudio para remix ou continuação</li>
+                    <li>• Possibilidade de adicionar novos vocais ou instrumentos em músicas já existentes</li>
+                    <li>• Acesso antecipado a novos recursos da plataforma</li>
+                    <li>• Possibilidade de comprar créditos adicionais quando necessário</li>
+                    <li>• Fila prioritária para geração de músicas</li>
+                    <li>• Criação de até 10 músicas simultaneamente</li>
+                  </ul>
+
                   <div className="flex flex-wrap gap-3 mb-4">
                     <Button onClick={() => window.open(SUNO_REFERRAL, "_blank")} className="gap-2">
-                      🎵 Criar Música no Suno
+                      🎵 Transformar essa letra em música no Suno
                     </Button>
                     <Button onClick={generateSunoPrompt} variant="outline" className="gap-2">
                       ✨ Gerar Prompt para Suno
@@ -273,7 +290,7 @@ A letra deve combinar perfeitamente com o gênero ${genero} e o tema "${tema}". 
                   </div>
                   <p className="text-xs text-muted-foreground flex items-start gap-1.5">
                     <Lightbulb className="w-3.5 h-3.5 mt-0.5 shrink-0 text-primary" />
-                    Dica: Com o plano Suno Pro você pode criar mais músicas, usar mais créditos e explorar todos os recursos avançados da plataforma.
+                    Dica: Usuários do plano Suno Pro podem criar mais músicas por mês, utilizar recursos avançados e gerar faixas com qualidade profissional.
                   </p>
                 </CardContent>
               </Card>
