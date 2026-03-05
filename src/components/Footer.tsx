@@ -27,7 +27,7 @@ const Footer = () => (
           <div className="flex flex-col gap-2 text-sm text-muted-foreground">
             <Link to="/servicos/removedor-fundo" className="hover:text-primary transition-colors">Removedor de Fundo</Link>
             <Link to="/servicos/gerador-slides" className="hover:text-primary transition-colors">Gerador de Slides & E-book</Link>
-            <Link to="/servicos/criador-musica" className="hover:text-primary transition-colors">Criador de Música</Link>
+            <Link to="/servicos/criador-musica" className="hover:text-primary transition-colors">Criador de Música IA</Link>
           </div>
         </div>
         <div>
