@@ -130,7 +130,8 @@ export default function CriadorPrompt() {
   const toggleMic = (target: "description" | "improve") => {
     if (isListening) {
       stopListening();
-      setMicTarget(null);
+      // Don't clear micTarget here — the transcript arrives asynchronously
+      // micTarget is cleared after the transcript is consumed in the useEffect
     } else {
       setMicTarget(target);
       startListening();
