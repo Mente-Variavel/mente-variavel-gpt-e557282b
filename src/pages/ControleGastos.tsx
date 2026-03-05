@@ -14,7 +14,7 @@ type Entry = { id: string; type: EntryType; category: string; month: string; yea
 const expenseCategories = [
   "Alimentação", "Moradia", "Transporte", "Saúde", "Educação",
   "Lazer", "Vestuário", "Internet", "Energia", "Água",
-  "Telefone", "Assinaturas", "Impostos", "Outros"
+  "Gás de cozinha", "Telefone", "Assinaturas", "Impostos", "Outros"
 ];
 
 const incomeCategories = [

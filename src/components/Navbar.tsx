@@ -16,7 +16,7 @@ const financasItems = [
 const servicosItems = [
   { to: "/servicos/removedor-fundo", label: "Removedor de Fundo" },
   { to: "/servicos/gerador-slides", label: "Gerador de Slides & E-book" },
-  { to: "/servicos/pix-checkout", label: "Pix Checkout" },
+  { to: "/servicos/criador-musica", label: "Criador de Música" },
 ];
 
 const Navbar = () => {

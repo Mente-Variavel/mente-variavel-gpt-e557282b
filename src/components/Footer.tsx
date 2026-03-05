@@ -27,23 +27,28 @@ const Footer = () => (
           <div className="flex flex-col gap-2 text-sm text-muted-foreground">
             <Link to="/servicos/removedor-fundo" className="hover:text-primary transition-colors">Removedor de Fundo</Link>
             <Link to="/servicos/gerador-slides" className="hover:text-primary transition-colors">Gerador de Slides & E-book</Link>
-            <Link to="/servicos/pix-checkout" className="hover:text-primary transition-colors">Pix Checkout</Link>
+            <Link to="/servicos/criador-musica" className="hover:text-primary transition-colors">Criador de Música</Link>
           </div>
         </div>
         <div>
           <h4 className="font-display text-xs font-bold text-foreground mb-3 uppercase tracking-wider">Plataforma</h4>
           <div className="flex flex-col gap-2 text-sm text-muted-foreground">
             <Link to="/criador-prompt" className="hover:text-primary transition-colors">Criador de Prompt</Link>
+            <Link to="/sobre" className="hover:text-primary transition-colors">Sobre o Projeto</Link>
             <Link to="/contato" className="hover:text-primary transition-colors">Contato</Link>
           </div>
         </div>
       </div>
       <div className="border-t border-border/30 pt-6 flex flex-col md:flex-row items-center justify-between gap-4">
         <p className="text-xs text-muted-foreground">© 2026 Mente Variável. Todos os direitos reservados.</p>
-        <p className="text-xs text-muted-foreground/60 text-center max-w-lg">
-          Este site utiliza Inteligência Artificial. As respostas geradas podem conter limitações e não substituem aconselhamento profissional.
-        </p>
+        <div className="flex items-center gap-4 text-xs text-muted-foreground">
+          <Link to="/privacidade" className="hover:text-primary transition-colors">Política de Privacidade</Link>
+          <Link to="/termos" className="hover:text-primary transition-colors">Termos de Uso</Link>
+        </div>
       </div>
+      <p className="text-xs text-muted-foreground/60 text-center mt-4 max-w-lg mx-auto">
+        Este site utiliza Inteligência Artificial. As respostas geradas podem conter limitações e não substituem aconselhamento profissional.
+      </p>
     </div>
   </footer>
 );
