@@ -138,10 +138,8 @@ export default function GeradorSlides() {
   useEffect(() => {
     const savedSlides = localStorage.getItem("mv_slides_data");
     const savedChapters = localStorage.getItem("mv_chapters_data");
-    const savedCover = localStorage.getItem("mv_cover_url");
     if (savedSlides) try { setSlides(JSON.parse(savedSlides)); setStep(2); } catch {}
     if (savedChapters) try { setChapters(JSON.parse(savedChapters)); setStep(2); } catch {}
-    if (savedCover) setCoverUrl(savedCover);
   }, []);
 
   // Save data
