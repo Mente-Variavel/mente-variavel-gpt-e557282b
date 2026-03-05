@@ -8,10 +8,10 @@ import { toast } from "sonner";
 import { Save, Loader2, QrCode } from "lucide-react";
 
 const PIX_KEYS = [
-  { key: "pix_key", label: "Chave Pix", placeholder: "email, CPF, telefone ou chave aleatória" },
-  { key: "pix_receiver_name", label: "Nome do Recebedor (máx. 25)", placeholder: "Seu nome ou empresa", maxLength: 25 },
-  { key: "pix_receiver_city", label: "Cidade do Recebedor (máx. 15)", placeholder: "SAO PAULO", maxLength: 15 },
-  { key: "pix_amount", label: "Valor (opcional)", placeholder: "19.90" },
+  { key: "pix_key", label: "Chave Pix *", placeholder: "email, CPF, telefone ou chave aleatória", required: true },
+  { key: "pix_receiver_name", label: "Nome do Recebedor (máx. 25) *", placeholder: "Seu nome ou empresa", maxLength: 25, required: true },
+  { key: "pix_receiver_city", label: "Cidade do Recebedor (máx. 15) *", placeholder: "SAO PAULO", maxLength: 15, required: true },
+  { key: "pix_amount", label: "Valor (use ponto: 19.90)", placeholder: "19.90" },
   { key: "pix_description", label: "Descrição (opcional)", placeholder: "E-book Envelopamento" },
   { key: "pix_txid", label: "TXID / Identificador", placeholder: "EBOOK" },
 ];
@@ -38,14 +38,29 @@ export default function PixConfigAdmin() {
   }, []);
 
   const handleSave = async () => {
+    // Validate required fields
+    const requiredKeys = PIX_KEYS.filter(k => k.required);
+    const missing = requiredKeys.filter(k => !values[k.key]?.trim());
+    if (missing.length > 0) {
+      toast.error(`Preencha os campos obrigatórios: ${missing.map(k => k.label.replace(' *', '')).join(', ')}`);
+      return;
+    }
+
+    // Normalize amount: comma → dot
+    const normalizedValues = { ...values };
+    if (normalizedValues["pix_amount"]) {
+      normalizedValues["pix_amount"] = normalizedValues["pix_amount"].replace(",", ".");
+    }
+
     setSaving(true);
     try {
       for (const { key } of PIX_KEYS) {
-        const val = values[key] || "";
+        const val = normalizedValues[key] || "";
         await supabase
           .from("site_settings")
           .upsert({ key, value: val, updated_at: new Date().toISOString() }, { onConflict: "key" });
       }
+      setValues(normalizedValues);
       toast.success("Configuração do Pix salva com sucesso!");
     } catch {
       toast.error("Erro ao salvar configuração.");
