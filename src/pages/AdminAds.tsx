@@ -14,7 +14,7 @@ import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
-import { LogIn, AlertTriangle, Clock, Plus, Sparkles, Trash2, Save, Mail, MailOpen, Eye, ChevronDown, ChevronUp, Users, Bug } from "lucide-react";
+import { LogIn, AlertTriangle, Clock, Plus, Sparkles, Trash2, Save, Mail, MailOpen, ChevronDown, ChevronUp, Users, Bug, BarChart3, Image, MessageSquare, DollarSign, Settings } from "lucide-react";
 
 const getAdStatus = (planEnd: string | null) => {
   if (!planEnd) return null;
@@ -61,15 +61,61 @@ const AdminAds = () => {
   const { data: contactMessages } = useQuery({
     queryKey: ["admin-contact-messages"],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("contact_messages")
-        .select("*")
-        .order("created_at", { ascending: false });
+      const { data, error } = await supabase.from("contact_messages").select("*").order("created_at", { ascending: false });
       if (error) throw error;
       return data;
     },
     enabled: !!user,
   });
+
+  const { data: registeredUsers } = useQuery({
+    queryKey: ["admin-users"],
+    queryFn: async () => {
+      const { data, error } = await supabase.from("profiles").select("*").order("created_at", { ascending: false });
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!user,
+  });
+
+  // API Usage stats
+  const { data: apiUsage } = useQuery({
+    queryKey: ["admin-api-usage"],
+    queryFn: async () => {
+      const todayStart = new Date();
+      todayStart.setHours(0, 0, 0, 0);
+      const { data, error } = await supabase
+        .from("api_usage")
+        .select("*")
+        .gte("created_at", todayStart.toISOString())
+        .order("created_at", { ascending: false });
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!user,
+    refetchInterval: 30_000,
+  });
+
+  // Google Analytics setting
+  const { data: gaSettings } = useQuery({
+    queryKey: ["site-settings-ga"],
+    queryFn: async () => {
+      const { data } = await supabase.from("site_settings").select("*").eq("key", "google_analytics_id").single();
+      return data;
+    },
+    enabled: !!user,
+  });
+
+  const [gaId, setGaId] = useState("");
+  useEffect(() => {
+    if (gaSettings?.value) setGaId(gaSettings.value);
+  }, [gaSettings]);
+
+  const saveGaId = async () => {
+    const { error } = await supabase.from("site_settings").upsert({ key: "google_analytics_id", value: gaId, updated_at: new Date().toISOString() });
+    if (error) toast.error("Erro ao salvar");
+    else toast.success("Google Analytics ID salvo!");
+  };
 
   const markAsRead = useMutation({
     mutationFn: async (id: string) => {
@@ -82,30 +128,12 @@ const AdminAds = () => {
   const [showMessages, setShowMessages] = useState(true);
   const [showUsers, setShowUsers] = useState(false);
   const [showDebug, setShowDebug] = useState(false);
+  const [showStats, setShowStats] = useState(true);
+  const [showSettings, setShowSettings] = useState(false);
   const [expandedMessage, setExpandedMessage] = useState<string | null>(null);
 
-  const { data: registeredUsers } = useQuery({
-    queryKey: ["admin-users"],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("profiles")
-        .select("*")
-        .order("created_at", { ascending: false });
-      if (error) throw error;
-      return data;
-    },
-    enabled: !!user,
-  });
-
   const updateMutation = useMutation({
-    mutationFn: async (ad: {
-      id: string; title: string; description: string; image_url: string;
-      link_url: string; whatsapp_number: string; is_active: boolean;
-      plan_name: string; plan_start: string; plan_end: string;
-      plan_value: string; client_name: string;
-      ad_format: string; placement: string;
-      page_targets: string[];
-    }) => {
+    mutationFn: async (ad: any) => {
       const { error } = await supabase.from("ads").update({
         title: ad.title, description: ad.description, image_url: ad.image_url,
         link_url: ad.link_url, whatsapp_number: ad.whatsapp_number, is_active: ad.is_active,
@@ -125,7 +153,6 @@ const AdminAds = () => {
     onError: () => toast.error("Erro ao salvar anúncio"),
   });
 
-  // Sponsored tools mutations
   const saveTool = useMutation({
     mutationFn: async (tool: typeof emptyTool & { id?: string }) => {
       const payload = {
@@ -148,7 +175,6 @@ const AdminAds = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["admin-sponsored-tools"] });
-      queryClient.invalidateQueries({ queryKey: ["sponsored-tools"] });
       toast.success("Ferramenta patrocinada salva!");
     },
     onError: () => toast.error("Erro ao salvar ferramenta"),
@@ -161,7 +187,6 @@ const AdminAds = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["admin-sponsored-tools"] });
-      queryClient.invalidateQueries({ queryKey: ["sponsored-tools"] });
       toast.success("Ferramenta removida!");
     },
     onError: () => toast.error("Erro ao remover ferramenta"),
@@ -206,8 +231,7 @@ const AdminAds = () => {
         <div className="flex-1 flex flex-col items-center justify-center pt-20 gap-4">
           <p className="text-muted-foreground">Faça login para gerenciar os anúncios.</p>
           <Button onClick={() => navigate("/auth")} className="gap-2">
-            <LogIn className="w-4 h-4" />
-            Fazer login
+            <LogIn className="w-4 h-4" /> Fazer login
           </Button>
         </div>
         <Footer />
@@ -230,12 +254,28 @@ const AdminAds = () => {
     ...expiringTools.map((t) => ({ ...t, type: "tool" as const, label: t.client_name || t.name })),
   ];
 
-  // Debug info
   const activeAds = ads?.filter(a => a.is_active) || [];
   const placementCounts: Record<string, number> = {};
-  activeAds.forEach(a => {
-    placementCounts[a.placement] = (placementCounts[a.placement] || 0) + 1;
+  activeAds.forEach(a => { placementCounts[a.placement] = (placementCounts[a.placement] || 0) + 1; });
+
+  // Usage stats
+  const usageByTool: Record<string, { count: number; cost: number }> = {};
+  apiUsage?.forEach(u => {
+    if (!usageByTool[u.tool]) usageByTool[u.tool] = { count: 0, cost: 0 };
+    usageByTool[u.tool].count += u.request_count;
+    usageByTool[u.tool].cost += Number(u.estimated_cost || 0);
   });
+  const totalRequests = apiUsage?.length || 0;
+  const totalCost = apiUsage?.reduce((sum, u) => sum + Number(u.estimated_cost || 0), 0) || 0;
+  const imageCount = usageByTool["image_generation"]?.count || 0;
+
+  const toolLabels: Record<string, string> = {
+    chat: "Chat IA",
+    image_generation: "Geração de Imagens",
+    ai_generate: "Gerador IA (Prompts/Slides)",
+    prompt_generator: "Criador de Prompt",
+    slide_generator: "Gerador de Slides",
+  };
 
   const ToolForm = ({ value, onChange, onSave, onDelete, saving }: {
     value: typeof emptyTool;
@@ -248,7 +288,7 @@ const AdminAds = () => {
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div><Label>Nome da ferramenta</Label><Input value={value.name} onChange={(e) => onChange({ ...value, name: e.target.value })} /></div>
         <div><Label>URL</Label><Input value={value.url} onChange={(e) => onChange({ ...value, url: e.target.value })} /></div>
-        <div className="sm:col-span-2"><Label>Descrição ({value.description.length}/500 caracteres)</Label><Textarea value={value.description} onChange={(e) => { if (e.target.value.length <= 500) onChange({ ...value, description: e.target.value }); }} placeholder="Breve descrição (máx. 500 caracteres)" rows={2} /></div>
+        <div className="sm:col-span-2"><Label>Descrição ({value.description.length}/500)</Label><Textarea value={value.description} onChange={(e) => { if (e.target.value.length <= 500) onChange({ ...value, description: e.target.value }); }} placeholder="Breve descrição" rows={2} /></div>
         <div><Label>URL do Ícone</Label><Input value={value.icon_url} onChange={(e) => onChange({ ...value, icon_url: e.target.value })} placeholder="https://..." /></div>
         <div><Label>Nome do cliente</Label><Input value={value.client_name} onChange={(e) => onChange({ ...value, client_name: e.target.value })} /></div>
         <div><Label>WhatsApp</Label><Input value={value.whatsapp_number} onChange={(e) => onChange({ ...value, whatsapp_number: e.target.value })} placeholder="5511999999999" /></div>
@@ -276,7 +316,7 @@ const AdminAds = () => {
       <div className="flex gap-2 justify-end">
         {onDelete && (
           <Button variant="destructive" size="sm" onClick={onDelete} className="gap-1">
-            <Trash2 className="w-3.5 h-3.5" /> Remover
+            <Trash2 className="w-3.5 h-3.5" /> Excluir
           </Button>
         )}
         <Button size="sm" onClick={onSave} disabled={saving || !value.name || !value.url} className="gap-1">
@@ -291,10 +331,83 @@ const AdminAds = () => {
       <Navbar />
       <main className="flex-1 pt-20 container mx-auto px-4 py-8">
         <h1 className="font-display text-2xl md:text-3xl font-bold text-foreground mb-4">
-          Gerenciar Anúncios
+          Painel Administrativo
         </h1>
 
-        {/* Debug Panel */}
+        {/* === API Usage Stats === */}
+        <div className="mb-6">
+          <button
+            onClick={() => setShowStats(!showStats)}
+            className="flex items-center gap-2 font-display text-xl font-bold text-foreground mb-3 hover:text-primary transition-colors"
+          >
+            <BarChart3 className="w-5 h-5 text-primary" />
+            Estatísticas de Uso (Hoje)
+            {showStats ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+          </button>
+          {showStats && (
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
+              <div className="glass rounded-xl p-4 border border-border/50 text-center">
+                <Image className="w-6 h-6 mx-auto mb-1 text-primary" />
+                <p className="text-2xl font-bold text-foreground">{imageCount}</p>
+                <p className="text-xs text-muted-foreground">Imagens geradas</p>
+              </div>
+              <div className="glass rounded-xl p-4 border border-border/50 text-center">
+                <MessageSquare className="w-6 h-6 mx-auto mb-1 text-primary" />
+                <p className="text-2xl font-bold text-foreground">{totalRequests}</p>
+                <p className="text-xs text-muted-foreground">Requisições IA</p>
+              </div>
+              <div className="glass rounded-xl p-4 border border-border/50 text-center">
+                <DollarSign className="w-6 h-6 mx-auto mb-1 text-primary" />
+                <p className="text-2xl font-bold text-foreground">US$ {totalCost.toFixed(3)}</p>
+                <p className="text-xs text-muted-foreground">Custo estimado</p>
+              </div>
+              <div className="glass rounded-xl p-4 border border-border/50 text-center">
+                <Users className="w-6 h-6 mx-auto mb-1 text-primary" />
+                <p className="text-2xl font-bold text-foreground">{registeredUsers?.length || 0}</p>
+                <p className="text-xs text-muted-foreground">Usuários</p>
+              </div>
+            </div>
+          )}
+          {showStats && Object.keys(usageByTool).length > 0 && (
+            <div className="glass rounded-xl p-4 border border-border/50 mb-4">
+              <h4 className="text-sm font-semibold text-foreground mb-2">Custo por ferramenta (hoje)</h4>
+              <div className="space-y-1">
+                {Object.entries(usageByTool).map(([tool, stats]) => (
+                  <div key={tool} className="flex items-center justify-between text-xs">
+                    <span className="text-muted-foreground">{toolLabels[tool] || tool}</span>
+                    <span className="text-foreground font-medium">{stats.count} req · US$ {stats.cost.toFixed(4)}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* === Settings === */}
+        <div className="mb-6">
+          <button
+            onClick={() => setShowSettings(!showSettings)}
+            className="flex items-center gap-2 font-display text-xl font-bold text-foreground mb-3 hover:text-primary transition-colors"
+          >
+            <Settings className="w-5 h-5 text-primary" />
+            Configurações
+            {showSettings ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+          </button>
+          {showSettings && (
+            <div className="glass rounded-xl p-4 border border-border/50 space-y-3">
+              <div>
+                <Label className="text-sm">Google Analytics ID</Label>
+                <div className="flex gap-2 mt-1">
+                  <Input value={gaId} onChange={(e) => setGaId(e.target.value)} placeholder="G-XXXXXXXXXX" className="max-w-xs" />
+                  <Button size="sm" onClick={saveGaId}>Salvar</Button>
+                </div>
+                <p className="text-xs text-muted-foreground mt-1">ID de acompanhamento GA4 para o site</p>
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* === Debug Panel === */}
         <div className="mb-6">
           <button
             onClick={() => setShowDebug(!showDebug)}
@@ -315,15 +428,12 @@ const AdminAds = () => {
               {activeAds.length === 0 && (
                 <p className="text-yellow-500">⚠ Nenhum anúncio ativo. Ative pelo menos um para exibir no site.</p>
               )}
-              {activeAds.map(ad => {
-                const targets = (ad as any).page_targets as string[] || [];
-                return (
-                  <div key={ad.id} className="ml-4 border-l-2 border-primary/30 pl-3 py-1">
-                    <p>✅ <strong>{ad.client_name || ad.title || ad.slot}</strong></p>
-                    <p className="text-muted-foreground">Posição: {ad.placement} | Formato: {ad.ad_format} | Páginas: {targets.length === 0 ? "todas (padrão)" : targets.join(", ")}</p>
-                  </div>
-                );
-              })}
+              {activeAds.map(ad => (
+                <div key={ad.id} className="ml-4 border-l-2 border-primary/30 pl-3 py-1">
+                  <p>✅ <strong>{ad.client_name || ad.title || ad.slot}</strong></p>
+                  <p className="text-muted-foreground">Posição: {ad.placement} | Formato: {ad.ad_format} | Páginas: {ad.page_targets?.length === 0 ? "todas" : ad.page_targets?.join(", ")}</p>
+                </div>
+              ))}
               {ads?.filter(a => !a.is_active).map(ad => (
                 <div key={ad.id} className="ml-4 border-l-2 border-muted/30 pl-3 py-1 opacity-50">
                   <p>❌ <strong>{ad.client_name || ad.title || ad.slot}</strong> — desativado</p>
@@ -333,11 +443,43 @@ const AdminAds = () => {
           )}
         </div>
 
-        {/* Contact Messages Section */}
+        {/* === Alerts === */}
+        {allAlerts.length > 0 && (
+          <div className="mb-6 space-y-2">
+            {allAlerts.map((item) => {
+              const status = getAdStatus(item.plan_end);
+              const isExpired = status === "expired";
+              const daysLeft = item.plan_end
+                ? Math.ceil((new Date(item.plan_end).getTime() - new Date().setHours(0,0,0,0)) / (1000*60*60*24))
+                : 0;
+              return (
+                <div key={`alert-${item.id}`} className={`flex items-center gap-3 p-3 rounded-lg border ${isExpired ? "border-destructive/50 bg-destructive/10" : "border-yellow-500/50 bg-yellow-500/10"}`}>
+                  {isExpired ? <AlertTriangle className="w-5 h-5 text-destructive shrink-0" /> : <Clock className="w-5 h-5 text-yellow-500 shrink-0" />}
+                  <span className="text-sm flex-1">
+                    {isExpired
+                      ? `⚠️ Plano de "${item.label}" VENCIDO! ${item.type === "tool" ? "(Ferramenta)" : ""}`
+                      : `⏰ Plano de "${item.label}" vence em ${daysLeft} dia${daysLeft !== 1 ? "s" : ""} ${item.type === "tool" ? "(Ferramenta)" : ""}`}
+                  </span>
+                  {item.whatsapp_number && (
+                    <a
+                      href={`https://wa.me/${item.whatsapp_number.replace(/\D/g, "")}?text=${encodeURIComponent(isExpired ? `Olá ${item.label}! Seu plano no MenteVariável venceu. Gostaria de renovar?` : `Olá ${item.label}! Seu plano vence em ${daysLeft} dia(s). Gostaria de renovar?`)}`}
+                      target="_blank" rel="noopener noreferrer"
+                      className="shrink-0 px-3 py-1.5 rounded-md bg-[#25D366] hover:bg-[#20BD5A] text-white text-xs font-medium transition-colors"
+                    >
+                      Avisar no WhatsApp
+                    </a>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        )}
+
+        {/* === Mensagens de Contato === */}
         <div className="mb-8">
           <button
             onClick={() => setShowMessages(!showMessages)}
-            className="flex items-center gap-2 font-display text-xl md:text-2xl font-bold text-foreground mb-4 hover:text-primary transition-colors"
+            className="flex items-center gap-2 font-display text-xl font-bold text-foreground mb-4 hover:text-primary transition-colors"
           >
             <Mail className="w-5 h-5 text-primary" />
             Mensagens de Contato
@@ -348,7 +490,6 @@ const AdminAds = () => {
             )}
             {showMessages ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
           </button>
-
           {showMessages && (
             <div className="space-y-3">
               {!contactMessages || contactMessages.length === 0 ? (
@@ -357,9 +498,7 @@ const AdminAds = () => {
                 contactMessages.map((msg) => (
                   <div
                     key={msg.id}
-                    className={`glass rounded-xl p-4 border cursor-pointer transition-all ${
-                      msg.is_read ? "border-border/50 opacity-70" : "border-primary/30 bg-primary/5"
-                    }`}
+                    className={`glass rounded-xl p-4 border cursor-pointer transition-all ${msg.is_read ? "border-border/50 opacity-70" : "border-primary/30 bg-primary/5"}`}
                     onClick={() => {
                       setExpandedMessage(expandedMessage === msg.id ? null : msg.id);
                       if (!msg.is_read) markAsRead.mutate(msg.id);
@@ -367,15 +506,9 @@ const AdminAds = () => {
                   >
                     <div className="flex items-center justify-between gap-3">
                       <div className="flex items-center gap-3 min-w-0">
-                        {msg.is_read ? (
-                          <MailOpen className="w-4 h-4 text-muted-foreground shrink-0" />
-                        ) : (
-                          <Mail className="w-4 h-4 text-primary shrink-0" />
-                        )}
+                        {msg.is_read ? <MailOpen className="w-4 h-4 text-muted-foreground shrink-0" /> : <Mail className="w-4 h-4 text-primary shrink-0" />}
                         <div className="min-w-0">
-                          <span className={`text-sm font-semibold ${msg.is_read ? "text-muted-foreground" : "text-foreground"}`}>
-                            {msg.name}
-                          </span>
+                          <span className={`text-sm font-semibold ${msg.is_read ? "text-muted-foreground" : "text-foreground"}`}>{msg.name}</span>
                           <span className="text-xs text-muted-foreground ml-2">{msg.email}</span>
                         </div>
                       </div>
@@ -386,11 +519,7 @@ const AdminAds = () => {
                     {expandedMessage === msg.id && (
                       <div className="mt-3 pt-3 border-t border-border/50">
                         <p className="text-sm text-foreground whitespace-pre-wrap">{msg.message}</p>
-                        <a
-                          href={`mailto:${msg.email}?subject=Re: Contato MenteVariável`}
-                          className="inline-flex items-center gap-1 mt-3 text-xs text-primary hover:underline"
-                          onClick={(e) => e.stopPropagation()}
-                        >
+                        <a href={`mailto:${msg.email}?subject=Re: Contato MenteVariável`} className="inline-flex items-center gap-1 mt-3 text-xs text-primary hover:underline" onClick={(e) => e.stopPropagation()}>
                           <Mail className="w-3 h-3" /> Responder por e-mail
                         </a>
                       </div>
@@ -402,20 +531,17 @@ const AdminAds = () => {
           )}
         </div>
 
-        {/* Registered Users Section */}
+        {/* === Usuários === */}
         <div className="mb-8">
           <button
             onClick={() => setShowUsers(!showUsers)}
-            className="flex items-center gap-2 font-display text-xl md:text-2xl font-bold text-foreground mb-4 hover:text-primary transition-colors"
+            className="flex items-center gap-2 font-display text-xl font-bold text-foreground mb-4 hover:text-primary transition-colors"
           >
             <Users className="w-5 h-5 text-primary" />
             Usuários Cadastrados
-            {registeredUsers && (
-              <Badge className="ml-2">{registeredUsers.length}</Badge>
-            )}
+            {registeredUsers && <Badge className="ml-2">{registeredUsers.length}</Badge>}
             {showUsers ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
           </button>
-
           {showUsers && (
             <div className="space-y-3">
               {!registeredUsers || registeredUsers.length === 0 ? (
@@ -450,56 +576,15 @@ const AdminAds = () => {
           )}
         </div>
 
-        {allAlerts.length > 0 && (
-          <div className="mb-6 space-y-2">
-            {allAlerts.map((item) => {
-              const status = getAdStatus(item.plan_end);
-              const isExpired = status === "expired";
-              const daysLeft = item.plan_end
-                ? Math.ceil((new Date(item.plan_end).getTime() - new Date().setHours(0,0,0,0)) / (1000*60*60*24))
-                : 0;
-              return (
-                <div
-                  key={`alert-${item.id}`}
-                  className={`flex items-center gap-3 p-3 rounded-lg border ${
-                    isExpired ? "border-destructive/50 bg-destructive/10" : "border-yellow-500/50 bg-yellow-500/10"
-                  }`}
-                >
-                  {isExpired ? <AlertTriangle className="w-5 h-5 text-destructive shrink-0" /> : <Clock className="w-5 h-5 text-yellow-500 shrink-0" />}
-                  <span className="text-sm flex-1">
-                    {isExpired
-                      ? `⚠️ Plano de "${item.label}" VENCIDO! ${item.type === "tool" ? "(Ferramenta)" : ""}`
-                      : `⏰ Plano de "${item.label}" vence em ${daysLeft} dia${daysLeft !== 1 ? "s" : ""} ${item.type === "tool" ? "(Ferramenta)" : ""}`}
-                  </span>
-                  {item.whatsapp_number && (
-                    <a
-                      href={`https://wa.me/${item.whatsapp_number.replace(/\D/g, "")}?text=${encodeURIComponent(
-                        isExpired
-                          ? `Olá ${item.label}! Seu plano no MenteVariável venceu. Gostaria de renovar?`
-                          : `Olá ${item.label}! Seu plano no MenteVariável vence em ${daysLeft} dia${daysLeft !== 1 ? "s" : ""}. Gostaria de renovar?`
-                      )}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="shrink-0 px-3 py-1.5 rounded-md bg-[#25D366] hover:bg-[#20BD5A] text-white text-xs font-medium transition-colors"
-                    >
-                      Avisar no WhatsApp
-                    </a>
-                  )}
-                </div>
-              );
-            })}
-          </div>
-        )}
-
-        {/* Ads Section */}
+        {/* === Anúncios === */}
+        <h2 className="font-display text-xl md:text-2xl font-bold text-foreground mb-4">
+          Anúncios
+        </h2>
         <div className="grid gap-6 mb-12">
           {ads?.map((ad) => (
             <AdEditor
               key={ad.id}
-              ad={{
-                ...ad,
-                page_targets: (ad as any).page_targets || [],
-              }}
+              ad={{ ...ad, page_targets: ad.page_targets || [] }}
               label={ad.client_name || ad.title || ad.slot}
               planStatus={getAdStatus(ad.plan_end)}
               onSave={(updated) => updateMutation.mutate({ ...updated, id: ad.id })}
@@ -508,12 +593,11 @@ const AdminAds = () => {
           ))}
         </div>
 
-        {/* Sponsored Tools Section */}
+        {/* === Ferramentas Patrocinadas === */}
         <h2 className="font-display text-xl md:text-2xl font-bold text-foreground mb-4 flex items-center gap-2">
           <Sparkles className="w-5 h-5 text-primary" />
           Ferramentas Patrocinadas
         </h2>
-
         <div className="grid gap-6 mb-8">
           {sponsoredTools?.map((tool) => {
             const val = editingTools[tool.id];
@@ -531,7 +615,6 @@ const AdminAds = () => {
           })}
         </div>
 
-        {/* Add New Tool */}
         <div className="mb-8">
           <h3 className="font-display text-lg font-semibold text-foreground mb-3 flex items-center gap-2">
             <Plus className="w-4 h-4" /> Adicionar nova ferramenta patrocinada
