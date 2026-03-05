@@ -27,7 +27,7 @@ const Guides = () => (
           </p>
         </motion.div>
 
-        <AdPlaceholder format="banner" className="mb-8" />
+        <AdPlaceholder placement="banner_top" className="mb-8" />
 
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-5xl mx-auto">
           {guides.map((guide, i) => (
@@ -56,7 +56,7 @@ const Guides = () => (
           ))}
         </div>
 
-        <AdPlaceholder format="inline" className="mt-12" />
+        <AdPlaceholder placement="middle" className="mt-12" />
       </div>
     </main>
     <Footer />

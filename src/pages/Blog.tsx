@@ -27,7 +27,7 @@ const Blog = () => (
           </p>
         </motion.div>
 
-        <AdPlaceholder format="banner" className="mb-8" />
+        <AdPlaceholder placement="banner_top" className="mb-8" />
 
         <div className="flex flex-col lg:flex-row gap-8 max-w-6xl mx-auto">
           <div className="flex-1 space-y-6">
@@ -57,21 +57,21 @@ const Blog = () => (
                     Ler artigo <ArrowRight className="w-3 h-3 group-hover:translate-x-1 transition-transform" />
                   </span>
                 </Link>
-                {i === 1 && <AdPlaceholder format="inline" className="mt-6" />}
+                {i === 1 && <AdPlaceholder placement="middle" className="mt-6" />}
               </motion.div>
             ))}
           </div>
 
           {/* Sidebar */}
           <aside className="lg:w-72 shrink-0 space-y-6">
-            <AdPlaceholder format="sidebar" />
+            <AdPlaceholder placement="sidebar" />
             <div className="glass rounded-xl p-5">
               <h3 className="font-display text-xs font-bold text-foreground mb-3 uppercase tracking-wider">Sobre o Blog</h3>
               <p className="text-sm text-muted-foreground leading-relaxed">
                 Aqui compartilhamos dicas, tutoriais e reflexões sobre Inteligência Artificial e como ela pode transformar seu dia a dia.
               </p>
             </div>
-            <AdPlaceholder format="sidebar" />
+            <AdPlaceholder placement="sidebar" />
           </aside>
         </div>
       </div>

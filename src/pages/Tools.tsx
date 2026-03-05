@@ -74,7 +74,7 @@ const Tools = () => {
             </p>
           </motion.div>
 
-          <AdPlaceholder format="banner" slot="ferramentas_topo" className="mb-8" />
+          <AdPlaceholder placement="tools" className="mb-8" />
 
           <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
             {tools.map((tool, i) => (
@@ -139,7 +139,7 @@ const Tools = () => {
             ))}
           </div>
 
-          <AdPlaceholder format="footer" slot="ferramentas_rodape" className="mt-8" />
+          <AdPlaceholder placement="footer" className="mt-8" />
         </div>
       </main>
       <Footer />

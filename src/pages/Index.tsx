@@ -230,7 +230,7 @@ export default function Index() {
         </section>
         {/* Ad between tools and CTA */}
         <div className="container mx-auto px-4">
-          <AdPlaceholder format="inline" slot="home_inline" className="my-8" />
+          <AdPlaceholder placement="middle" className="my-8" />
         </div>
 
         {/* CTA */}
