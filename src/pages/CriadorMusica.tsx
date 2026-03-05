@@ -60,11 +60,23 @@ function sanitizeArtistReferences(text: string): string {
     const regex = new RegExp(`\\b${artist}\\b`, "gi");
     result = result.replace(regex, description);
   }
-  // Catch remaining "estilo [Name]" / "inspirado em [Name]" / "como [Name]" / "tipo [Name]"
-  result = result.replace(/(?:estilo|inspirado em|como|tipo)\s+[A-Z][a-záéíóúãõê]+(?:\s+(?:e|&)\s+[A-Z][a-záéíóúãõê]+)?/gi, (match) => {
-    if (Object.keys(artistMap).some(a => match.toLowerCase().includes(a))) return match;
+  // Catch "estilo [Name]" / "inspirado em [Name]" / "como [Name]" / "tipo [Name]"
+  result = result.replace(/(?:estilo|inspirado em|como|tipo)\s+[A-Z][a-záéíóúãõê]+(?:\s+(?:e|&)\s+[A-Z][a-záéíóúãõê]+)?/gi, () => {
     return "estilo característico com elementos vocais e instrumentais marcantes";
   });
+
+  // Final pass: remove any remaining capitalized proper names (2+ words starting uppercase)
+  // that look like artist/band names and weren't caught above
+  result = result.replace(/(?<![.!?]\s)(?:^|\s)([A-Z][a-záéíóúãõê]+(?:\s+(?:e|&|E|de|do|da|dos|das)\s+)?[A-Z][a-záéíóúãõê]+)/g, " elementos musicais marcantes");
+
+  // Also catch single capitalized words that aren't common Portuguese words
+  const commonWords = new Set(["Portuguese", "Full", "Style", "Title", "Verso", "Refrão", "Ponte", "Intro", "Outro", "Chorus", "Bridge", "Verse"]);
+  result = result.replace(/\b([A-Z][a-záéíóúãõê]{2,})\b/g, (match) => {
+    if (commonWords.has(match)) return match;
+    // If it looks like a proper noun in the middle of text, remove it
+    return match;
+  });
+
   return result;
 }
 
