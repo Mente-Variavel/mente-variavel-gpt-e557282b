@@ -7,6 +7,7 @@ import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import AdEditor from "@/components/admin/AdEditor";
 import PixConfigAdmin from "@/components/admin/PixConfigAdmin";
+import VideoUploadAdmin from "@/components/admin/VideoUploadAdmin";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -631,6 +632,11 @@ const AdminAds = () => {
         {/* Pix Checkout Config */}
         <div className="mt-10">
           <PixConfigAdmin />
+        </div>
+
+        {/* Video Upload */}
+        <div className="mt-6">
+          <VideoUploadAdmin />
         </div>
       </main>
       <Footer />
