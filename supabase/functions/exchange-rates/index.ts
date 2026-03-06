@@ -118,6 +118,22 @@ serve(async (req) => {
       lastUpdated = "N/A";
     }
 
+    // Fetch real BTC price
+    try {
+      const btcRes = await fetch("https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=usd");
+      if (btcRes.ok) {
+        const btcData = await btcRes.json();
+        const btcInUsd = btcData?.bitcoin?.usd;
+        if (btcInUsd && rates) {
+          // BTC rate relative to base currency: 1 USD = 1/btcInUsd BTC
+          const usdRate = rates["USD"] || 1;
+          rates["BTC"] = usdRate / btcInUsd;
+        }
+      }
+    } catch (e) {
+      console.error("BTC price fetch failed:", e);
+    }
+
     // Ensure base currency is 1
     rates[baseCurrency] = 1;
 
