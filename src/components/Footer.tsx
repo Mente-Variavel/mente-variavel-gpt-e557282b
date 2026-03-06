@@ -70,8 +70,10 @@ const Footer = () => {
             </div>
           </div>
           <div>
-            <h4 className="font-display text-xs font-bold text-foreground mb-3 uppercase tracking-wider">Plataforma</h4>
+            <h4 className="font-display text-xs font-bold text-foreground mb-3 uppercase tracking-wider">Produtos</h4>
             <div className="flex flex-col gap-2 text-sm text-muted-foreground">
+              <Link to="/produtos/gerador-legendas" className="hover:text-primary transition-colors">Gerador de Legendas</Link>
+              <Link to="/produtos/pix-checkout" className="hover:text-primary transition-colors">Pix Checkout</Link>
               <Link to="/criador-prompt" className="hover:text-primary transition-colors">Criador de Prompt</Link>
               <Link to="/guias" className="hover:text-primary transition-colors">Guias</Link>
               <Link to="/blog" className="hover:text-primary transition-colors">Blog</Link>
