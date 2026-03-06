@@ -54,7 +54,16 @@ const quickSuggestions = [
 type HistoryItem = { id: string; prompt: string; date: string; framework: string };
 
 function loadHistory(): HistoryItem[] {
-  try { return JSON.parse(localStorage.getItem("mv_prompt_history") || "[]"); } catch { return []; }
+  try {
+    const saved = JSON.parse(localStorage.getItem("mv_prompt_history") || "[]") as HistoryItem[];
+    // Clear history from previous days
+    const today = new Date().toLocaleDateString("pt-BR");
+    const todayItems = saved.filter((item) => item.date.startsWith(today));
+    if (todayItems.length !== saved.length) {
+      localStorage.setItem("mv_prompt_history", JSON.stringify(todayItems));
+    }
+    return todayItems;
+  } catch { return []; }
 }
 
 async function callAI(messages: { role: string; content: string }[]): Promise<string> {
