@@ -27,6 +27,8 @@ export type SubtitleFontId =
 
 export type BackgroundColorId = "dark" | "neon-blue" | "neon-green" | "white" | "yellow" | "pink" | "black" | "red";
 
+export type TextAlign = "center" | "left" | "right";
+
 export interface SubtitleStyleConfig {
   styleId: SubtitleStyleId;
   highlightColor: HighlightColor;
@@ -39,6 +41,10 @@ export interface SubtitleStyleConfig {
   backgroundMaxWidth: number;
   fontId: SubtitleFontId;
   backgroundColorId: BackgroundColorId;
+  lineHeight: number;
+  letterSpacing: number;
+  textAlign: TextAlign;
+  borderRadius: number;
 }
 
 export interface SubtitleStyleInfo {
@@ -114,6 +120,10 @@ export const DEFAULT_STYLE_CONFIG: SubtitleStyleConfig = {
   backgroundMaxWidth: 90,
   fontId: "orbitron",
   backgroundColorId: "dark",
+  lineHeight: 1.4,
+  letterSpacing: 0,
+  textAlign: "center",
+  borderRadius: 8,
 };
 
 /** Get the CSS font-family string for a given fontId */
