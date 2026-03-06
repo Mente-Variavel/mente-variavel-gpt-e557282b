@@ -48,6 +48,10 @@ export interface SubtitleStyleConfig {
   textAlign: TextAlign;
   borderRadius: number;
   layoutMode: SubtitleLayoutMode;
+  /** Full-width background bar to cover watermarks */
+  fullWidthBackground: boolean;
+  /** Height of the full-width bar in pixels (preview scale) */
+  fullWidthBarHeight: number;
 }
 
 export interface SubtitlePresetInfo {
@@ -290,6 +294,8 @@ export const DEFAULT_STYLE_CONFIG: SubtitleStyleConfig = {
   textAlign: "center",
   borderRadius: 8,
   layoutMode: "single-line",
+  fullWidthBackground: false,
+  fullWidthBarHeight: 60,
 };
 
 /** Get the CSS font-family string for a given fontId */
