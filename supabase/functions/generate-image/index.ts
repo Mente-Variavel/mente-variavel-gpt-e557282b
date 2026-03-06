@@ -18,7 +18,7 @@ serve(async (req) => {
   }
 
   try {
-    const { prompt, referenceImages, size } = await req.json();
+    const { prompt, referenceImages, size, aspectRatio } = await req.json();
 
     if (!prompt) {
       return new Response(JSON.stringify({ error: "Prompt é obrigatório" }), {
@@ -73,13 +73,24 @@ serve(async (req) => {
     }
 
     const hasRefImages = referenceImages && referenceImages.length > 0;
-    console.log(`[generate-image] prompt: "${prompt.slice(0, 80)}...", refs: ${hasRefImages ? referenceImages.length : 0}, ip: ${ip}`);
+    
+    // Build aspect ratio instruction
+    const ratioMap: Record<string, string> = {
+      "16:9": "wide landscape format (16:9 aspect ratio, like a YouTube thumbnail or banner)",
+      "9:16": "tall vertical/portrait format (9:16 aspect ratio, like Instagram Reels or TikTok)",
+      "1:1": "square format (1:1 aspect ratio)",
+    };
+    const ratioInstruction = aspectRatio && ratioMap[aspectRatio] 
+      ? ` The image MUST be in ${ratioMap[aspectRatio]}.` 
+      : "";
+
+    console.log(`[generate-image] prompt: "${prompt.slice(0, 80)}...", refs: ${hasRefImages ? referenceImages.length : 0}, ip: ${ip}, ratio: ${aspectRatio || "default"}`);
 
     const userContent: any[] = [];
     if (hasRefImages) {
       userContent.push({
         type: "text",
-        text: `Generate an image based on this instruction: ${prompt}. Use the provided reference image(s) as visual guidance. Preserve key elements from the reference. Create a high-quality, professional result.`,
+        text: `Generate an image based on this instruction: ${prompt}.${ratioInstruction} Use the provided reference image(s) as visual guidance. Preserve key elements from the reference. Create a high-quality, professional result.`,
       });
       for (const img of referenceImages) {
         if (img && img.startsWith("data:image")) {
@@ -87,7 +98,7 @@ serve(async (req) => {
         }
       }
     } else {
-      userContent.push({ type: "text", text: `Generate a high-quality image: ${prompt}` });
+      userContent.push({ type: "text", text: `Generate a high-quality image: ${prompt}${ratioInstruction}` });
     }
 
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {

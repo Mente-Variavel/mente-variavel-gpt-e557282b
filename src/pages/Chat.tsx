@@ -73,6 +73,19 @@ const tips = [
   "Anexe imagens como referência usando o clipe 📎",
 ];
 
+const ASPECT_RATIO_PATTERNS: { pattern: RegExp; ratio: string }[] = [
+  { pattern: /16[:\s]*9|widescreen|paisagem|landscape|capa.*youtube|youtube.*capa|banner|thumbnail/i, ratio: "16:9" },
+  { pattern: /9[:\s]*16|vertical|portrait|retrato|reels|stories|tiktok/i, ratio: "9:16" },
+  { pattern: /1[:\s]*1|quadrad[ao]|square/i, ratio: "1:1" },
+];
+
+function detectAspectRatio(text: string): string | undefined {
+  for (const { pattern, ratio } of ASPECT_RATIO_PATTERNS) {
+    if (pattern.test(text)) return ratio;
+  }
+  return undefined;
+}
+
 async function fileToBase64(file: File): Promise<string> {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
@@ -112,7 +125,7 @@ const Chat = () => {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
   }, [messages, isLoading]);
 
-  const generateImage = async (prompt: string, referenceImages?: string[]) => {
+  const generateImage = async (prompt: string, referenceImages?: string[], aspectRatio?: string) => {
     setIsLoading(true);
     try {
       // Validate references before sending
@@ -148,7 +161,7 @@ const Chat = () => {
           "Content-Type": "application/json",
           Authorization: `Bearer ${authToken}`,
         },
-        body: JSON.stringify({ prompt, referenceImages }),
+        body: JSON.stringify({ prompt, referenceImages, aspectRatio }),
         signal: controller.signal,
       });
 
@@ -247,8 +260,9 @@ const Chat = () => {
 
     // CRITICAL: If user attached images, ALWAYS route to image generation
     if (hasImages || triggerMatch) {
-      console.log("[Chat] Routing to image generation. hasImages:", hasImages, "triggerMatch:", triggerMatch, "refImages count:", imageBase64List.length);
-      await generateImage(input, hasImages ? imageBase64List : undefined);
+      const detectedRatio = detectAspectRatio(input);
+      console.log("[Chat] Routing to image generation. hasImages:", hasImages, "triggerMatch:", triggerMatch, "aspectRatio:", detectedRatio);
+      await generateImage(input, hasImages ? imageBase64List : undefined, detectedRatio);
       return;
     }
 

@@ -29,7 +29,7 @@ const Footer = () => {
       toast.success("Login realizado!");
       setShowLogin(false);
       setPassword("");
-      navigate("/admin/anuncios");
+      navigate("/");
     }
     setLoading(false);
   };
