@@ -206,8 +206,17 @@ function drawSubtitle(
       case "center": barCenterY = canvasHeight / 2; break;
       default: barCenterY = canvasHeight - barOffsetPx - barH / 2; break;
     }
+    const barWidthPct = (config.fullWidthBarWidth ?? 100) / 100;
+    const barW = canvasWidth * barWidthPct;
+    const barX = (canvasWidth - barW) / 2;
     ctx.fillStyle = `rgba(${bgRgba}, ${opacity})`;
-    ctx.fillRect(0, barCenterY - barH / 2, canvasWidth, barH);
+    if (barWidthPct < 1) {
+      const r = (config.borderRadius ?? 8) * scale;
+      roundRect(ctx, barX, barCenterY - barH / 2, barW, barH, r);
+      ctx.fill();
+    } else {
+      ctx.fillRect(0, barCenterY - barH / 2, canvasWidth, barH);
+    }
   }
 
   // Background (inline, not full-width)
