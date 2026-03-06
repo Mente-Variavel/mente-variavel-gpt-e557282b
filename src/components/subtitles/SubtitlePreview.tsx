@@ -2,7 +2,7 @@ import { useRef, useState, useEffect, useMemo } from "react";
 import { Play, Pause } from "lucide-react";
 import type { SubtitleLine } from "./SubtitleEditor";
 import type { SubtitleStyleConfig } from "@/lib/subtitle-styles";
-import { HIGHLIGHT_COLORS, getFontFamily } from "@/lib/subtitle-styles";
+import { HIGHLIGHT_COLORS, BACKGROUND_COLORS, getFontFamily } from "@/lib/subtitle-styles";
 import { loadSubtitleFonts } from "@/lib/subtitle-fonts-loader";
 
 interface SubtitlePreviewProps {
@@ -193,17 +193,19 @@ const SubtitlePreview = ({ videoUrl, subtitles, onTimeUpdate, styleConfig }: Sub
               key={subKey}
               className={`inline-block rounded-lg text-center font-bold ${animationClass}`}
               style={{
-                fontFamily,
-                fontSize: `${styleConfig.fontSize}px`,
-                maxWidth: `${styleConfig.backgroundMaxWidth}%`,
-                padding: styleConfig.showBackground ? `${styleConfig.backgroundPadding}px ${styleConfig.backgroundPadding * 1.5}px` : "0",
-                backgroundColor: styleConfig.showBackground
-                  ? styleConfig.styleId === "mente-variavel"
-                    ? `hsla(222, 47%, 6%, ${styleConfig.backgroundOpacity / 100})`
-                    : `hsla(0, 0%, 0%, ${styleConfig.backgroundOpacity / 100})`
-                  : "transparent",
-                backdropFilter: styleConfig.showBackground ? "blur(4px)" : "none",
-                borderBottom: styleConfig.showBackground && styleConfig.styleId === "mente-variavel" ? `2px solid ${neonGreen}` : "none",
+                const bgColorEntry = BACKGROUND_COLORS.find(c => c.id === styleConfig.backgroundColorId);
+                const bgRgba = bgColorEntry?.rgba ?? "0, 0, 0";
+                return {
+                  fontFamily,
+                  fontSize: `${styleConfig.fontSize}px`,
+                  maxWidth: `${styleConfig.backgroundMaxWidth}%`,
+                  padding: styleConfig.showBackground ? `${styleConfig.backgroundPadding}px ${styleConfig.backgroundPadding * 1.5}px` : "0",
+                  backgroundColor: styleConfig.showBackground
+                    ? `rgba(${bgRgba}, ${styleConfig.backgroundOpacity / 100})`
+                    : "transparent",
+                  backdropFilter: styleConfig.showBackground ? "blur(4px)" : "none",
+                  borderBottom: styleConfig.showBackground && styleConfig.styleId === "mente-variavel" ? `2px solid ${neonGreen}` : "none",
+                };
               }}
             >
               {renderSubtitleContent()}
