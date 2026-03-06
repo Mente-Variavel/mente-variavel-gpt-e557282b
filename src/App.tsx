@@ -21,7 +21,7 @@ import Blog from "./pages/Blog";
 import BlogPost from "./pages/BlogPost";
 import Guides from "./pages/Guides";
 import GuideArticle from "./pages/GuideArticle";
-import Anuncie from "./pages/Anuncie";
+import Parceiro from "./pages/Parceiro";
 import About from "./pages/About";
 import Contact from "./pages/Contact";
 
@@ -61,7 +61,8 @@ function App() {
             <Route path="/blog/:slug" element={<BlogPost />} />
             <Route path="/guias" element={<Guides />} />
             <Route path="/guias/:slug" element={<GuideArticle />} />
-            <Route path="/anuncie" element={<Anuncie />} />
+            <Route path="/parceiro" element={<Parceiro />} />
+            <Route path="/anuncie" element={<Parceiro />} />
             <Route path="/sobre" element={<About />} />
             <Route path="/contato" element={<Contact />} />
             

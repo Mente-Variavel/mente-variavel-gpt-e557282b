@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from "react";
 import logoMv from "@/assets/logo-mv.png";
 import { Link, useNavigate } from "react-router-dom";
-import AdPlaceholder from "@/components/AdPlaceholder";
+
 import { motion, AnimatePresence } from "framer-motion";
 import { ArrowRight, TrendingUp, Wand2, Layers, DollarSign, ImageOff, Music, Sparkles, Send, MessageSquare, Mic, MicOff, Paperclip, X, FileText } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -88,11 +88,7 @@ export default function Index() {
   return (
     <div className="min-h-screen flex flex-col bg-background">
       <Navbar />
-      <main className="flex-1">
-        {/* Banner top ad */}
-        <div className="container mx-auto px-4 pt-20">
-          <AdPlaceholder placement="banner_top" className="mb-4" />
-        </div>
+      <main className="flex-1 pt-20">
 
         {/* Hero */}
         <section className="relative pt-12 pb-20 overflow-hidden">
@@ -221,10 +217,6 @@ export default function Index() {
           </div>
         </section>
 
-        {/* Middle ad */}
-        <div className="container mx-auto px-4">
-          <AdPlaceholder placement="middle" className="my-4" />
-        </div>
 
         {/* Tools Grid */}
         <section id="ferramentas" className="py-20">
@@ -246,15 +238,6 @@ export default function Index() {
           </div>
         </section>
 
-        {/* Between sections ad */}
-        <div className="container mx-auto px-4">
-          <AdPlaceholder placement="between_sections" className="my-4" />
-        </div>
-
-        {/* Sidebar ad */}
-        <div className="container mx-auto px-4">
-          <AdPlaceholder placement="sidebar" className="my-4" />
-        </div>
 
         {/* CTA */}
         <section className="py-16">
@@ -273,10 +256,6 @@ export default function Index() {
           </div>
         </section>
 
-        {/* Footer ad */}
-        <div className="container mx-auto px-4">
-          <AdPlaceholder placement="footer" className="mb-4" />
-        </div>
       </main>
       <Footer />
     </div>

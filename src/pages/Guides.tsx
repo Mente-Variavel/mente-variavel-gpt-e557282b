@@ -3,7 +3,6 @@ import { BookOpen, ArrowRight } from "lucide-react";
 import { motion } from "framer-motion";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
-import AdPlaceholder from "@/components/AdPlaceholder";
 import { guides } from "@/data/guides";
 
 const Guides = () => (
@@ -26,8 +25,6 @@ const Guides = () => (
             Aprenda sobre Inteligência Artificial com nossos guias completos e gratuitos. Conteúdo educacional de qualidade em português.
           </p>
         </motion.div>
-
-        <AdPlaceholder placement="banner_top" className="mb-8" />
 
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-5xl mx-auto">
           {guides.map((guide, i) => (
@@ -55,8 +52,6 @@ const Guides = () => (
             </motion.div>
           ))}
         </div>
-
-        <AdPlaceholder placement="middle" className="mt-12" />
       </div>
     </main>
     <Footer />

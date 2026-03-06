@@ -5,7 +5,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useNavigate } from "react-router-dom";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
-import AdEditor from "@/components/admin/AdEditor";
+
 import PixConfigAdmin from "@/components/admin/PixConfigAdmin";
 import VideoUploadAdmin from "@/components/admin/VideoUploadAdmin";
 import AdminNotifications from "@/components/admin/AdminNotifications";
@@ -41,15 +41,7 @@ const AdminAds = () => {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
 
-  const { data: ads, isLoading } = useQuery({
-    queryKey: ["admin-ads"],
-    queryFn: async () => {
-      const { data, error } = await supabase.from("ads").select("*").order("slot");
-      if (error) throw error;
-      return data;
-    },
-    enabled: !!user,
-  });
+  const isLoading = false;
 
   const { data: sponsoredTools, isLoading: toolsLoading } = useQuery({
     queryKey: ["admin-sponsored-tools"],
@@ -130,31 +122,10 @@ const AdminAds = () => {
 
   const [showMessages, setShowMessages] = useState(true);
   const [showUsers, setShowUsers] = useState(false);
-  const [showDebug, setShowDebug] = useState(false);
   const [showStats, setShowStats] = useState(true);
   const [showSettings, setShowSettings] = useState(true);
   const [expandedMessage, setExpandedMessage] = useState<string | null>(null);
 
-  const updateMutation = useMutation({
-    mutationFn: async (ad: any) => {
-      const { error } = await supabase.from("ads").update({
-        title: ad.title, description: ad.description, image_url: ad.image_url,
-        link_url: ad.link_url, whatsapp_number: ad.whatsapp_number, is_active: ad.is_active,
-        plan_name: ad.plan_name || null, plan_start: ad.plan_start || null,
-        plan_end: ad.plan_end || null, plan_value: ad.plan_value ? parseFloat(ad.plan_value) : null,
-        client_name: ad.client_name || null,
-        ad_format: ad.ad_format, placement: ad.placement,
-        page_targets: ad.page_targets,
-      }).eq("id", ad.id);
-      if (error) throw error;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["admin-ads"] });
-      queryClient.invalidateQueries({ queryKey: ["ads-by-placement"] });
-      toast.success("Anúncio salvo com sucesso!");
-    },
-    onError: () => toast.error("Erro ao salvar anúncio"),
-  });
 
   const saveTool = useMutation({
     mutationFn: async (tool: typeof emptyTool & { id?: string }) => {
@@ -242,24 +213,14 @@ const AdminAds = () => {
     );
   }
 
-  const expiringAds = ads?.filter((ad) => {
-    const status = getAdStatus(ad.plan_end);
-    return status === "expiring" || status === "expired";
-  }) || [];
-
   const expiringTools = sponsoredTools?.filter((t) => {
     const status = getAdStatus(t.plan_end);
     return status === "expiring" || status === "expired";
   }) || [];
 
   const allAlerts = [
-    ...expiringAds.map((ad) => ({ ...ad, type: "ad" as const, label: ad.client_name || ad.title || ad.slot })),
     ...expiringTools.map((t) => ({ ...t, type: "tool" as const, label: t.client_name || t.name })),
   ];
-
-  const activeAds = ads?.filter(a => a.is_active) || [];
-  const placementCounts: Record<string, number> = {};
-  activeAds.forEach(a => { placementCounts[a.placement] = (placementCounts[a.placement] || 0) + 1; });
 
   // Usage stats
   const usageByTool: Record<string, { count: number; cost: number }> = {};
@@ -413,41 +374,6 @@ const AdminAds = () => {
           )}
         </div>
 
-        {/* === Debug Panel === */}
-        <div className="mb-6">
-          <button
-            onClick={() => setShowDebug(!showDebug)}
-            className="flex items-center gap-2 text-xs font-medium text-muted-foreground hover:text-primary transition-colors mb-2"
-          >
-            <Bug className="w-3.5 h-3.5" />
-            Debug / Diagnóstico
-            {showDebug ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
-          </button>
-          {showDebug && (
-            <div className="p-4 rounded-lg border border-border/50 bg-card/30 text-xs space-y-2">
-              <p><strong>Total de anúncios:</strong> {ads?.length || 0}</p>
-              <p><strong>Anúncios ativos:</strong> {activeAds.length}</p>
-              <p><strong>Por posição:</strong></p>
-              {Object.entries(placementCounts).map(([k, v]) => (
-                <p key={k} className="ml-4">• {k}: {v} anúncio(s)</p>
-              ))}
-              {activeAds.length === 0 && (
-                <p className="text-yellow-500">⚠ Nenhum anúncio ativo. Ative pelo menos um para exibir no site.</p>
-              )}
-              {activeAds.map(ad => (
-                <div key={ad.id} className="ml-4 border-l-2 border-primary/30 pl-3 py-1">
-                  <p>✅ <strong>{ad.client_name || ad.title || ad.slot}</strong></p>
-                  <p className="text-muted-foreground">Posição: {ad.placement} | Formato: {ad.ad_format} | Páginas: {ad.page_targets?.length === 0 ? "todas" : ad.page_targets?.join(", ")}</p>
-                </div>
-              ))}
-              {ads?.filter(a => !a.is_active).map(ad => (
-                <div key={ad.id} className="ml-4 border-l-2 border-muted/30 pl-3 py-1 opacity-50">
-                  <p>❌ <strong>{ad.client_name || ad.title || ad.slot}</strong> — desativado</p>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
 
         {/* === Alerts === */}
         {allAlerts.length > 0 && (
@@ -582,22 +508,6 @@ const AdminAds = () => {
           )}
         </div>
 
-        {/* === Anúncios === */}
-        <h2 className="font-display text-xl md:text-2xl font-bold text-foreground mb-4">
-          Anúncios
-        </h2>
-        <div className="grid gap-6 mb-12">
-          {ads?.map((ad) => (
-            <AdEditor
-              key={ad.id}
-              ad={{ ...ad, page_targets: ad.page_targets || [] }}
-              label={ad.client_name || ad.title || ad.slot}
-              planStatus={getAdStatus(ad.plan_end)}
-              onSave={(updated) => updateMutation.mutate({ ...updated, id: ad.id })}
-              saving={updateMutation.isPending}
-            />
-          ))}
-        </div>
 
         {/* === Ferramentas Patrocinadas === */}
         <h2 className="font-display text-xl md:text-2xl font-bold text-foreground mb-4 flex items-center gap-2">
