@@ -2,7 +2,8 @@ import { useRef, useState, useEffect, useMemo } from "react";
 import { Play, Pause } from "lucide-react";
 import type { SubtitleLine } from "./SubtitleEditor";
 import type { SubtitleStyleConfig } from "@/lib/subtitle-styles";
-import { HIGHLIGHT_COLORS } from "@/lib/subtitle-styles";
+import { HIGHLIGHT_COLORS, getFontFamily } from "@/lib/subtitle-styles";
+import { loadSubtitleFonts } from "@/lib/subtitle-fonts-loader";
 
 interface SubtitlePreviewProps {
   videoUrl: string;
@@ -20,6 +21,9 @@ const SubtitlePreview = ({ videoUrl, subtitles, onTimeUpdate, styleConfig }: Sub
   const [currentTime, setCurrentTimeLocal] = useState(0);
   const [activeSub, setActiveSub] = useState<SubtitleLine | null>(null);
   const [subKey, setSubKey] = useState(0);
+
+  // Load Google Fonts on mount
+  useEffect(() => { loadSubtitleFonts(); }, []);
 
   useEffect(() => {
     const video = videoRef.current;
@@ -45,6 +49,8 @@ const SubtitlePreview = ({ videoUrl, subtitles, onTimeUpdate, styleConfig }: Sub
     else { video.pause(); setIsPlaying(false); }
   };
 
+  const fontFamily = getFontFamily(styleConfig.fontId);
+
   const positionStyle = useMemo((): React.CSSProperties => {
     const offset = `${styleConfig.verticalOffset}%`;
     switch (styleConfig.position) {
@@ -56,9 +62,15 @@ const SubtitlePreview = ({ videoUrl, subtitles, onTimeUpdate, styleConfig }: Sub
 
   const animationClass = useMemo(() => {
     switch (styleConfig.styleId) {
-      case "animated-fade": return "animate-[subtitleFadeIn_0.4s_ease-out]";
-      case "animated-slide": return "animate-[subtitleSlideUp_0.35s_ease-out]";
-      case "mente-variavel": return "animate-[subtitleFadeIn_0.3s_ease-out]";
+      case "animated-fade":
+      case "influencer":
+        return "animate-[subtitleFadeIn_0.4s_ease-out]";
+      case "animated-slide":
+      case "shorts":
+        return "animate-[subtitleSlideUp_0.35s_ease-out]";
+      case "mente-variavel":
+      case "reels":
+        return "animate-[subtitleFadeIn_0.3s_ease-out]";
       default: return "";
     }
   }, [styleConfig.styleId]);
@@ -78,22 +90,90 @@ const SubtitlePreview = ({ videoUrl, subtitles, onTimeUpdate, styleConfig }: Sub
         return <span>{words.map((word, i) => (
           <span key={i} style={{ color: i === activeWordIndex ? highlightColor : "hsl(0 0% 100%)", transition: "color 0.15s ease", fontWeight: i === activeWordIndex ? 800 : 700 }}>{word} </span>
         ))}</span>;
+
       case "alternating":
         return <span>{words.map((word, i) => {
           const colors = ["hsl(0 0% 100%)", neonBlue, neonGreen];
           return <span key={i} style={{ color: colors[i % 3], fontWeight: i % 3 !== 0 ? 800 : 700 }}>{word} </span>;
         })}</span>;
+
       case "emphasis":
         return <span>{words.map((word, i) => {
           const isEmphasis = i % 3 === 0 || word.length > 5;
           return <span key={i} style={{ color: isEmphasis ? highlightColor : "hsl(0 0% 100%)", fontSize: isEmphasis ? `${styleConfig.fontSize * 1.3}px` : `${styleConfig.fontSize}px`, fontWeight: isEmphasis ? 900 : 600, transition: "all 0.2s ease" }}>{word} </span>;
         })}</span>;
+
       case "mente-variavel":
         return <span>{words.map((word, i) => {
           const isHighlight = i === activeWordIndex;
           const highlightCol = i % 2 === 0 ? neonGreen : neonBlue;
           return <span key={i} style={{ color: isHighlight ? highlightCol : "hsl(0 0% 100%)", fontWeight: isHighlight ? 900 : 700, textShadow: isHighlight ? `0 0 12px ${highlightCol}, 0 0 24px ${highlightCol}40` : "none", transition: "all 0.15s ease" }}>{word} </span>;
         })}</span>;
+
+      case "reels":
+        return <span>{words.map((word, i) => {
+          const isHighlight = i === activeWordIndex;
+          return <span key={i} style={{
+            color: isHighlight ? highlightColor : "hsl(0 0% 100%)",
+            fontWeight: 900,
+            fontSize: isHighlight ? `${styleConfig.fontSize * 1.2}px` : `${styleConfig.fontSize}px`,
+            textTransform: "uppercase" as const,
+            textShadow: isHighlight ? `0 0 8px ${highlightColor}60` : "1px 2px 4px rgba(0,0,0,0.5)",
+            transition: "all 0.15s ease",
+          }}>{word} </span>;
+        })}</span>;
+
+      case "shorts":
+        return <span style={{ textTransform: "uppercase", letterSpacing: "0.05em" }}>{words.map((word, i) => {
+          const isHighlight = i === activeWordIndex;
+          return <span key={i} style={{
+            color: isHighlight ? highlightColor : "hsl(0 0% 100%)",
+            fontWeight: 900,
+            fontSize: `${styleConfig.fontSize * 1.1}px`,
+            transition: "all 0.2s ease",
+            display: "inline-block",
+            transform: isHighlight ? "scale(1.15)" : "scale(1)",
+          }}>{word} </span>;
+        })}</span>;
+
+      case "podcast":
+        return <span style={{ textShadow: "0 2px 8px rgba(0,0,0,0.7), 0 0 2px rgba(0,0,0,0.5)" }}>
+          {words.map((word, i) => (
+            <span key={i} style={{ color: "hsl(0 0% 100%)", fontWeight: 600 }}>{word} </span>
+          ))}
+        </span>;
+
+      case "influencer":
+        return <span>{words.map((word, i) => {
+          const isHighlight = i === activeWordIndex;
+          const colorWheel = [highlightColor, neonBlue, neonGreen, "hsl(50 100% 55%)"];
+          const wordColor = isHighlight ? colorWheel[i % colorWheel.length] : "hsl(0 0% 100%)";
+          return <span key={i} style={{
+            color: wordColor,
+            fontWeight: isHighlight ? 900 : 700,
+            display: "inline-block",
+            transform: isHighlight ? "scale(1.2)" : "scale(1)",
+            textShadow: isHighlight ? `0 0 10px ${wordColor}80` : "none",
+            transition: "all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1)",
+          }}>{word} </span>;
+        })}</span>;
+
+      case "educational":
+        return <span>{words.map((word, i) => {
+          const isKeyword = word.length > 4 || i % 4 === 0;
+          return <span key={i} style={{
+            color: isKeyword ? highlightColor : "hsl(0 0% 100%)",
+            fontWeight: isKeyword ? 800 : 500,
+            backgroundColor: isKeyword ? `${highlightColor}20` : "transparent",
+            borderRadius: isKeyword ? "3px" : "0",
+            padding: isKeyword ? "0 3px" : "0",
+            textDecoration: isKeyword ? "underline" : "none",
+            textDecorationColor: isKeyword ? `${highlightColor}60` : "transparent",
+            textUnderlineOffset: "3px",
+            transition: "all 0.2s ease",
+          }}>{word} </span>;
+        })}</span>;
+
       default:
         return <span style={{ color: "hsl(0 0% 100%)" }}>{activeSub.text}</span>;
     }
@@ -109,6 +189,7 @@ const SubtitlePreview = ({ videoUrl, subtitles, onTimeUpdate, styleConfig }: Sub
               key={subKey}
               className={`inline-block rounded-lg text-center font-bold ${animationClass}`}
               style={{
+                fontFamily,
                 fontSize: `${styleConfig.fontSize}px`,
                 maxWidth: `${styleConfig.backgroundMaxWidth}%`,
                 padding: styleConfig.showBackground ? `${styleConfig.backgroundPadding}px ${styleConfig.backgroundPadding * 1.5}px` : "0",

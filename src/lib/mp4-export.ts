@@ -1,6 +1,6 @@
 import type { SubtitleLine } from "@/components/subtitles/SubtitleEditor";
 import type { SubtitleStyleConfig } from "./subtitle-styles";
-import { HIGHLIGHT_COLORS } from "./subtitle-styles";
+import { HIGHLIGHT_COLORS, getCanvasFontFamily } from "./subtitle-styles";
 
 const getColor = (colorId: string): string =>
   HIGHLIGHT_COLORS.find((c) => c.id === colorId)?.color ?? "hsl(185 100% 50%)";
@@ -43,8 +43,9 @@ function drawSubtitle(
   const scale = canvasWidth / 360;
   const fontSize = config.fontSize * scale;
   const padding = config.backgroundPadding * scale;
+  const fontFamily = getCanvasFontFamily(config.fontId);
 
-  ctx.font = `bold ${fontSize}px "Orbitron", "Inter", sans-serif`;
+  ctx.font = `bold ${fontSize}px ${fontFamily}`;
   ctx.textAlign = "center";
   ctx.textBaseline = "middle";
 
@@ -114,15 +115,55 @@ function drawSubtitle(
         weight = isActive ? "900" : "bold";
         break;
       }
+      case "reels": {
+        const isActive = i === activeWordIndex;
+        color = isActive ? highlightColor : "white";
+        weight = "900";
+        wFontSize = isActive ? fontSize * 1.2 : fontSize;
+        break;
+      }
+      case "shorts": {
+        const isActive = i === activeWordIndex;
+        color = isActive ? highlightColor : "white";
+        weight = "900";
+        wFontSize = fontSize * 1.1;
+        break;
+      }
+      case "podcast": {
+        color = "white";
+        weight = "600";
+        break;
+      }
+      case "influencer": {
+        const isActive = i === activeWordIndex;
+        const colorWheel = [highlightColor, NEON_BLUE, NEON_GREEN, "hsl(50, 100%, 55%)"];
+        color = isActive ? colorWheel[i % colorWheel.length] : "white";
+        weight = isActive ? "900" : "bold";
+        wFontSize = isActive ? fontSize * 1.2 : fontSize;
+        break;
+      }
+      case "educational": {
+        const isKeyword = word.length > 4 || i % 4 === 0;
+        color = isKeyword ? highlightColor : "white";
+        weight = isKeyword ? "800" : "500";
+        break;
+      }
       default: color = "white"; break;
     }
 
-    ctx.font = `${weight} ${wFontSize}px "Orbitron", "Inter", sans-serif`;
+    ctx.font = `${weight} ${wFontSize}px ${fontFamily}`;
     ctx.fillStyle = color;
 
-    if (config.styleId === "mente-variavel" && i === activeWordIndex) {
+    const needsGlow = (config.styleId === "mente-variavel" && i === activeWordIndex) ||
+                      (config.styleId === "influencer" && i === activeWordIndex) ||
+                      (config.styleId === "reels" && i === activeWordIndex);
+
+    if (needsGlow) {
       ctx.shadowColor = color;
       ctx.shadowBlur = 12 * scale;
+    } else if (config.styleId === "podcast") {
+      ctx.shadowColor = "rgba(0,0,0,0.7)";
+      ctx.shadowBlur = 8 * scale;
     } else {
       ctx.shadowColor = "transparent";
       ctx.shadowBlur = 0;

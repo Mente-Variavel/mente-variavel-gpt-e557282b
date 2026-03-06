@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { Download, Sparkles, FileText, ArrowLeft, Loader2, Film } from "lucide-react";
 import { toast } from "sonner";
 import Navbar from "@/components/Navbar";
@@ -14,6 +14,7 @@ import { downloadSRT, downloadTXT } from "@/lib/srt-export";
 import { exportVideoWithSubtitles } from "@/lib/mp4-export";
 import { DEFAULT_STYLE_CONFIG, type SubtitleStyleConfig } from "@/lib/subtitle-styles";
 import { useSubtitleUsage } from "@/hooks/useSubtitleUsage";
+import { loadSubtitleFonts } from "@/lib/subtitle-fonts-loader";
 
 const SETTINGS_STORAGE_KEY = "mv-subtitle-full-settings";
 
@@ -51,6 +52,8 @@ const GeradorLegendas = () => {
   });
 
   const { usage, refetchUsage } = useSubtitleUsage();
+
+  useEffect(() => { loadSubtitleFonts(); }, []);
 
   const handleExportMP4 = useCallback(async () => {
     if (!videoUrl || subtitles.length === 0) return;
