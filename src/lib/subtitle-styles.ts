@@ -52,6 +52,8 @@ export interface SubtitleStyleConfig {
   fullWidthBackground: boolean;
   /** Height of the full-width bar in pixels (preview scale) */
   fullWidthBarHeight: number;
+  /** Independent vertical offset for the bar (% from edge) */
+  fullWidthBarOffset: number;
 }
 
 export interface SubtitlePresetInfo {
@@ -296,6 +298,7 @@ export const DEFAULT_STYLE_CONFIG: SubtitleStyleConfig = {
   layoutMode: "single-line",
   fullWidthBackground: false,
   fullWidthBarHeight: 60,
+  fullWidthBarOffset: 10,
 };
 
 /** Get the CSS font-family string for a given fontId */
