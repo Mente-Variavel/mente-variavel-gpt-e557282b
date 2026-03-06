@@ -10,7 +10,7 @@ import { motion } from "framer-motion";
 import MicInput from "@/components/MicInput";
 import { toast } from "sonner";
 
-const genres = ["Sertanejo", "Gospel", "Pop", "Rock", "Trap", "Funk", "MPB"];
+const genres = ["Sertanejo", "Gospel", "Pop", "Rock", "Trap", "Funk", "MPB", "Rap", "R&B", "Soul"];
 const themeSuggestions = ["amor", "superação", "história", "vida", "traição", "motivação"];
 
 const SUNO_REFERRAL = "https://suno.com/invite/@vibrantsaturation527";
@@ -68,6 +68,34 @@ function sanitizeArtistReferences(text: string): string {
     "ludmilla": "funk pop brasileiro com voz feminina potente e versátil, textura vocal forte e rítmica, batida funk e eletrônica, atmosfera empoderada e dançante, ritmo rápido",
     "projota": "rap pop brasileiro com vocais masculinos melódicos e emotivos, textura vocal suave alternando com flow rápido, violão e batida hip hop, atmosfera reflexiva e esperançosa, ritmo moderado",
     "péricles": "pagode romântico com voz masculina grave e aveludada, textura vocal encorpada e suave, cavaquinho e tantã, atmosfera romântica e noturna, ritmo cadenciado e groovy",
+    "alanis morissette": "rock alternativo com voz feminina potente e raivosa, textura vocal crua e catártica com grito emocional, guitarra distorcida e bateria agressiva, atmosfera angustiada e libertadora, ritmo médio-rápido e intenso",
+    "whitney houston": "pop soul com voz feminina extraordinariamente potente e virtuosa, textura vocal brilhante com melismas elaborados, arranjo orquestral e piano, atmosfera grandiosa e emotiva, ritmo moderado e dramático",
+    "stevie wonder": "soul funk com voz masculina calorosa e jubilosa, textura vocal expressiva e melismática, harmonica, clavinet e sintetizadores, groove funk irresistível, atmosfera alegre e espiritual, ritmo groovy e dançante",
+    "james brown": "funk soul com voz masculina gritada e enérgica, textura vocal rasgada e rítmica, metais potentes e guitarra funk, groove pesado e dançante, atmosfera explosiva e festiva, ritmo rápido e sincopado",
+    "aretha franklin": "soul gospel com voz feminina poderosa e espiritual, textura vocal rica com runs vocais intensos, piano e órgão, metais e coro gospel, atmosfera empoderada e emocional, ritmo moderado e groovy",
+    "ray charles": "soul blues com voz masculina rouca e emotiva, textura vocal profunda e apaixonada, piano e órgão hammond, metais e cordas, atmosfera nostálgica e calorosa, ritmo moderado e swingado",
+    "marvin gaye": "soul romântico com voz masculina suave e sedutora, textura vocal aveludada e sensual, baixo groovy e cordas exuberantes, atmosfera íntima e apaixonada, ritmo lento e envolvente",
+    "lauryn hill": "hip hop soul com voz feminina potente e melódica, textura vocal quente alternando entre canto e rap, violão acústico e batida hip hop, atmosfera consciente e espiritual, ritmo moderado e orgânico",
+    "tupac": "rap west coast com vocais masculinos intensos e emotivos, textura vocal grave e apaixonada, flow rítmico e poético, piano melancólico e batida boom bap, atmosfera revolucionária e vulnerável, ritmo moderado",
+    "2pac": "rap west coast com vocais masculinos intensos e emotivos, textura vocal grave e apaixonada, flow rítmico e poético, piano melancólico e batida boom bap, atmosfera revolucionária e vulnerável, ritmo moderado",
+    "notorious big": "rap east coast com voz masculina grave e imponente, textura vocal profunda e fluida, flow relaxado e storytelling, samples de jazz e soul, atmosfera urbana e cinematográfica, ritmo moderado e groovy",
+    "biggie": "rap east coast com voz masculina grave e imponente, textura vocal profunda e fluida, flow relaxado e storytelling, samples de jazz e soul, atmosfera urbana e cinematográfica, ritmo moderado e groovy",
+    "snoop dogg": "g-funk rap com voz masculina relaxada e nasalada, textura vocal suave e descontraída, sintetizadores funky e batida west coast, atmosfera chill e festiva, ritmo moderado e groovy",
+    "jay-z": "hip hop com voz masculina confiante e rítmica, textura vocal grave e assertiva, flow preciso e sofisticado, produção polida com samples soul, atmosfera imponente e luxuosa, ritmo médio-rápido",
+    "kanye west": "hip hop experimental com vocais masculinos emotivos e autotune, textura vocal crua e vulnerável, produção inovadora com samples soul e sintetizadores, atmosfera grandiosa e introspectiva, ritmo variado",
+    "john legend": "r&b soul com voz masculina suave e romântica, textura vocal aveludada e emotiva, piano elegante e cordas, atmosfera sofisticada e apaixonada, ritmo lento e intimista",
+    "alicia keys": "r&b soul com voz feminina potente e emotiva, textura vocal calorosa e gospel, piano como instrumento principal, atmosfera empoderada e intimista, ritmo moderado e groovy",
+    "usher": "r&b pop com voz masculina suave e sensual, textura vocal falsete e rítmica, batida dançante e produção polida, atmosfera sedutora e festiva, ritmo médio-rápido e dançante",
+    "chris brown": "r&b pop com voz masculina ágil e melódica, textura vocal suave com runs rápidos, batida trap e r&b moderno, atmosfera romântica e urbana, ritmo moderado a rápido",
+    "frank ocean": "r&b alternativo com voz masculina suave e etérea, textura vocal delicada e introspectiva, produção minimalista com sintetizadores e piano, atmosfera melancólica e onírica, ritmo lento e flutuante",
+    "sza": "r&b alternativo com voz feminina suave e expressiva, textura vocal airy e emotiva, produção neo-soul com batida trap, atmosfera vulnerável e sensual, ritmo moderado e orgânico",
+    "freddie mercury": "rock operístico com voz masculina extraordinariamente potente e versátil, textura vocal dramática com extensão ampla, guitarra pesada e piano, coro épico, atmosfera teatral e grandiosa, ritmo variado e dinâmico",
+    "elvis presley": "rock and roll clássico com voz masculina grave e carismática, textura vocal calorosa e vibrante, guitarra acústica e elétrica, contrabaixo e bateria, atmosfera nostálgica e sensual, ritmo médio-rápido e swingado",
+    "amy winehouse": "jazz soul com voz feminina rouca e profunda, textura vocal crua e emotiva com influência vintage, contrabaixo e bateria jazz, metais e guitarra, atmosfera melancólica e boêmia, ritmo moderado e swingado",
+    "cardi b": "hip hop trap com voz feminina agressiva e carismática, textura vocal rítmica e assertiva, 808 bass pesado e hi-hats rápidos, atmosfera ousada e dominante, ritmo rápido",
+    "nicki minaj": "hip hop pop com voz feminina versátil e teatral, textura vocal alternando entre rap agressivo e canto melódico, produção eletrônica pesada, atmosfera extravagante e poderosa, ritmo rápido",
+    "travis scott": "trap psicodélico com vocais masculinos processados com autotune, textura vocal etérea e hipnótica, 808 bass massivo e reverb pesado, atmosfera sombria e espacial, ritmo moderado e pesado",
+    "50 cent": "hip hop g-unit com voz masculina grave e rítmica, textura vocal rouca e assertiva, batida pesada com piano dramático, atmosfera street e intensa, ritmo moderado e pesado",
   };
 
   let result = text;
@@ -116,6 +144,9 @@ const genreDetails: Record<string, string> = {
   "Trap": "808 bass, hi-hats, snare rolls, dark synths, autotune vocals, ad-libs, heavy sub-bass, atmospheric pads, modern trap production",
   "Funk": "funk carioca beat, bass-heavy 808, atabaque percussion, shaker, MC-style vocals, rhythmic flow, Brazilian funk groove",
   "MPB": "nylon guitar, piano, flute, light percussion, smooth bass, poetic vocals, bossa nova influence, sophisticated harmony, Brazilian rhythms",
+  "Rap": "boom bap drums, 808 bass, hi-hats, scratching, aggressive vocal delivery, complex rhyme schemes, sampled loops, raw lyrical flow, hip hop production",
+  "R&B": "smooth bass, Rhodes piano, lush pads, finger snaps, silky vocals, layered harmonies, sensual groove, modern R&B production, slow jam atmosphere",
+  "Soul": "organ, brass section, warm bass, gospel-influenced vocals, hand claps, tambourine, powerful emotional delivery, vintage soul warmth, Motown-inspired groove",
 };
 
 function buildSunoPrompt(genero: string, tema: string, titulo: string, estilo: string): string {
