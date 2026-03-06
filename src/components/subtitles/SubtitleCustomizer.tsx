@@ -255,6 +255,21 @@ const SubtitleCustomizer = ({ config, onChange, watermarkEnabled, onResegment }:
             </div>
             <div>
               <div className="flex items-center justify-between">
+                <span className="text-[8px] text-muted-foreground">Largura</span>
+                <span className="text-[8px] text-muted-foreground">{config.fullWidthBarWidth ?? 100}%</span>
+              </div>
+              <input
+                type="range"
+                min={30}
+                max={100}
+                step={1}
+                value={config.fullWidthBarWidth ?? 100}
+                onChange={(e) => set("fullWidthBarWidth", Number(e.target.value))}
+                className="mt-0.5 w-full accent-primary h-3"
+              />
+            </div>
+            <div>
+              <div className="flex items-center justify-between">
                 <span className="text-[8px] text-muted-foreground">Posição da Barra</span>
                 <span className="text-[8px] text-muted-foreground">{config.fullWidthBarOffset ?? 10}%</span>
               </div>

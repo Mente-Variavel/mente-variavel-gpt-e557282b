@@ -9,6 +9,20 @@ const NEON_BLUE = "hsl(185, 100%, 50%)";
 const NEON_GREEN = "hsl(155, 100%, 45%)";
 const SAFE_MARGIN = 0.04;
 
+function roundRect(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number, r: number) {
+  ctx.beginPath();
+  ctx.moveTo(x + r, y);
+  ctx.lineTo(x + w - r, y);
+  ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+  ctx.lineTo(x + w, y + h - r);
+  ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+  ctx.lineTo(x + r, y + h);
+  ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+  ctx.lineTo(x, y + r);
+  ctx.quadraticCurveTo(x, y, x + r, y);
+  ctx.closePath();
+}
+
 const BACKGROUND_COLORS_MAP: Record<string, string> = {
   "dark": "8, 12, 20", "black": "0, 0, 0", "neon-blue": "0, 90, 128",
   "neon-green": "0, 102, 60", "pink": "128, 0, 64", "red": "128, 0, 0",
@@ -206,8 +220,17 @@ function drawSubtitle(
       case "center": barCenterY = canvasHeight / 2; break;
       default: barCenterY = canvasHeight - barOffsetPx - barH / 2; break;
     }
+    const barWidthPct = (config.fullWidthBarWidth ?? 100) / 100;
+    const barW = canvasWidth * barWidthPct;
+    const barX = (canvasWidth - barW) / 2;
     ctx.fillStyle = `rgba(${bgRgba}, ${opacity})`;
-    ctx.fillRect(0, barCenterY - barH / 2, canvasWidth, barH);
+    if (barWidthPct < 1) {
+      const r = (config.borderRadius ?? 8) * scale;
+      roundRect(ctx, barX, barCenterY - barH / 2, barW, barH, r);
+      ctx.fill();
+    } else {
+      ctx.fillRect(0, barCenterY - barH / 2, canvasWidth, barH);
+    }
   }
 
   // Background (inline, not full-width)
