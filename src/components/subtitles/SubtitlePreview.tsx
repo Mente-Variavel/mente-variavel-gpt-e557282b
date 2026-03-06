@@ -71,7 +71,7 @@ const SubtitlePreview = ({ videoUrl, subtitles, onTimeUpdate, styleConfig }: Sub
   }, [activeSub, subKey, styleConfig.fontSize, styleConfig.fontId, styleConfig.letterSpacing]);
 
 
-  const highlightColor = getHighlightCSS(styleConfig.highlightColor);
+  const fontFamily = getFontFamily(styleConfig.fontId);
   const neonBlue = "hsl(185 100% 50%)";
   const neonGreen = "hsl(155 100% 45%)";
 
