@@ -1,0 +1,2 @@
+ALTER TABLE public.pix_checkout_subscriptions DROP CONSTRAINT IF EXISTS pix_checkout_subscriptions_status_check;
+ALTER TABLE public.pix_checkout_subscriptions ADD CONSTRAINT pix_checkout_subscriptions_status_check CHECK (status IN ('trial', 'active', 'expired', 'pending'));
