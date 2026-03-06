@@ -53,7 +53,24 @@ const SubtitlePreview = ({ videoUrl, subtitles, onTimeUpdate, styleConfig }: Sub
     else { video.pause(); setIsPlaying(false); }
   };
 
-  const fontFamily = getFontFamily(styleConfig.fontId);
+  // Auto-scale subtitle text to fit within container
+  useEffect(() => {
+    const span = subtitleRef.current;
+    const container = containerRef.current;
+    if (!span || !container || !activeSub) { setTextScale(1); return; }
+    requestAnimationFrame(() => {
+      const containerWidth = container.clientWidth;
+      const safeWidth = containerWidth * (1 - 2 * SAFE_MARGIN / 100);
+      const spanWidth = span.scrollWidth;
+      if (spanWidth > safeWidth) {
+        setTextScale(Math.max(0.5, safeWidth / spanWidth));
+      } else {
+        setTextScale(1);
+      }
+    });
+  }, [activeSub, subKey, styleConfig.fontSize, styleConfig.fontId, styleConfig.letterSpacing]);
+
+
   const highlightColor = getHighlightCSS(styleConfig.highlightColor);
   const neonBlue = "hsl(185 100% 50%)";
   const neonGreen = "hsl(155 100% 45%)";
