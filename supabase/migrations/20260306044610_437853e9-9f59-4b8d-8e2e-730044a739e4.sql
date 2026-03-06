@@ -1,0 +1,1 @@
+DELETE FROM admin_notifications WHERE id = '22fb6aae-f984-49d8-a073-9f83b4b850aa';
