@@ -41,19 +41,35 @@ serve(async (req) => {
     const sb = createClient(supabaseUrl, serviceKey);
     const ip = getClientIp(req);
 
-    // Rate limit: 3 images per IP per 24h
-    const since = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
-    const { count } = await sb
-      .from("image_rate_limits")
-      .select("*", { count: "exact", head: true })
-      .eq("ip_address", ip)
-      .gte("generated_at", since);
+    // Check if user is admin — skip rate limit for admins
+    let isAdmin = false;
+    const authHeader = req.headers.get("authorization");
+    if (authHeader) {
+      const anonClient = createClient(supabaseUrl, Deno.env.get("SUPABASE_ANON_KEY")!, {
+        global: { headers: { Authorization: authHeader } },
+      });
+      const { data: { user } } = await anonClient.auth.getUser();
+      if (user) {
+        const { data: hasRole } = await sb.rpc("has_role", { _user_id: user.id, _role: "admin" });
+        if (hasRole) isAdmin = true;
+      }
+    }
 
-    if ((count || 0) >= 3) {
-      return new Response(
-        JSON.stringify({ error: "Limite diário gratuito atingido. Volte amanhã para gerar mais imagens." }),
-        { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+    // Rate limit: 3 images per IP per 24h (skip for admins)
+    if (!isAdmin) {
+      const since = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
+      const { count } = await sb
+        .from("image_rate_limits")
+        .select("*", { count: "exact", head: true })
+        .eq("ip_address", ip)
+        .gte("generated_at", since);
+
+      if ((count || 0) >= 3) {
+        return new Response(
+          JSON.stringify({ error: "Limite diário gratuito atingido. Volte amanhã para gerar mais imagens." }),
+          { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
     }
 
     const hasRefImages = referenceImages && referenceImages.length > 0;
