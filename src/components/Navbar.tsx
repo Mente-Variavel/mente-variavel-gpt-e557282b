@@ -21,6 +21,7 @@ const servicosItems = [
 
 const produtosItems = [
   { to: "/produtos/pix-checkout", label: "Pix Checkout" },
+  { to: "/produtos/gerador-legendas", label: "Gerador de Legendas" },
 ];
 
 
