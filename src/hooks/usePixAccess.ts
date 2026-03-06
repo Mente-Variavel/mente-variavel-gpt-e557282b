@@ -62,6 +62,15 @@ export const usePixAccess = () => {
         } else {
           setStatus("trial");
         }
+      } else if (data.status === "pending") {
+        // Check if there's also a valid trial
+        const end = new Date(data.trial_end);
+        setTrialEnd(end);
+        if (end < new Date()) {
+          setStatus("expired");
+        } else {
+          setStatus("trial");
+        }
       } else {
         setStatus("expired");
       }
