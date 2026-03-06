@@ -74,19 +74,21 @@ export default function PixAccessGate({ children }: PixAccessGateProps) {
 
   return (
     <>
-      {status === "trial" && trialEnd && (
-        <motion.div
-          initial={{ opacity: 0, y: -10 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="bg-primary/10 border border-primary/20 rounded-lg px-4 py-2.5 mb-4 text-center text-sm"
-        >
-          <span className="text-primary font-semibold">🎉 Você está usando o período de teste gratuito.</span>
-          <span className="text-muted-foreground ml-1">
-            Expira em {trialEnd.toLocaleDateString("pt-BR")}.
-          </span>
-        </motion.div>
-      )}
-      {children}
+      <div className="relative">
+        {status === "trial" && trialEnd && (
+          <motion.div
+            initial={{ opacity: 0, x: -10 }}
+            animate={{ opacity: 1, x: 0 }}
+            className="absolute top-2 left-2 z-10 bg-primary/10 border border-primary/20 rounded-lg px-3 py-1.5 text-xs backdrop-blur-sm"
+          >
+            <span className="text-primary font-semibold">🎉 Teste gratuito</span>
+            <span className="text-muted-foreground ml-1">
+              — expira em {trialEnd.toLocaleDateString("pt-BR")}
+            </span>
+          </motion.div>
+        )}
+        {children}
+      </div>
     </>
   );
 }
