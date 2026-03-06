@@ -91,6 +91,7 @@ export default function CriadorPrompt() {
   const [format, setFormat] = useState("");
   const [restrictions, setRestrictions] = useState("");
   const [language, setLanguage] = useState("pt-BR");
+  const [imageRatio, setImageRatio] = useState<string | null>(null);
   const [generatedPrompt, setGeneratedPrompt] = useState("");
   const [loading, setLoading] = useState(false);
 
@@ -170,12 +171,13 @@ ${audience ? `Público-alvo: ${audience}` : ""}
 ${tone ? `Tom desejado: ${tone}` : ""}
 ${format ? `Formato de saída: ${format}` : ""}
 ${restrictions ? `Restrições: ${restrictions}` : ""}
+${imageRatio ? `Proporção de imagem desejada: ${imageRatio} — inclua esta informação de proporção no prompt gerado para que a IA gere a imagem no tamanho correto.` : ""}
 
 INSTRUÇÕES:
 - Retorne APENAS o prompt final, pronto para copiar e colar.
 - O prompt DEVE ser gerado no idioma: ${langLabel} (código: ${language}).
 - Estruture claramente seguindo o framework ${framework}.
-- Seja detalhado e específico.
+- Seja detalhado e específico.${imageRatio ? `\n- INCLUA no prompt gerado a instrução explícita de que a imagem deve ser gerada na proporção ${imageRatio}.` : ""}
 - NÃO inclua explicações sobre o framework, apenas o prompt gerado.`
       }]);
 
@@ -307,6 +309,33 @@ Retorne APENAS o prompt melhorado no idioma ${langLabel}, pronto para uso. Não 
                   )}
                 </div>
                 <Textarea value={description} onChange={e => setDescription(e.target.value)} placeholder="Ex: Um artigo sobre produtividade com IA para empreendedores" rows={3} />
+              </div>
+
+              {/* Aspect Ratio selector */}
+              <div>
+                <label className="text-xs text-muted-foreground mb-2 block">Proporção da imagem (opcional)</label>
+                <div className="flex gap-3">
+                  {[
+                    { ratio: "1:1", label: "1:1", desc: "Quadrada", w: "w-10", h: "h-10" },
+                    { ratio: "9:16", label: "9:16", desc: "Vertical / Reels", w: "w-7", h: "h-12" },
+                    { ratio: "16:9", label: "16:9", desc: "Paisagem / YouTube", w: "w-14", h: "h-8" },
+                  ].map(({ ratio, label, desc, w, h }) => (
+                    <button
+                      key={ratio}
+                      type="button"
+                      onClick={() => setImageRatio(imageRatio === ratio ? null : ratio)}
+                      className={`flex flex-col items-center gap-1.5 p-3 rounded-xl border transition-all ${
+                        imageRatio === ratio
+                          ? "border-primary bg-primary/10 text-primary"
+                          : "border-border/50 bg-secondary/30 text-muted-foreground hover:border-primary/40"
+                      }`}
+                    >
+                      <div className={`${w} ${h} rounded border-2 ${imageRatio === ratio ? "border-primary" : "border-muted-foreground/40"}`} />
+                      <span className="text-xs font-semibold">{label}</span>
+                      <span className="text-[10px] leading-tight">{desc}</span>
+                    </button>
+                  ))}
+                </div>
               </div>
               <div className="grid sm:grid-cols-3 gap-4">
                 <div>
