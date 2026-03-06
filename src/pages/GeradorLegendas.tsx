@@ -14,6 +14,7 @@ import UsageBadge from "@/components/subtitles/UsageBadge";
 import { downloadSRT, downloadTXT } from "@/lib/srt-export";
 import { exportVideoWithSubtitles } from "@/lib/mp4-export";
 import { DEFAULT_STYLE_CONFIG, type SubtitleStyleConfig } from "@/lib/subtitle-styles";
+import { segmentSubtitles } from "@/lib/subtitle-segmenter";
 import { useSubtitleUsage } from "@/hooks/useSubtitleUsage";
 import { loadSubtitleFonts } from "@/lib/subtitle-fonts-loader";
 
@@ -130,9 +131,10 @@ const GeradorLegendas = () => {
       }
 
       const data = await response.json();
-      setSubtitles(data.subtitles);
+      const segmented = segmentSubtitles(data.subtitles);
+      setSubtitles(segmented);
       setStep("editor");
-      toast.success(`Transcrição concluída! ${data.subtitles.length} legendas geradas.`);
+      toast.success(`Transcrição concluída! ${segmented.length} legendas geradas.`);
       refetchUsage();
     } catch (error) {
       console.error("Transcription error:", error);

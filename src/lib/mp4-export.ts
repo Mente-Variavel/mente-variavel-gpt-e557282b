@@ -7,7 +7,7 @@ const getColor = (colorId: string): string =>
 
 const NEON_BLUE = "hsl(185, 100%, 50%)";
 const NEON_GREEN = "hsl(155, 100%, 45%)";
-const SAFE_MARGIN = 0.04; // 4% safe margin on each side
+const SAFE_MARGIN = 0.04;
 
 const BACKGROUND_COLORS_MAP: Record<string, string> = {
   "dark": "8, 12, 20", "black": "0, 0, 0", "neon-blue": "0, 90, 128",
@@ -37,25 +37,6 @@ function drawWatermark(ctx: CanvasRenderingContext2D, canvasWidth: number, canva
   ctx.lineTo(x + textWidth / 2, y + fontSize * 0.7);
   ctx.stroke();
   ctx.restore();
-}
-
-/** Break text into lines that fit within maxWidth */
-function wrapText(ctx: CanvasRenderingContext2D, text: string, maxWidth: number): string[] {
-  const words = text.split(" ");
-  const lines: string[] = [];
-  let currentLine = "";
-
-  for (const word of words) {
-    const testLine = currentLine ? `${currentLine} ${word}` : word;
-    if (ctx.measureText(testLine).width > maxWidth && currentLine) {
-      lines.push(currentLine);
-      currentLine = word;
-    } else {
-      currentLine = testLine;
-    }
-  }
-  if (currentLine) lines.push(currentLine);
-  return lines.length > 0 ? lines : [""];
 }
 
 interface WordRenderInfo {
@@ -88,9 +69,9 @@ function getWordStyles(
         break;
       }
       case "emphasis": {
-        const isEmphasis = i % 3 === 0 || word.length > 5;
+        const isEmphasis = i % 3 === 0 || word.length > 4;
         color = isEmphasis ? highlightColor : "white";
-        wFontSize = isEmphasis ? fontSize * 1.3 : fontSize;
+        wFontSize = isEmphasis ? fontSize * 1.15 : fontSize;
         break;
       }
       case "mente-variavel": {
@@ -104,7 +85,7 @@ function getWordStyles(
         const isActive = i === activeWordIndex;
         color = isActive ? highlightColor : "white";
         weight = "900";
-        wFontSize = isActive ? fontSize * 1.2 : fontSize;
+        wFontSize = isActive ? fontSize * 1.15 : fontSize;
         glow = isActive;
         break;
       }
@@ -112,19 +93,17 @@ function getWordStyles(
         const isActive = i === activeWordIndex;
         color = isActive ? highlightColor : "white";
         weight = "900";
-        wFontSize = fontSize * 1.1;
         break;
       }
       case "podcast":
-        color = "white";
-        weight = "600";
+        color = "white"; weight = "600";
         break;
       case "influencer": {
         const isActive = i === activeWordIndex;
         const colorWheel = [highlightColor, NEON_BLUE, NEON_GREEN, "hsl(50, 100%, 55%)"];
         color = isActive ? colorWheel[i % colorWheel.length] : "white";
         weight = isActive ? "900" : "bold";
-        wFontSize = isActive ? fontSize * 1.2 : fontSize;
+        wFontSize = isActive ? fontSize * 1.15 : fontSize;
         glow = isActive;
         break;
       }
@@ -143,11 +122,16 @@ function getWordStyles(
   });
 }
 
+/**
+ * Draw a single-line subtitle (already segmented into short phrases).
+ * Text is rendered as ONE centered line — no wrapping.
+ */
 function drawSubtitle(
   ctx: CanvasRenderingContext2D, sub: SubtitleLine, time: number,
   config: SubtitleStyleConfig, canvasWidth: number, canvasHeight: number
 ) {
-  const words = sub.text.split(" ");
+  const text = sub.text.toUpperCase();
+  const words = text.split(" ");
   const progress = (time - sub.start) / (sub.end - sub.start);
   const activeWordIndex = Math.floor(progress * words.length);
   const highlightColor = getColor(config.highlightColor);
@@ -155,29 +139,35 @@ function drawSubtitle(
   const fontSize = config.fontSize * scale;
   const padding = config.backgroundPadding * scale;
   const fontFamily = getCanvasFontFamily(config.fontId);
-  const lineHeightMultiplier = config.lineHeight ?? 1.4;
-  const letterSpacing = (config.letterSpacing ?? 0) * scale;
   const borderRadius = (config.borderRadius ?? 8) * scale;
+  const letterSpacing = (config.letterSpacing ?? 0) * scale;
 
-  // Calculate safe area
   const safeLeft = canvasWidth * SAFE_MARGIN;
-  const safeRight = canvasWidth * (1 - SAFE_MARGIN);
-  const safeWidth = safeRight - safeLeft;
-  const maxTextWidth = safeWidth * (config.backgroundMaxWidth / 100) - padding * 3;
+  const safeWidth = canvasWidth * (1 - 2 * SAFE_MARGIN);
+  const maxWidth = safeWidth * (config.backgroundMaxWidth / 100);
 
   ctx.font = `bold ${fontSize}px ${fontFamily}`;
-  ctx.textAlign = config.textAlign ?? "center";
   ctx.textBaseline = "middle";
 
-  // Wrap text into lines
-  const lines = wrapText(ctx, sub.text, maxTextWidth);
-  const lineHeight = fontSize * lineHeightMultiplier;
-  const totalTextHeight = lines.length * lineHeight;
-  const bgWidth = Math.min(
-    safeWidth * (config.backgroundMaxWidth / 100),
-    Math.max(...lines.map(l => ctx.measureText(l).width)) + padding * 3
-  );
-  const bgHeight = totalTextHeight + padding * 2;
+  // Measure full text width to check fit
+  const wordStyles = getWordStyles(words, activeWordIndex, config, highlightColor, fontSize);
+  let totalTextWidth = 0;
+  for (let i = 0; i < words.length; i++) {
+    const ws = wordStyles[i];
+    ctx.font = `${ws.weight} ${ws.fontSize}px ${fontFamily}`;
+    totalTextWidth += ctx.measureText(words[i]).width + (i < words.length - 1 ? fontSize * 0.3 + letterSpacing : 0);
+  }
+
+  // Scale down if too wide
+  let renderScale = 1;
+  if (totalTextWidth > maxWidth - padding * 3) {
+    renderScale = (maxWidth - padding * 3) / totalTextWidth;
+  }
+
+  const scaledTextWidth = totalTextWidth * renderScale;
+  const bgWidth = scaledTextWidth + padding * 4;
+  const bgHeight = fontSize * renderScale * 1.6 + padding * 2;
+  const x = canvasWidth / 2;
 
   // Y position
   let blockY: number;
@@ -188,94 +178,58 @@ function drawSubtitle(
     default: blockY = canvasHeight - offsetPx - bgHeight / 2; break;
   }
 
-  // Clamp to safe area
+  // Clamp
   const minY = canvasHeight * SAFE_MARGIN + bgHeight / 2;
   const maxY = canvasHeight * (1 - SAFE_MARGIN) - bgHeight / 2;
   blockY = Math.max(minY, Math.min(maxY, blockY));
 
-  const x = canvasWidth / 2;
-
-  // Draw background
+  // Background
   if (config.showBackground) {
     const bgRgba = BACKGROUND_COLORS_MAP[config.backgroundColorId ?? "dark"] ?? "0, 0, 0";
     const opacity = config.backgroundOpacity / 100;
-    const bgColor = `rgba(${bgRgba}, ${opacity})`;
-    const bx = x - bgWidth / 2;
-    const by = blockY - bgHeight / 2;
+    ctx.fillStyle = `rgba(${bgRgba}, ${opacity})`;
     ctx.beginPath();
-    ctx.roundRect(bx, by, bgWidth, bgHeight, borderRadius);
-    ctx.fillStyle = bgColor;
+    ctx.roundRect(x - bgWidth / 2, blockY - bgHeight / 2, bgWidth, bgHeight, borderRadius);
     ctx.fill();
     if (config.styleId === "mente-variavel") {
       ctx.strokeStyle = NEON_GREEN;
       ctx.lineWidth = 2 * scale;
       ctx.beginPath();
-      ctx.moveTo(bx, by + bgHeight);
-      ctx.lineTo(bx + bgWidth, by + bgHeight);
+      ctx.moveTo(x - bgWidth / 2, blockY + bgHeight / 2);
+      ctx.lineTo(x + bgWidth / 2, blockY + bgHeight / 2);
       ctx.stroke();
     }
   }
 
-  // Draw text line by line with word-level styling
-  const wordStyles = getWordStyles(words, activeWordIndex, config, highlightColor, fontSize);
-  let wordIndex = 0;
-  const firstLineY = blockY - totalTextHeight / 2 + lineHeight / 2;
+  // Draw words in a single line
+  let wx = x - scaledTextWidth / 2;
 
-  for (let lineIdx = 0; lineIdx < lines.length; lineIdx++) {
-    const lineText = lines[lineIdx];
-    const lineWords = lineText.split(" ");
-    const lineY = firstLineY + lineIdx * lineHeight;
+  for (let i = 0; i < words.length; i++) {
+    const ws = wordStyles[i];
+    const actualFontSize = ws.fontSize * renderScale;
+    ctx.font = `${ws.weight} ${actualFontSize}px ${fontFamily}`;
+    ctx.fillStyle = ws.color;
+    ctx.textAlign = "left";
 
-    // Measure total line width for centering
-    let totalLineWidth = 0;
-    const lineWordWidths: number[] = [];
-    for (let i = 0; i < lineWords.length; i++) {
-      const ws = wordStyles[wordIndex + i];
-      if (!ws) break;
-      ctx.font = `${ws.weight} ${ws.fontSize}px ${fontFamily}`;
-      const w = ctx.measureText(lineWords[i]).width + (i < lineWords.length - 1 ? fontSize * 0.3 + letterSpacing : 0);
-      lineWordWidths.push(w);
-      totalLineWidth += w;
-    }
-
-    // Starting x based on alignment
-    let wx: number;
-    const align = config.textAlign ?? "center";
-    if (align === "left") {
-      wx = x - bgWidth / 2 + padding * 1.5;
-    } else if (align === "right") {
-      wx = x + bgWidth / 2 - padding * 1.5 - totalLineWidth;
+    if (ws.glow) {
+      ctx.shadowColor = ws.color;
+      ctx.shadowBlur = 12 * scale;
+    } else if (config.styleId === "podcast") {
+      ctx.shadowColor = "rgba(0,0,0,0.7)";
+      ctx.shadowBlur = 8 * scale;
     } else {
-      wx = x - totalLineWidth / 2;
+      ctx.shadowColor = "rgba(0,0,0,0.6)";
+      ctx.shadowBlur = 4 * scale;
     }
 
-    for (let i = 0; i < lineWords.length; i++) {
-      const ws = wordStyles[wordIndex + i];
-      if (!ws) break;
-      ctx.font = `${ws.weight} ${ws.fontSize}px ${fontFamily}`;
-      ctx.fillStyle = ws.color;
+    // Outline
+    ctx.strokeStyle = "rgba(0,0,0,0.5)";
+    ctx.lineWidth = 2.5 * scale * renderScale;
+    ctx.strokeText(words[i], wx, blockY);
+    ctx.fillText(words[i], wx, blockY);
 
-      if (ws.glow) {
-        ctx.shadowColor = ws.color;
-        ctx.shadowBlur = 12 * scale;
-      } else if (config.styleId === "podcast") {
-        ctx.shadowColor = "rgba(0,0,0,0.7)";
-        ctx.shadowBlur = 8 * scale;
-      } else {
-        ctx.shadowColor = "transparent";
-        ctx.shadowBlur = 0;
-      }
-
-      const wordW = ctx.measureText(lineWords[i]).width;
-      // Stroke outline
-      ctx.strokeStyle = "rgba(0,0,0,0.6)";
-      ctx.lineWidth = 3 * scale;
-      ctx.textAlign = "left";
-      ctx.strokeText(lineWords[i], wx, lineY);
-      ctx.fillText(lineWords[i], wx, lineY);
-      wx += wordW + fontSize * 0.3 + letterSpacing;
-    }
-    wordIndex += lineWords.length;
+    const wordW = ctx.measureText(words[i]).width;
+    wx += wordW + (fontSize * 0.3 + letterSpacing) * renderScale;
   }
 
   ctx.shadowColor = "transparent";
