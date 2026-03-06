@@ -195,64 +195,62 @@ const SubtitlePreview = ({ videoUrl, subtitles, onTimeUpdate, styleConfig }: Sub
     <div className="relative overflow-hidden rounded-xl border border-border bg-background">
       <div ref={containerRef} className="relative aspect-[9/16] max-h-[500px] w-full bg-background">
         <video ref={videoRef} src={videoUrl} className="h-full w-full object-contain" onEnded={() => setIsPlaying(false)} />
+        {/* Full-width anti-watermark bar — always visible */}
+        {styleConfig.fullWidthBackground && (
+          <div
+            className="absolute"
+            style={{
+              ...barPositionStyle,
+              left: `${(100 - (styleConfig.fullWidthBarWidth ?? 100)) / 2}%`,
+              right: `${(100 - (styleConfig.fullWidthBarWidth ?? 100)) / 2}%`,
+              height: `${styleConfig.fullWidthBarHeight ?? 60}px`,
+              backgroundColor: `rgba(${bgRgba}, ${styleConfig.backgroundOpacity / 100})`,
+              backdropFilter: "blur(4px)",
+              borderRadius: (styleConfig.fullWidthBarWidth ?? 100) < 100 ? `${styleConfig.borderRadius}px` : undefined,
+              transform: styleConfig.position === "center" ? "translateY(-50%)" : undefined,
+            }}
+          />
+        )}
         {activeSub && (
-          <>
-            {/* Full-width anti-watermark bar */}
-            {styleConfig.fullWidthBackground && (
-              <div
-                className="absolute"
-                style={{
-                  ...barPositionStyle,
-                  left: `${(100 - (styleConfig.fullWidthBarWidth ?? 100)) / 2}%`,
-                  right: `${(100 - (styleConfig.fullWidthBarWidth ?? 100)) / 2}%`,
-                  height: `${styleConfig.fullWidthBarHeight ?? 60}px`,
-                  backgroundColor: `rgba(${bgRgba}, ${styleConfig.backgroundOpacity / 100})`,
-                  backdropFilter: "blur(4px)",
-                  borderRadius: (styleConfig.fullWidthBarWidth ?? 100) < 100 ? `${styleConfig.borderRadius}px` : undefined,
-                  transform: styleConfig.position === "center" ? "translateY(-50%)" : undefined,
-                }}
-              />
-            )}
-            <div
-              className="absolute flex justify-center"
+          <div
+            className="absolute flex justify-center"
+            style={{
+              ...positionStyle,
+              left: `${SAFE_MARGIN}%`,
+              right: `${SAFE_MARGIN}%`,
+              zIndex: 1,
+            }}
+          >
+            <span
+              ref={subtitleRef}
+              key={subKey}
+              className={`inline-flex flex-col items-center justify-center text-center ${animationClass}`}
               style={{
-                ...positionStyle,
-                left: `${SAFE_MARGIN}%`,
-                right: `${SAFE_MARGIN}%`,
-                zIndex: 1,
+                fontFamily,
+                fontSize: `${styleConfig.fontSize}px`,
+                lineHeight: isTwoLine ? 1.3 : 1.2,
+                letterSpacing: 0,
+                textTransform: "uppercase",
+                whiteSpace: isTwoLine ? "normal" : "nowrap",
+                overflow: "visible",
+                transform: `scale(${textScale})`,
+                transformOrigin: "center center",
+                padding: styleConfig.showBackground && !styleConfig.fullWidthBackground
+                  ? `${styleConfig.backgroundPadding}px ${styleConfig.backgroundPadding * 2}px`
+                  : `${styleConfig.backgroundPadding * 0.5}px ${styleConfig.backgroundPadding}px`,
+                backgroundColor: styleConfig.showBackground && !styleConfig.fullWidthBackground
+                  ? `rgba(${bgRgba}, ${styleConfig.backgroundOpacity / 100})`
+                  : "transparent",
+                backdropFilter: styleConfig.showBackground && !styleConfig.fullWidthBackground ? "blur(4px)" : "none",
+                borderRadius: `${styleConfig.borderRadius}px`,
+                borderBottom: styleConfig.showBackground && styleConfig.styleId === "mente-variavel"
+                  ? `2px solid ${neonGreen}` : "none",
+                textShadow: (!styleConfig.showBackground && !styleConfig.fullWidthBackground) ? "0 2px 8px rgba(0,0,0,0.8), 0 0 4px rgba(0,0,0,0.6)" : "none",
               }}
             >
-              <span
-                ref={subtitleRef}
-                key={subKey}
-                className={`inline-flex flex-col items-center justify-center text-center ${animationClass}`}
-                style={{
-                  fontFamily,
-                  fontSize: `${styleConfig.fontSize}px`,
-                  lineHeight: isTwoLine ? 1.3 : 1.2,
-                  letterSpacing: 0,
-                  textTransform: "uppercase",
-                  whiteSpace: isTwoLine ? "normal" : "nowrap",
-                  overflow: "visible",
-                  transform: `scale(${textScale})`,
-                  transformOrigin: "center center",
-                  padding: styleConfig.showBackground && !styleConfig.fullWidthBackground
-                    ? `${styleConfig.backgroundPadding}px ${styleConfig.backgroundPadding * 2}px`
-                    : `${styleConfig.backgroundPadding * 0.5}px ${styleConfig.backgroundPadding}px`,
-                  backgroundColor: styleConfig.showBackground && !styleConfig.fullWidthBackground
-                    ? `rgba(${bgRgba}, ${styleConfig.backgroundOpacity / 100})`
-                    : "transparent",
-                  backdropFilter: styleConfig.showBackground && !styleConfig.fullWidthBackground ? "blur(4px)" : "none",
-                  borderRadius: `${styleConfig.borderRadius}px`,
-                  borderBottom: styleConfig.showBackground && styleConfig.styleId === "mente-variavel"
-                    ? `2px solid ${neonGreen}` : "none",
-                  textShadow: (!styleConfig.showBackground && !styleConfig.fullWidthBackground) ? "0 2px 8px rgba(0,0,0,0.8), 0 0 4px rgba(0,0,0,0.6)" : "none",
-                }}
-              >
-                {renderWords()}
-              </span>
-            </div>
-          </>
+              {renderWords()}
+            </span>
+          </div>
         )}
         <button onClick={togglePlay} className="absolute inset-0 flex items-center justify-center bg-background/20 opacity-0 transition-opacity hover:opacity-100">
           <div className="flex h-14 w-14 items-center justify-center rounded-full bg-primary/20 backdrop-blur-sm">
