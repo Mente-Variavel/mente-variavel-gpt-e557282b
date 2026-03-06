@@ -16,6 +16,7 @@ import EbookDownload from "./pages/EbookDownload";
 import PixCheckout from "./pages/PixCheckout";
 import CriadorMusica from "./pages/CriadorMusica";
 import CriadorPrompt from "./pages/CriadorPrompt";
+import PixCheckoutProduct from "./pages/PixCheckoutProduct";
 import Blog from "./pages/Blog";
 import BlogPost from "./pages/BlogPost";
 import Guides from "./pages/Guides";
@@ -52,6 +53,7 @@ function App() {
             <Route path="/servicos/gerador-slides" element={<GeradorSlides />} />
             <Route path="/ebook-download" element={<EbookDownload />} />
             <Route path="/pix-checkout" element={<PixCheckout />} />
+            <Route path="/produtos/pix-checkout" element={<PixCheckoutProduct />} />
             <Route path="/servicos/criador-musica" element={<CriadorMusica />} />
             <Route path="/servicos/criador-prompt" element={<CriadorPrompt />} />
             <Route path="/criador-prompt" element={<CriadorPrompt />} />

@@ -10,6 +10,7 @@ import { toast } from "sonner";
 import { generatePixPayload } from "@/lib/pixEmv";
 import { supabase } from "@/integrations/supabase/client";
 import logoMv from "@/assets/logo-mv.png";
+import PixAccessGate from "@/components/PixAccessGate";
 
 interface PixConfig {
   pixKey: string;
@@ -100,6 +101,7 @@ export default function PixCheckout() {
       <Navbar />
       <main className="flex-1 pt-24 pb-16">
         <div className="container mx-auto px-4 max-w-lg">
+          <PixAccessGate>
           {/* Header */}
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="text-center mb-8">
             <div className="flex items-center justify-center gap-3 mb-3">
@@ -207,6 +209,7 @@ export default function PixCheckout() {
               </Card>
             </motion.div>
           ) : null}
+          </PixAccessGate>
         </div>
       </main>
       <Footer />
