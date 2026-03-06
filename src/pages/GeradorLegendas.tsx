@@ -52,10 +52,19 @@ const GeradorLegendas = () => {
     } catch {}
     return true;
   });
+  // Store raw (unsegmented) subtitles for re-segmentation when mode changes
+  const rawSubtitlesRef = useRef<SubtitleLine[]>([]);
 
   const { usage, refetchUsage } = useSubtitleUsage();
 
   useEffect(() => { loadSubtitleFonts(); }, []);
+
+  const handleResegment = useCallback(() => {
+    if (rawSubtitlesRef.current.length > 0) {
+      const segmented = segmentSubtitles(rawSubtitlesRef.current, styleConfig.layoutMode);
+      setSubtitles(segmented);
+    }
+  }, [styleConfig.layoutMode]);
 
   const handleExportMP4 = useCallback(async () => {
     if (!videoUrl || subtitles.length === 0) return;
