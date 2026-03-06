@@ -1,4 +1,5 @@
 import { useState, useCallback, useEffect } from "react";
+import { supabase } from "@/integrations/supabase/client";
 import { Download, Sparkles, FileText, ArrowLeft, Loader2, Film } from "lucide-react";
 import { toast } from "sonner";
 import Navbar from "@/components/Navbar";
@@ -102,6 +103,9 @@ const GeradorLegendas = () => {
     }
     setIsProcessing(true);
     try {
+      const { data: { session } } = await supabase.auth.getSession();
+      const token = session?.access_token || import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
+
       const formData = new FormData();
       formData.append("file", videoFile, videoFile.name);
       formData.append("language", "pt");
@@ -110,7 +114,7 @@ const GeradorLegendas = () => {
         `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/transcribe-video`,
         {
           method: "POST",
-          headers: { Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}` },
+          headers: { Authorization: `Bearer ${token}` },
           body: formData,
         }
       );
