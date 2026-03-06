@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
-import { Copy, Check, QrCode, ArrowLeft, Lock, Key, FileText, Share2 } from "lucide-react";
+import { Copy, Check, QrCode, ArrowLeft, Lock, Key, FileText, Share2, RefreshCw } from "lucide-react";
 import { toast } from "sonner";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
@@ -396,6 +396,12 @@ export default function PixCheckout() {
                       </Button>
                     )}
                   </div>
+
+                  {/* Novo Pix */}
+                  <Button variant="secondary" className="w-full text-sm gap-2" onClick={handleReset}>
+                    <RefreshCw className="h-4 w-4" />
+                    Novo Pix
+                  </Button>
 
                   <p className="text-center text-xs text-muted-foreground">
                     Escaneie o QR Code{!useBrCode && pixKey ? ", copie a chave" : ""} ou use o Copia e Cola para pagar
