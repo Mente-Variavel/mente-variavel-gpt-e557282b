@@ -88,26 +88,26 @@ const SubtitlePreview = ({ videoUrl, subtitles, onTimeUpdate, styleConfig }: Sub
     switch (styleConfig.styleId) {
       case "dynamic-highlight":
         return <span>{words.map((word, i) => (
-          <span key={i} style={{ color: i === activeWordIndex ? highlightColor : "hsl(0 0% 100%)", transition: "color 0.15s ease", fontWeight: i === activeWordIndex ? 800 : 700 }}>{word} </span>
+          <span key={i} style={{ color: i === activeWordIndex ? highlightColor : "hsl(0 0% 100%)", transition: "color 0.15s ease", fontWeight: i === activeWordIndex ? 800 : 700, marginRight: "0.3em" }}>{word}</span>
         ))}</span>;
 
       case "alternating":
         return <span>{words.map((word, i) => {
           const colors = ["hsl(0 0% 100%)", neonBlue, neonGreen];
-          return <span key={i} style={{ color: colors[i % 3], fontWeight: i % 3 !== 0 ? 800 : 700 }}>{word} </span>;
+          return <span key={i} style={{ color: colors[i % 3], fontWeight: i % 3 !== 0 ? 800 : 700, marginRight: "0.3em" }}>{word}</span>;
         })}</span>;
 
       case "emphasis":
         return <span>{words.map((word, i) => {
           const isEmphasis = i % 3 === 0 || word.length > 5;
-          return <span key={i} style={{ color: isEmphasis ? highlightColor : "hsl(0 0% 100%)", fontSize: isEmphasis ? `${styleConfig.fontSize * 1.3}px` : `${styleConfig.fontSize}px`, fontWeight: isEmphasis ? 900 : 600, transition: "all 0.2s ease" }}>{word} </span>;
+          return <span key={i} style={{ color: isEmphasis ? highlightColor : "hsl(0 0% 100%)", fontSize: isEmphasis ? `${styleConfig.fontSize * 1.3}px` : `${styleConfig.fontSize}px`, fontWeight: isEmphasis ? 900 : 600, transition: "all 0.2s ease", marginRight: "0.3em" }}>{word}</span>;
         })}</span>;
 
       case "mente-variavel":
         return <span>{words.map((word, i) => {
           const isHighlight = i === activeWordIndex;
           const highlightCol = i % 2 === 0 ? neonGreen : neonBlue;
-          return <span key={i} style={{ color: isHighlight ? highlightCol : "hsl(0 0% 100%)", fontWeight: isHighlight ? 900 : 700, textShadow: isHighlight ? `0 0 12px ${highlightCol}, 0 0 24px ${highlightCol}40` : "none", transition: "all 0.15s ease" }}>{word} </span>;
+          return <span key={i} style={{ color: isHighlight ? highlightCol : "hsl(0 0% 100%)", fontWeight: isHighlight ? 900 : 700, textShadow: isHighlight ? `0 0 12px ${highlightCol}, 0 0 24px ${highlightCol}40` : "none", transition: "all 0.15s ease", marginRight: "0.3em" }}>{word}</span>;
         })}</span>;
 
       case "reels":
@@ -120,7 +120,8 @@ const SubtitlePreview = ({ videoUrl, subtitles, onTimeUpdate, styleConfig }: Sub
             textTransform: "uppercase" as const,
             textShadow: isHighlight ? `0 0 8px ${highlightColor}60` : "1px 2px 4px rgba(0,0,0,0.5)",
             transition: "all 0.15s ease",
-          }}>{word} </span>;
+            marginRight: "0.3em",
+          }}>{word}</span>;
         })}</span>;
 
       case "shorts":
@@ -133,13 +134,14 @@ const SubtitlePreview = ({ videoUrl, subtitles, onTimeUpdate, styleConfig }: Sub
             transition: "all 0.2s ease",
             display: "inline-block",
             transform: isHighlight ? "scale(1.15)" : "scale(1)",
-          }}>{word} </span>;
+            marginRight: "0.35em",
+          }}>{word}</span>;
         })}</span>;
 
       case "podcast":
         return <span style={{ textShadow: "0 2px 8px rgba(0,0,0,0.7), 0 0 2px rgba(0,0,0,0.5)" }}>
           {words.map((word, i) => (
-            <span key={i} style={{ color: "hsl(0 0% 100%)", fontWeight: 600 }}>{word} </span>
+            <span key={i} style={{ color: "hsl(0 0% 100%)", fontWeight: 600, marginRight: "0.3em" }}>{word}</span>
           ))}
         </span>;
 
@@ -155,7 +157,8 @@ const SubtitlePreview = ({ videoUrl, subtitles, onTimeUpdate, styleConfig }: Sub
             transform: isHighlight ? "scale(1.2)" : "scale(1)",
             textShadow: isHighlight ? `0 0 10px ${wordColor}80` : "none",
             transition: "all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1)",
-          }}>{word} </span>;
+            marginRight: "0.35em",
+          }}>{word}</span>;
         })}</span>;
 
       case "educational":
@@ -171,7 +174,8 @@ const SubtitlePreview = ({ videoUrl, subtitles, onTimeUpdate, styleConfig }: Sub
             textDecorationColor: isKeyword ? `${highlightColor}60` : "transparent",
             textUnderlineOffset: "3px",
             transition: "all 0.2s ease",
-          }}>{word} </span>;
+            marginRight: "0.3em",
+          }}>{word}</span>;
         })}</span>;
 
       default:
