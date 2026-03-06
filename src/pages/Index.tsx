@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from "react";
+import logoMv from "@/assets/logo-mv.png";
 import { Link, useNavigate } from "react-router-dom";
 import AdPlaceholder from "@/components/AdPlaceholder";
 import { motion, AnimatePresence } from "framer-motion";
@@ -97,6 +98,12 @@ export default function Index() {
         <section className="relative pt-12 pb-20 overflow-hidden">
           <div className="absolute inset-0 bg-gradient-to-br from-primary/10 via-background to-accent/5" />
           <div className="absolute top-20 left-1/2 -translate-x-1/2 w-[600px] h-[600px] bg-primary/5 rounded-full blur-3xl" />
+          <img
+            src={logoMv}
+            alt=""
+            aria-hidden="true"
+            className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] object-contain opacity-[0.04] pointer-events-none select-none"
+          />
           <div className="container mx-auto px-4 relative z-10 text-center">
             <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6 }}>
               <h2 className="text-xl sm:text-2xl font-bold text-primary text-glow-cyan mb-3">
