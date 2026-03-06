@@ -56,12 +56,26 @@ const IMAGE_WITH_ATTACHMENT_TRIGGERS = [
   "edita", "edite", "melhora", "melhore", "ajusta", "ajuste",
 ];
 
+// Detect structured image prompts (from prompt generators)
+const IMAGE_PROMPT_INDICATORS = [
+  "estilo visual:", "configuração da cena:", "composição técnica",
+  "proporção: 16:9", "proporção: 9:16", "proporção: 1:1",
+  "proporção 16:9", "proporção 9:16", "proporção 1:1",
+  "fotorrealismo", "fotorrealista", "renderização",
+  "resolução 8k", "resolução 4k", "iluminação e cor",
+  "enquadramento:", "golden hour", "hora dourada",
+  "gere a imagem estritamente", "gere a imagem na proporção",
+  "visual style:", "scene setup:", "aspect ratio:",
+];
+
 function isImageRequest(text: string, hasAttachments: boolean): boolean {
   const lower = text.toLowerCase();
   if (IMAGE_TRIGGERS.some((t) => lower.includes(t))) return true;
   if (hasAttachments && IMAGE_WITH_ATTACHMENT_TRIGGERS.some((t) => lower.includes(t))) return true;
-  // If user attached images with ANY text, route to image generation
   if (hasAttachments) return true;
+  // Detect structured image prompts with multiple indicators
+  const indicatorCount = IMAGE_PROMPT_INDICATORS.filter((t) => lower.includes(t)).length;
+  if (indicatorCount >= 2) return true;
   return false;
 }
 
