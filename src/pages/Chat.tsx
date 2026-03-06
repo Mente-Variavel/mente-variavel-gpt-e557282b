@@ -33,6 +33,16 @@ const IMAGE_TRIGGERS = [
   "usar esse logo", "use esse logo", "com esse logo", "usando esse logo",
   "usar essa imagem", "use essa imagem", "com essa imagem", "usando essa imagem",
   "mockup", "estampa", "estampar", "personalizar", "personalização",
+  // Broader triggers
+  "cria um", "cria uma", "crie um", "crie uma",
+  "gera um", "gera uma", "gere um", "gere uma",
+  "faz um", "faz uma", "faça um", "faça uma",
+  "desenho de", "desenho do", "desenho da",
+  "imagem de", "imagem do", "imagem da", "imagem com",
+  "foto de", "foto do", "foto da",
+  "arte de", "arte do", "arte da",
+  "ilustração de", "ilustração do", "ilustração da",
+  "picture of", "image of", "photo of",
 ];
 
 // If user attached images, also check these lighter triggers
@@ -41,13 +51,16 @@ const IMAGE_WITH_ATTACHMENT_TRIGGERS = [
   "logo", "imagem", "foto", "design", "arte", "produto", "capa",
   "poster", "cartaz", "flyer", "panfleto", "embalagem",
   "t-shirt", "shirt", "mug", "cup", "sticker",
+  "coloca", "coloque", "aplica", "aplique", "usa", "use",
+  "edita", "edite", "melhora", "melhore", "ajusta", "ajuste",
 ];
 
 function isImageRequest(text: string, hasAttachments: boolean): boolean {
   const lower = text.toLowerCase();
   if (IMAGE_TRIGGERS.some((t) => lower.includes(t))) return true;
-  // If user attached images, use lighter triggers — they likely want image generation
   if (hasAttachments && IMAGE_WITH_ATTACHMENT_TRIGGERS.some((t) => lower.includes(t))) return true;
+  // If user attached images with ANY text, route to image generation
+  if (hasAttachments) return true;
   return false;
 }
 
