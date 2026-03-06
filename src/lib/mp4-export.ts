@@ -9,6 +9,20 @@ const NEON_BLUE = "hsl(185, 100%, 50%)";
 const NEON_GREEN = "hsl(155, 100%, 45%)";
 const SAFE_MARGIN = 0.04;
 
+function roundRect(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number, r: number) {
+  ctx.beginPath();
+  ctx.moveTo(x + r, y);
+  ctx.lineTo(x + w - r, y);
+  ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+  ctx.lineTo(x + w, y + h - r);
+  ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+  ctx.lineTo(x + r, y + h);
+  ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+  ctx.lineTo(x, y + r);
+  ctx.quadraticCurveTo(x, y, x + r, y);
+  ctx.closePath();
+}
+
 const BACKGROUND_COLORS_MAP: Record<string, string> = {
   "dark": "8, 12, 20", "black": "0, 0, 0", "neon-blue": "0, 90, 128",
   "neon-green": "0, 102, 60", "pink": "128, 0, 64", "red": "128, 0, 0",
