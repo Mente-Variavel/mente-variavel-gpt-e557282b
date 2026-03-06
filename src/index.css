@@ -146,4 +146,14 @@
 ::-webkit-scrollbar-thumb:hover {
   background: hsl(185 100% 50% / 0.5);
 }
+
+@keyframes subtitleFadeIn {
+  0% { opacity: 0; transform: translateY(6px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes subtitleSlideUp {
+  0% { opacity: 0; transform: translateY(20px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
 /* rebuild */
