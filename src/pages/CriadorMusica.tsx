@@ -87,7 +87,6 @@ function sanitizeArtistReferences(text: string): string {
     "alicia keys": "r&b soul com voz feminina potente e emotiva, textura vocal calorosa e gospel, piano como instrumento principal, atmosfera empoderada e intimista, ritmo moderado e groovy",
     "usher": "r&b pop com voz masculina suave e sensual, textura vocal falsete e rítmica, batida dançante e produção polida, atmosfera sedutora e festiva, ritmo médio-rápido e dançante",
     "chris brown": "r&b pop com voz masculina ágil e melódica, textura vocal suave com runs rápidos, batida trap e r&b moderno, atmosfera romântica e urbana, ritmo moderado a rápido",
-    "the weeknd": "pop moderno synthwave com vocais masculinos falsete suaves, textura vocal sedosa e melancólica, sintetizadores retrô e batida eletrônica, atmosfera noturna e cinematográfica, ritmo médio e pulsante",
     "frank ocean": "r&b alternativo com voz masculina suave e etérea, textura vocal delicada e introspectiva, produção minimalista com sintetizadores e piano, atmosfera melancólica e onírica, ritmo lento e flutuante",
     "sza": "r&b alternativo com voz feminina suave e expressiva, textura vocal airy e emotiva, produção neo-soul com batida trap, atmosfera vulnerável e sensual, ritmo moderado e orgânico",
     "freddie mercury": "rock operístico com voz masculina extraordinariamente potente e versátil, textura vocal dramática com extensão ampla, guitarra pesada e piano, coro épico, atmosfera teatral e grandiosa, ritmo variado e dinâmico",
