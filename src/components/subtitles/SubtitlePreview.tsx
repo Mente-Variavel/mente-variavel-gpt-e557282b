@@ -20,10 +20,12 @@ const SAFE_MARGIN = 4; // percent
 const SubtitlePreview = ({ videoUrl, subtitles, onTimeUpdate, styleConfig }: SubtitlePreviewProps) => {
   const videoRef = useRef<HTMLVideoElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
+  const subtitleRef = useRef<HTMLSpanElement>(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentTime, setCurrentTimeLocal] = useState(0);
   const [activeSub, setActiveSub] = useState<SubtitleLine | null>(null);
   const [subKey, setSubKey] = useState(0);
+  const [textScale, setTextScale] = useState(1);
 
   useEffect(() => { loadSubtitleFonts(); }, []);
 
