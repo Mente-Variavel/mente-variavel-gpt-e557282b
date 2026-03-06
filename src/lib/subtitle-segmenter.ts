@@ -1,24 +1,31 @@
 import type { SubtitleLine } from "@/components/subtitles/SubtitleEditor";
+import type { SubtitleLayoutMode } from "./subtitle-styles";
 
-const MAX_WORDS_PER_SEGMENT = 4;
-const MAX_CHARS_PER_SEGMENT = 26;
+const SINGLE_LINE_MAX_WORDS = 4;
+const SINGLE_LINE_MAX_CHARS = 26;
+
+const TWO_LINE_MAX_WORDS = 8;
+const TWO_LINE_MAX_CHARS = 50;
 
 /**
- * Splits long subtitle lines into short phrase segments
- * so they display as ONE centered line at a time.
+ * Splits long subtitle lines into short phrase segments.
  * 
- * Rules:
- * - Max 4 words per segment
- * - Max ~26 characters per segment
- * - Never breaks words in the middle
- * - Time is distributed proportionally across segments
+ * - "single-line": Max 4 words / ~26 chars — ONE line at a time
+ * - "two-line": Max 8 words / ~50 chars — up to TWO lines at a time
+ * 
+ * Time is distributed proportionally by character count.
  */
-export function segmentSubtitles(subtitles: SubtitleLine[]): SubtitleLine[] {
+export function segmentSubtitles(
+  subtitles: SubtitleLine[],
+  mode: SubtitleLayoutMode = "single-line"
+): SubtitleLine[] {
+  const maxWords = mode === "two-line" ? TWO_LINE_MAX_WORDS : SINGLE_LINE_MAX_WORDS;
+  const maxChars = mode === "two-line" ? TWO_LINE_MAX_CHARS : SINGLE_LINE_MAX_CHARS;
+
   const result: SubtitleLine[] = [];
 
   for (const sub of subtitles) {
     const words = sub.text.trim().split(/\s+/).filter(Boolean);
-
     if (words.length === 0) continue;
 
     // Build chunks respecting both word count and character limits
@@ -30,7 +37,7 @@ export function segmentSubtitles(subtitles: SubtitleLine[]): SubtitleLine[] {
 
       if (
         currentChunk.length > 0 &&
-        (currentChunk.length >= MAX_WORDS_PER_SEGMENT || candidate.length > MAX_CHARS_PER_SEGMENT)
+        (currentChunk.length >= maxWords || candidate.length > maxChars)
       ) {
         chunks.push(currentChunk.join(" "));
         currentChunk = [word];

@@ -63,18 +63,18 @@ const SubtitlePreview = ({ videoUrl, subtitles, onTimeUpdate, styleConfig }: Sub
       const safeWidth = containerWidth * (1 - 2 * SAFE_MARGIN / 100);
       const spanWidth = span.scrollWidth;
       if (spanWidth > safeWidth) {
-        setTextScale(Math.max(0.5, safeWidth / spanWidth));
+        setTextScale(Math.max(0.55, safeWidth / spanWidth));
       } else {
         setTextScale(1);
       }
     });
-  }, [activeSub, subKey, styleConfig.fontSize, styleConfig.fontId, styleConfig.letterSpacing]);
-
+  }, [activeSub, subKey, styleConfig.fontSize, styleConfig.fontId]);
 
   const fontFamily = getFontFamily(styleConfig.fontId);
   const highlightColor = getHighlightCSS(styleConfig.highlightColor);
   const neonBlue = "hsl(185 100% 50%)";
   const neonGreen = "hsl(155 100% 45%)";
+  const isTwoLine = styleConfig.layoutMode === "two-line";
 
   const positionStyle = useMemo((): React.CSSProperties => {
     const offset = `${Math.max(styleConfig.verticalOffset, SAFE_MARGIN)}%`;
@@ -93,74 +93,90 @@ const SubtitlePreview = ({ videoUrl, subtitles, onTimeUpdate, styleConfig }: Sub
       case "animated-slide":
       case "shorts":
         return "animate-[subtitleSlideUp_0.25s_ease-out]";
-      case "mente-variavel":
-      case "reels":
-        return "animate-[subtitleFadeIn_0.2s_ease-out]";
       default: return "animate-[subtitleFadeIn_0.2s_ease-out]";
     }
   }, [styleConfig.styleId]);
 
-  // Single-line word-level coloring
-  const renderWords = () => {
-    if (!activeSub) return null;
-    const words = activeSub.text.split(" ");
-    const progress = (currentTime - activeSub.start) / (activeSub.end - activeSub.start);
-    const activeWordIndex = Math.floor(progress * words.length);
+  // Split text for two-line mode
+  const getLines = (text: string): string[] => {
+    if (!isTwoLine) return [text];
+    const words = text.split(" ");
+    if (words.length <= 3) return [text];
+    const mid = Math.ceil(words.length / 2);
+    return [words.slice(0, mid).join(" "), words.slice(mid).join(" ")];
+  };
 
+  // Word-level coloring for a single word
+  const getWordStyle = (wordIndex: number, totalWords: number, activeWordIndex: number): React.CSSProperties => {
     const ws = (color: string, weight: number, extra?: React.CSSProperties): React.CSSProperties => ({
       color, fontWeight: weight, transition: "all 0.15s ease", display: "inline-block", ...extra,
     });
 
     switch (styleConfig.styleId) {
       case "dynamic-highlight":
-        return words.map((w, i) => (
-          <span key={i} style={ws(i === activeWordIndex ? highlightColor : "white", i === activeWordIndex ? 900 : 700)}>{w}&nbsp;</span>
-        ));
-      case "alternating":
-        return words.map((w, i) => {
-          const c = ["white", neonBlue, neonGreen][i % 3];
-          return <span key={i} style={ws(c, 800)}>{w}&nbsp;</span>;
-        });
-      case "emphasis":
-        return words.map((w, i) => {
-          const em = i % 3 === 0 || w.length > 4;
-          return <span key={i} style={ws(em ? highlightColor : "white", em ? 900 : 700, em ? { transform: "scale(1.15)", display: "inline-block" } : undefined)}>{w}&nbsp;</span>;
-        });
-      case "mente-variavel":
-        return words.map((w, i) => {
-          const active = i === activeWordIndex;
-          const col = i % 2 === 0 ? neonGreen : neonBlue;
-          return <span key={i} style={ws(active ? col : "white", active ? 900 : 700, active ? { textShadow: `0 0 12px ${col}, 0 0 24px ${col}40` } : undefined)}>{w}&nbsp;</span>;
-        });
-      case "reels":
-        return words.map((w, i) => {
-          const active = i === activeWordIndex;
-          return <span key={i} style={ws(active ? highlightColor : "white", 900, active ? { transform: "scale(1.15)", display: "inline-block", textShadow: `0 0 8px ${highlightColor}60` } : { textShadow: "1px 2px 4px rgba(0,0,0,0.5)" })}>{w}&nbsp;</span>;
-        });
-      case "shorts":
-        return words.map((w, i) => {
-          const active = i === activeWordIndex;
-          return <span key={i} style={ws(active ? highlightColor : "white", 900, { transform: active ? "scale(1.2)" : "scale(1)", display: "inline-block" })}>{w}&nbsp;</span>;
-        });
+        return ws(wordIndex === activeWordIndex ? highlightColor : "white", wordIndex === activeWordIndex ? 900 : 700);
+      case "alternating": {
+        const c = ["white", neonBlue, neonGreen][wordIndex % 3];
+        return ws(c, 800);
+      }
+      case "emphasis": {
+        const em = wordIndex % 3 === 0;
+        return ws(em ? highlightColor : "white", em ? 900 : 700, em ? { transform: "scale(1.1)", display: "inline-block" } : undefined);
+      }
+      case "mente-variavel": {
+        const active = wordIndex === activeWordIndex;
+        const col = wordIndex % 2 === 0 ? neonGreen : neonBlue;
+        return ws(active ? col : "white", active ? 900 : 700, active ? { textShadow: `0 0 12px ${col}, 0 0 24px ${col}40` } : undefined);
+      }
+      case "reels": {
+        const active = wordIndex === activeWordIndex;
+        return ws(active ? highlightColor : "white", 900, active ? { transform: "scale(1.1)", display: "inline-block", textShadow: `0 0 8px ${highlightColor}60` } : { textShadow: "1px 2px 4px rgba(0,0,0,0.5)" });
+      }
+      case "shorts": {
+        const active = wordIndex === activeWordIndex;
+        return ws(active ? highlightColor : "white", 900, { transform: active ? "scale(1.15)" : "scale(1)", display: "inline-block" });
+      }
       case "podcast":
-        return words.map((w, i) => (
-          <span key={i} style={ws("white", 600, { textShadow: "0 2px 8px rgba(0,0,0,0.7)" })}>{w}&nbsp;</span>
-        ));
-      case "influencer":
-        return words.map((w, i) => {
-          const active = i === activeWordIndex;
-          const wheel = [highlightColor, neonBlue, neonGreen, "hsl(50 100% 55%)"];
-          const col = active ? wheel[i % wheel.length] : "white";
-          return <span key={i} style={ws(col, active ? 900 : 700, active ? { transform: "scale(1.2)", display: "inline-block", textShadow: `0 0 10px ${col}80` } : undefined)}>{w}&nbsp;</span>;
-        });
-      case "educational":
-        return words.map((w, i) => {
-          const kw = w.length > 4 || i % 4 === 0;
-          return <span key={i} style={ws(kw ? highlightColor : "white", kw ? 800 : 500, kw ? { textDecoration: "underline", textDecorationColor: `${highlightColor}60`, textUnderlineOffset: "3px" } : undefined)}>{w}&nbsp;</span>;
-        });
+        return ws("white", 600, { textShadow: "0 2px 8px rgba(0,0,0,0.7)" });
+      case "influencer": {
+        const active = wordIndex === activeWordIndex;
+        const wheel = [highlightColor, neonBlue, neonGreen, "hsl(50 100% 55%)"];
+        const col = active ? wheel[wordIndex % wheel.length] : "white";
+        return ws(col, active ? 900 : 700, active ? { transform: "scale(1.15)", display: "inline-block", textShadow: `0 0 10px ${col}80` } : undefined);
+      }
+      case "educational": {
+        const kw = wordIndex % 4 === 0;
+        return ws(kw ? highlightColor : "white", kw ? 800 : 500, kw ? { textDecoration: "underline", textDecorationColor: `${highlightColor}60`, textUnderlineOffset: "3px" } : undefined);
+      }
       default:
-        return <span style={{ color: "white" }}>{activeSub.text}</span>;
+        return { color: "white" };
     }
+  };
+
+  const renderWords = () => {
+    if (!activeSub) return null;
+    const allWords = activeSub.text.split(" ");
+    const progress = (currentTime - activeSub.start) / (activeSub.end - activeSub.start);
+    const activeWordIndex = Math.floor(progress * allWords.length);
+    const lines = getLines(activeSub.text);
+
+    let globalIndex = 0;
+    return lines.map((line, lineIdx) => {
+      const lineWords = line.split(" ");
+      const rendered = lineWords.map((w) => {
+        const idx = globalIndex++;
+        return (
+          <span key={idx} style={getWordStyle(idx, allWords.length, activeWordIndex)}>
+            {w}&nbsp;
+          </span>
+        );
+      });
+      return (
+        <span key={lineIdx} style={{ display: "block", textAlign: "center" }}>
+          {rendered}
+        </span>
+      );
+    });
   };
 
   const bgColorEntry = BACKGROUND_COLORS.find(c => c.id === styleConfig.backgroundColorId);
@@ -179,17 +195,17 @@ const SubtitlePreview = ({ videoUrl, subtitles, onTimeUpdate, styleConfig }: Sub
               right: `${SAFE_MARGIN}%`,
             }}
           >
-             <span
+            <span
               ref={subtitleRef}
               key={subKey}
-              className={`inline-flex items-center justify-center text-center ${animationClass}`}
+              className={`inline-flex flex-col items-center justify-center text-center ${animationClass}`}
               style={{
                 fontFamily,
                 fontSize: `${styleConfig.fontSize}px`,
-                lineHeight: 1.2,
-                letterSpacing: `${styleConfig.letterSpacing}px`,
+                lineHeight: isTwoLine ? 1.3 : 1.2,
+                letterSpacing: 0,
                 textTransform: "uppercase",
-                whiteSpace: "nowrap",
+                whiteSpace: isTwoLine ? "normal" : "nowrap",
                 overflow: "visible",
                 transform: `scale(${textScale})`,
                 transformOrigin: "center center",

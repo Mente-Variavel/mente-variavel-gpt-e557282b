@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback, useEffect, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Download, Sparkles, FileText, ArrowLeft, Loader2, Film } from "lucide-react";
 import { toast } from "sonner";
@@ -52,10 +52,19 @@ const GeradorLegendas = () => {
     } catch {}
     return true;
   });
+  // Store raw (unsegmented) subtitles for re-segmentation when mode changes
+  const rawSubtitlesRef = useRef<SubtitleLine[]>([]);
 
   const { usage, refetchUsage } = useSubtitleUsage();
 
   useEffect(() => { loadSubtitleFonts(); }, []);
+
+  const handleResegment = useCallback(() => {
+    if (rawSubtitlesRef.current.length > 0) {
+      const segmented = segmentSubtitles(rawSubtitlesRef.current, styleConfig.layoutMode);
+      setSubtitles(segmented);
+    }
+  }, [styleConfig.layoutMode]);
 
   const handleExportMP4 = useCallback(async () => {
     if (!videoUrl || subtitles.length === 0) return;
@@ -131,7 +140,8 @@ const GeradorLegendas = () => {
       }
 
       const data = await response.json();
-      const segmented = segmentSubtitles(data.subtitles);
+      rawSubtitlesRef.current = data.subtitles;
+      const segmented = segmentSubtitles(data.subtitles, styleConfig.layoutMode);
       setSubtitles(segmented);
       setStep("editor");
       toast.success(`Transcrição concluída! ${segmented.length} legendas geradas.`);
@@ -229,7 +239,7 @@ const GeradorLegendas = () => {
             <div className="grid gap-6 lg:grid-cols-[1fr_1.2fr]">
               <div className="order-1 flex flex-col gap-4">
                 <SubtitlePreview videoUrl={videoUrl} subtitles={subtitles} onTimeUpdate={setCurrentTime} styleConfig={styleConfig} />
-                <SubtitleCustomizer config={styleConfig} onChange={setStyleConfig} watermarkEnabled={watermarkEnabled} />
+                <SubtitleCustomizer config={styleConfig} onChange={setStyleConfig} watermarkEnabled={watermarkEnabled} onResegment={handleResegment} />
               </div>
 
               <div className="order-2 flex flex-col gap-4">

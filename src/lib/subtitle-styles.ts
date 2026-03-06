@@ -1,3 +1,5 @@
+export type SubtitleLayoutMode = "single-line" | "two-line";
+
 export type SubtitleStyleId =
   | "classic"
   | "dynamic-highlight"
@@ -45,6 +47,15 @@ export interface SubtitleStyleConfig {
   letterSpacing: number;
   textAlign: TextAlign;
   borderRadius: number;
+  layoutMode: SubtitleLayoutMode;
+}
+
+export interface SubtitlePresetInfo {
+  id: string;
+  name: string;
+  description: string;
+  badge?: string;
+  config: Partial<SubtitleStyleConfig>;
 }
 
 export interface SubtitleStyleInfo {
@@ -58,16 +69,15 @@ export interface SubtitleFontInfo {
   id: SubtitleFontId;
   name: string;
   cssFamily: string;
-  /** Google Fonts import name (null = system font) */
   googleFont: string | null;
 }
 
 export const SUBTITLE_FONTS: SubtitleFontInfo[] = [
-  { id: "orbitron", name: "Orbitron", cssFamily: '"Orbitron", sans-serif', googleFont: "Orbitron:wght@400;600;700;800;900" },
   { id: "montserrat", name: "Montserrat", cssFamily: '"Montserrat", sans-serif', googleFont: "Montserrat:wght@400;600;700;800;900" },
   { id: "poppins", name: "Poppins", cssFamily: '"Poppins", sans-serif', googleFont: "Poppins:wght@400;600;700;800;900" },
   { id: "bebas-neue", name: "Bebas Neue", cssFamily: '"Bebas Neue", sans-serif', googleFont: "Bebas+Neue" },
   { id: "anton", name: "Anton", cssFamily: '"Anton", sans-serif', googleFont: "Anton" },
+  { id: "orbitron", name: "Orbitron", cssFamily: '"Orbitron", sans-serif', googleFont: "Orbitron:wght@400;600;700;800;900" },
   { id: "oswald", name: "Oswald", cssFamily: '"Oswald", sans-serif', googleFont: "Oswald:wght@400;600;700" },
   { id: "impact", name: "Impact", cssFamily: '"Impact", "Arial Black", sans-serif', googleFont: null },
 ];
@@ -108,31 +118,187 @@ export const BACKGROUND_COLORS: { id: BackgroundColorId; name: string; color: st
   { id: "yellow", name: "Amarelo", color: "hsl(50 100% 30%)", rgba: "153, 128, 0" },
 ];
 
+/** Color presets for simplified UI */
+export const COLOR_PRESETS: { id: string; name: string; highlightColor: HighlightColor; backgroundColorId: BackgroundColorId }[] = [
+  { id: "white-only", name: "Branco", highlightColor: "white", backgroundColorId: "dark" },
+  { id: "white-green", name: "Branco + Verde", highlightColor: "neon-green", backgroundColorId: "dark" },
+  { id: "white-blue", name: "Branco + Azul", highlightColor: "neon-blue", backgroundColorId: "dark" },
+  { id: "white-yellow", name: "Branco + Amarelo", highlightColor: "yellow", backgroundColorId: "dark" },
+  { id: "white-pink", name: "Branco + Rosa", highlightColor: "pink", backgroundColorId: "dark" },
+  { id: "white-red", name: "Branco + Vermelho", highlightColor: "red", backgroundColorId: "black" },
+];
+
+/** Style presets that auto-configure everything */
+export const STYLE_PRESETS: SubtitlePresetInfo[] = [
+  {
+    id: "single-viral",
+    name: "Single Line Viral",
+    description: "Uma linha por vez, estilo Zemo",
+    badge: "POPULAR",
+    config: {
+      layoutMode: "single-line",
+      styleId: "dynamic-highlight",
+      fontId: "montserrat",
+      fontSize: 22,
+      position: "bottom",
+      showBackground: true,
+      backgroundOpacity: 70,
+      backgroundPadding: 8,
+      backgroundColorId: "dark",
+      borderRadius: 8,
+      verticalOffset: 10,
+      backgroundMaxWidth: 90,
+      highlightColor: "neon-green",
+      lineHeight: 1.2,
+      letterSpacing: 0,
+      textAlign: "center",
+    },
+  },
+  {
+    id: "two-line-viral",
+    name: "Two Line Viral",
+    description: "Duas linhas, estilo Opus",
+    badge: "NOVO",
+    config: {
+      layoutMode: "two-line",
+      styleId: "dynamic-highlight",
+      fontId: "bebas-neue",
+      fontSize: 24,
+      position: "bottom",
+      showBackground: true,
+      backgroundOpacity: 60,
+      backgroundPadding: 10,
+      backgroundColorId: "dark",
+      borderRadius: 8,
+      verticalOffset: 10,
+      backgroundMaxWidth: 90,
+      highlightColor: "yellow",
+      lineHeight: 1.3,
+      letterSpacing: 0,
+      textAlign: "center",
+    },
+  },
+  {
+    id: "podcast-clean",
+    name: "Podcast Clean",
+    description: "Legendas limpas para podcasts",
+    config: {
+      layoutMode: "two-line",
+      styleId: "podcast",
+      fontId: "poppins",
+      fontSize: 18,
+      position: "bottom",
+      showBackground: true,
+      backgroundOpacity: 80,
+      backgroundPadding: 10,
+      backgroundColorId: "black",
+      borderRadius: 12,
+      verticalOffset: 8,
+      backgroundMaxWidth: 85,
+      highlightColor: "white",
+      lineHeight: 1.3,
+      letterSpacing: 0,
+      textAlign: "center",
+    },
+  },
+  {
+    id: "highlight-words",
+    name: "Highlight Words",
+    description: "Palavras-chave em destaque",
+    config: {
+      layoutMode: "single-line",
+      styleId: "emphasis",
+      fontId: "anton",
+      fontSize: 24,
+      position: "center",
+      showBackground: false,
+      backgroundOpacity: 60,
+      backgroundPadding: 8,
+      backgroundColorId: "dark",
+      borderRadius: 8,
+      verticalOffset: 10,
+      backgroundMaxWidth: 90,
+      highlightColor: "neon-blue",
+      lineHeight: 1.2,
+      letterSpacing: 0,
+      textAlign: "center",
+    },
+  },
+  {
+    id: "minimal",
+    name: "Minimal",
+    description: "Simples e discreto",
+    config: {
+      layoutMode: "single-line",
+      styleId: "classic",
+      fontId: "poppins",
+      fontSize: 16,
+      position: "bottom",
+      showBackground: true,
+      backgroundOpacity: 50,
+      backgroundPadding: 6,
+      backgroundColorId: "dark",
+      borderRadius: 6,
+      verticalOffset: 8,
+      backgroundMaxWidth: 80,
+      highlightColor: "white",
+      lineHeight: 1.2,
+      letterSpacing: 0,
+      textAlign: "center",
+    },
+  },
+  {
+    id: "mente-variavel",
+    name: "Mente Variável",
+    description: "Estilo exclusivo da marca",
+    badge: "EXCLUSIVO",
+    config: {
+      layoutMode: "single-line",
+      styleId: "mente-variavel",
+      fontId: "orbitron",
+      fontSize: 20,
+      position: "bottom",
+      showBackground: true,
+      backgroundOpacity: 70,
+      backgroundPadding: 8,
+      backgroundColorId: "dark",
+      borderRadius: 8,
+      verticalOffset: 10,
+      backgroundMaxWidth: 90,
+      highlightColor: "neon-green",
+      lineHeight: 1.2,
+      letterSpacing: 0,
+      textAlign: "center",
+    },
+  },
+];
+
 export const DEFAULT_STYLE_CONFIG: SubtitleStyleConfig = {
-  styleId: "mente-variavel",
+  styleId: "dynamic-highlight",
   highlightColor: "neon-green",
-  fontSize: 20,
+  fontSize: 22,
   position: "bottom",
   showBackground: true,
   backgroundOpacity: 70,
   backgroundPadding: 8,
   verticalOffset: 10,
   backgroundMaxWidth: 90,
-  fontId: "orbitron",
+  fontId: "montserrat",
   backgroundColorId: "dark",
-  lineHeight: 1.4,
+  lineHeight: 1.2,
   letterSpacing: 0,
   textAlign: "center",
   borderRadius: 8,
+  layoutMode: "single-line",
 };
 
 /** Get the CSS font-family string for a given fontId */
 export const getFontFamily = (fontId: SubtitleFontId): string =>
-  SUBTITLE_FONTS.find((f) => f.id === fontId)?.cssFamily ?? '"Orbitron", sans-serif';
+  SUBTITLE_FONTS.find((f) => f.id === fontId)?.cssFamily ?? '"Montserrat", sans-serif';
 
-/** Get a canvas-friendly font-family string (no CSS quotes needed for canvas) */
+/** Get a canvas-friendly font-family string */
 export const getCanvasFontFamily = (fontId: SubtitleFontId): string => {
   const font = SUBTITLE_FONTS.find((f) => f.id === fontId);
-  if (!font) return '"Orbitron", sans-serif';
+  if (!font) return '"Montserrat", sans-serif';
   return font.cssFamily;
 };
