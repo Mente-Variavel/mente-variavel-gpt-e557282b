@@ -28,7 +28,7 @@ const IMAGE_TRIGGERS = [
   "trocar fundo", "troque o fundo", "alterar iluminação", "altere a iluminação",
   "editar imagem", "edite a imagem", "modificar imagem", "modifique a imagem",
   "criar ilustração", "crie uma ilustração", "gerar arte", "gere uma arte",
-  "coloque", "colocar", "coloca", "aplique", "aplicar",
+  "coloque na imagem", "colocar na imagem", "coloca na imagem", "aplique na imagem", "aplicar na imagem",
   "na camiseta", "numa camiseta", "em uma camiseta", "na camisa",
   "usar esse logo", "use esse logo", "com esse logo", "usando esse logo",
   "usar essa imagem", "use essa imagem", "com essa imagem", "usando essa imagem",
