@@ -10,7 +10,7 @@ import { motion } from "framer-motion";
 import MicInput from "@/components/MicInput";
 import { toast } from "sonner";
 
-const genres = ["Sertanejo", "Gospel", "Pop", "Rock", "Trap", "Funk", "MPB"];
+const genres = ["Sertanejo", "Gospel", "Pop", "Rock", "Trap", "Funk", "MPB", "Rap", "R&B", "Soul"];
 const themeSuggestions = ["amor", "superação", "história", "vida", "traição", "motivação"];
 
 const SUNO_REFERRAL = "https://suno.com/invite/@vibrantsaturation527";
