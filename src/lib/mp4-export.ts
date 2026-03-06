@@ -348,6 +348,10 @@ export async function exportVideoWithSubtitles(
         const t = video.currentTime;
         onProgress?.({ percent: Math.round((t / duration) * 100), phase: "rendering" });
         ctx.drawImage(video, 0, 0, w, h);
+        // Always draw the anti-watermark bar (independent of subtitles)
+        if (config.fullWidthBackground) {
+          drawFullWidthBar(ctx, config, w, h);
+        }
         const activeSub = subtitles.find((s) => t >= s.start && t <= s.end);
         if (activeSub) drawSubtitle(ctx, activeSub, t, config, w, h);
         if (showWatermark) drawWatermark(ctx, w, h);
