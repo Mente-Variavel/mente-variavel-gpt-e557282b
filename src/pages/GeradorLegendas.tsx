@@ -140,7 +140,8 @@ const GeradorLegendas = () => {
       }
 
       const data = await response.json();
-      const segmented = segmentSubtitles(data.subtitles);
+      rawSubtitlesRef.current = data.subtitles;
+      const segmented = segmentSubtitles(data.subtitles, styleConfig.layoutMode);
       setSubtitles(segmented);
       setStep("editor");
       toast.success(`Transcrição concluída! ${segmented.length} legendas geradas.`);
