@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { Download, Sparkles, FileText, ArrowLeft, Loader2, Film } from "lucide-react";
 import { toast } from "sonner";
 import Navbar from "@/components/Navbar";
