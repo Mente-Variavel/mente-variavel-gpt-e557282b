@@ -192,7 +192,7 @@ const SubtitlePreview = ({ videoUrl, subtitles, onTimeUpdate, styleConfig }: Sub
             <span
               key={subKey}
               className={`inline-block rounded-lg text-center font-bold ${animationClass}`}
-              style={{
+              style={(() => {
                 const bgColorEntry = BACKGROUND_COLORS.find(c => c.id === styleConfig.backgroundColorId);
                 const bgRgba = bgColorEntry?.rgba ?? "0, 0, 0";
                 return {
@@ -206,7 +206,7 @@ const SubtitlePreview = ({ videoUrl, subtitles, onTimeUpdate, styleConfig }: Sub
                   backdropFilter: styleConfig.showBackground ? "blur(4px)" : "none",
                   borderBottom: styleConfig.showBackground && styleConfig.styleId === "mente-variavel" ? `2px solid ${neonGreen}` : "none",
                 };
-              }}
+              })()}
             >
               {renderSubtitleContent()}
             </span>
