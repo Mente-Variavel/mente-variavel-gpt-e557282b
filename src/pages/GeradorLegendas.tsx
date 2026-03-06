@@ -239,7 +239,7 @@ const GeradorLegendas = () => {
             <div className="grid gap-6 lg:grid-cols-[1fr_1.2fr]">
               <div className="order-1 flex flex-col gap-4">
                 <SubtitlePreview videoUrl={videoUrl} subtitles={subtitles} onTimeUpdate={setCurrentTime} styleConfig={styleConfig} />
-                <SubtitleCustomizer config={styleConfig} onChange={setStyleConfig} watermarkEnabled={watermarkEnabled} />
+                <SubtitleCustomizer config={styleConfig} onChange={setStyleConfig} watermarkEnabled={watermarkEnabled} onResegment={handleResegment} />
               </div>
 
               <div className="order-2 flex flex-col gap-4">
