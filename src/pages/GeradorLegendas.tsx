@@ -219,7 +219,7 @@ const GeradorLegendas = () => {
 
             <div className="grid gap-6 lg:grid-cols-[280px_1fr_1.2fr]">
               <div className="order-2 lg:order-1">
-                <SubtitleCustomizer config={styleConfig} onChange={setStyleConfig} />
+                <SubtitleCustomizer config={styleConfig} onChange={setStyleConfig} watermarkEnabled={watermarkEnabled} />
               </div>
 
               <div className="order-1 lg:order-2">
