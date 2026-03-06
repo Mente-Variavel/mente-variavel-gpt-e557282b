@@ -200,12 +200,15 @@ const SubtitlePreview = ({ videoUrl, subtitles, onTimeUpdate, styleConfig }: Sub
             {/* Full-width anti-watermark bar */}
             {styleConfig.fullWidthBackground && (
               <div
-                className="absolute left-0 right-0"
+                className="absolute"
                 style={{
                   ...barPositionStyle,
+                  left: `${(100 - (styleConfig.fullWidthBarWidth ?? 100)) / 2}%`,
+                  right: `${(100 - (styleConfig.fullWidthBarWidth ?? 100)) / 2}%`,
                   height: `${styleConfig.fullWidthBarHeight ?? 60}px`,
                   backgroundColor: `rgba(${bgRgba}, ${styleConfig.backgroundOpacity / 100})`,
                   backdropFilter: "blur(4px)",
+                  borderRadius: (styleConfig.fullWidthBarWidth ?? 100) < 100 ? `${styleConfig.borderRadius}px` : undefined,
                   transform: styleConfig.position === "center" ? "translateY(-50%)" : undefined,
                 }}
               />
