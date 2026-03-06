@@ -194,8 +194,23 @@ function drawSubtitle(
   const maxY = canvasHeight * (1 - SAFE_MARGIN) - totalH / 2;
   blockY = Math.max(minY, Math.min(maxY, blockY));
 
-  // Background
-  if (config.showBackground) {
+  // Full-width anti-watermark bar
+  if (config.fullWidthBackground) {
+    const bgRgba = BACKGROUND_COLORS_MAP[config.backgroundColorId ?? "dark"] ?? "0, 0, 0";
+    const opacity = config.backgroundOpacity / 100;
+    const barH = (config.fullWidthBarHeight ?? 60) * scale;
+    let barY: number;
+    switch (config.position) {
+      case "top": barY = blockY - barH / 2; break;
+      case "center": barY = blockY - barH / 2; break;
+      default: barY = blockY - barH / 2; break;
+    }
+    ctx.fillStyle = `rgba(${bgRgba}, ${opacity})`;
+    ctx.fillRect(0, barY, canvasWidth, barH);
+  }
+
+  // Background (inline, not full-width)
+  if (config.showBackground && !config.fullWidthBackground) {
     const bgRgba = BACKGROUND_COLORS_MAP[config.backgroundColorId ?? "dark"] ?? "0, 0, 0";
     const opacity = config.backgroundOpacity / 100;
     ctx.fillStyle = `rgba(${bgRgba}, ${opacity})`;

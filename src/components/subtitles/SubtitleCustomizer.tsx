@@ -218,6 +218,42 @@ const SubtitleCustomizer = ({ config, onChange, watermarkEnabled, onResegment }:
           </button>
         </div>
       </div>
+
+      {/* Full-width bar (anti-watermark) */}
+      <div>
+        <div className="flex items-center gap-2">
+          <span className="text-[9px] font-medium uppercase tracking-wide text-muted-foreground">Barra Anti-Marca</span>
+          <button
+            onClick={() => set("fullWidthBackground", !config.fullWidthBackground)}
+            className={`relative h-3.5 w-6 rounded-full border transition-all ${
+              config.fullWidthBackground ? "border-primary bg-primary/30" : "border-border bg-secondary/50"
+            }`}
+          >
+            <span
+              className={`absolute top-0.5 h-2 w-2 rounded-full transition-all ${
+                config.fullWidthBackground ? "left-[12px] bg-primary" : "left-0.5 bg-muted-foreground"
+              }`}
+            />
+          </button>
+        </div>
+        {config.fullWidthBackground && (
+          <div className="mt-1">
+            <div className="flex items-center justify-between">
+              <span className="text-[8px] text-muted-foreground">Espessura</span>
+              <span className="text-[8px] text-muted-foreground">{config.fullWidthBarHeight ?? 60}px</span>
+            </div>
+            <input
+              type="range"
+              min={30}
+              max={150}
+              step={2}
+              value={config.fullWidthBarHeight ?? 60}
+              onChange={(e) => set("fullWidthBarHeight", Number(e.target.value))}
+              className="mt-0.5 w-full accent-primary h-3"
+            />
+          </div>
+        )}
+      </div>
     </div>
   );
 };
