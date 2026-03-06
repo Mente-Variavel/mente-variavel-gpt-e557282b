@@ -116,6 +116,9 @@ const genreDetails: Record<string, string> = {
   "Trap": "808 bass, hi-hats, snare rolls, dark synths, autotune vocals, ad-libs, heavy sub-bass, atmospheric pads, modern trap production",
   "Funk": "funk carioca beat, bass-heavy 808, atabaque percussion, shaker, MC-style vocals, rhythmic flow, Brazilian funk groove",
   "MPB": "nylon guitar, piano, flute, light percussion, smooth bass, poetic vocals, bossa nova influence, sophisticated harmony, Brazilian rhythms",
+  "Rap": "boom bap drums, 808 bass, hi-hats, scratching, aggressive vocal delivery, complex rhyme schemes, sampled loops, raw lyrical flow, hip hop production",
+  "R&B": "smooth bass, Rhodes piano, lush pads, finger snaps, silky vocals, layered harmonies, sensual groove, modern R&B production, slow jam atmosphere",
+  "Soul": "organ, brass section, warm bass, gospel-influenced vocals, hand claps, tambourine, powerful emotional delivery, vintage soul warmth, Motown-inspired groove",
 };
 
 function buildSunoPrompt(genero: string, tema: string, titulo: string, estilo: string): string {
