@@ -25,6 +25,8 @@ export type SubtitleFontId =
   | "oswald"
   | "impact";
 
+export type BackgroundColorId = "dark" | "neon-blue" | "neon-green" | "white" | "yellow" | "pink" | "black" | "red";
+
 export interface SubtitleStyleConfig {
   styleId: SubtitleStyleId;
   highlightColor: HighlightColor;
@@ -36,6 +38,7 @@ export interface SubtitleStyleConfig {
   verticalOffset: number;
   backgroundMaxWidth: number;
   fontId: SubtitleFontId;
+  backgroundColorId: BackgroundColorId;
 }
 
 export interface SubtitleStyleInfo {
@@ -88,6 +91,17 @@ export const HIGHLIGHT_COLORS: { id: HighlightColor; name: string; color: string
   { id: "red", name: "Vermelho", color: "hsl(0 100% 50%)" },
 ];
 
+export const BACKGROUND_COLORS: { id: BackgroundColorId; name: string; color: string; rgba: string }[] = [
+  { id: "dark", name: "Escuro", color: "hsl(222 47% 5%)", rgba: "8, 12, 20" },
+  { id: "black", name: "Preto", color: "hsl(0 0% 0%)", rgba: "0, 0, 0" },
+  { id: "neon-blue", name: "Azul Neon", color: "hsl(185 100% 25%)", rgba: "0, 90, 128" },
+  { id: "neon-green", name: "Verde Neon", color: "hsl(155 100% 20%)", rgba: "0, 102, 60" },
+  { id: "pink", name: "Rosa Pink", color: "hsl(330 100% 25%)", rgba: "128, 0, 64" },
+  { id: "red", name: "Vermelho", color: "hsl(0 100% 25%)", rgba: "128, 0, 0" },
+  { id: "white", name: "Branco", color: "hsl(0 0% 100%)", rgba: "255, 255, 255" },
+  { id: "yellow", name: "Amarelo", color: "hsl(50 100% 30%)", rgba: "153, 128, 0" },
+];
+
 export const DEFAULT_STYLE_CONFIG: SubtitleStyleConfig = {
   styleId: "mente-variavel",
   highlightColor: "neon-green",
@@ -99,6 +113,7 @@ export const DEFAULT_STYLE_CONFIG: SubtitleStyleConfig = {
   verticalOffset: 10,
   backgroundMaxWidth: 90,
   fontId: "orbitron",
+  backgroundColorId: "dark",
 };
 
 /** Get the CSS font-family string for a given fontId */

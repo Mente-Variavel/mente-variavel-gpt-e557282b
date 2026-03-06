@@ -64,8 +64,14 @@ function drawSubtitle(
   const x = canvasWidth / 2;
 
   if (config.showBackground) {
+    const BACKGROUND_COLORS_MAP: Record<string, string> = {
+      "dark": "8, 12, 20", "black": "0, 0, 0", "neon-blue": "0, 90, 128",
+      "neon-green": "0, 102, 60", "pink": "128, 0, 64", "red": "128, 0, 0",
+      "white": "255, 255, 255", "yellow": "153, 128, 0",
+    };
+    const bgRgba = BACKGROUND_COLORS_MAP[config.backgroundColorId ?? "dark"] ?? "0, 0, 0";
     const opacity = config.backgroundOpacity / 100;
-    const bgColor = config.styleId === "mente-variavel" ? `rgba(8, 12, 20, ${opacity})` : `rgba(0, 0, 0, ${opacity})`;
+    const bgColor = `rgba(${bgRgba}, ${opacity})`;
     const radius = 8 * scale;
     const bx = x - bgWidth / 2;
     const by = y - bgHeight / 2;
