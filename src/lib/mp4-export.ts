@@ -194,19 +194,20 @@ function drawSubtitle(
   const maxY = canvasHeight * (1 - SAFE_MARGIN) - totalH / 2;
   blockY = Math.max(minY, Math.min(maxY, blockY));
 
-  // Full-width anti-watermark bar
+  // Full-width anti-watermark bar (uses independent offset)
   if (config.fullWidthBackground) {
     const bgRgba = BACKGROUND_COLORS_MAP[config.backgroundColorId ?? "dark"] ?? "0, 0, 0";
     const opacity = config.backgroundOpacity / 100;
     const barH = (config.fullWidthBarHeight ?? 60) * scale;
-    let barY: number;
+    const barOffsetPx = Math.max(config.fullWidthBarOffset ?? config.verticalOffset, 4) / 100 * canvasHeight;
+    let barCenterY: number;
     switch (config.position) {
-      case "top": barY = blockY - barH / 2; break;
-      case "center": barY = blockY - barH / 2; break;
-      default: barY = blockY - barH / 2; break;
+      case "top": barCenterY = barOffsetPx + barH / 2; break;
+      case "center": barCenterY = canvasHeight / 2; break;
+      default: barCenterY = canvasHeight - barOffsetPx - barH / 2; break;
     }
     ctx.fillStyle = `rgba(${bgRgba}, ${opacity})`;
-    ctx.fillRect(0, barY, canvasWidth, barH);
+    ctx.fillRect(0, barCenterY - barH / 2, canvasWidth, barH);
   }
 
   // Background (inline, not full-width)

@@ -85,6 +85,15 @@ const SubtitlePreview = ({ videoUrl, subtitles, onTimeUpdate, styleConfig }: Sub
     }
   }, [styleConfig.position, styleConfig.verticalOffset]);
 
+  const barPositionStyle = useMemo((): React.CSSProperties => {
+    const offset = `${Math.max(styleConfig.fullWidthBarOffset ?? styleConfig.verticalOffset, SAFE_MARGIN)}%`;
+    switch (styleConfig.position) {
+      case "top": return { top: offset, bottom: "auto" };
+      case "center": return { top: "50%", transform: "translateY(-50%)" };
+      default: return { bottom: offset, top: "auto" };
+    }
+  }, [styleConfig.position, styleConfig.fullWidthBarOffset, styleConfig.verticalOffset]);
+
   const animationClass = useMemo(() => {
     switch (styleConfig.styleId) {
       case "animated-fade":
@@ -193,7 +202,7 @@ const SubtitlePreview = ({ videoUrl, subtitles, onTimeUpdate, styleConfig }: Sub
               <div
                 className="absolute left-0 right-0"
                 style={{
-                  ...positionStyle,
+                  ...barPositionStyle,
                   height: `${styleConfig.fullWidthBarHeight ?? 60}px`,
                   backgroundColor: `rgba(${bgRgba}, ${styleConfig.backgroundOpacity / 100})`,
                   backdropFilter: "blur(4px)",
