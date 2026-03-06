@@ -1,216 +1,410 @@
 import { useState, useMemo, useEffect } from "react";
-import { motion } from "framer-motion";
-import { QrCode, Copy, CheckCircle, ChevronDown, ChevronUp, ShieldCheck, Loader2 } from "lucide-react";
 import { QRCodeSVG } from "qrcode.react";
+import { generatePixPayload, formatCurrency, generateTxId } from "@/lib/pixEmv";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
+import { Textarea } from "@/components/ui/textarea";
+import { Copy, Check, QrCode, ArrowLeft, Lock, Key, FileText, Share2 } from "lucide-react";
+import { toast } from "sonner";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
-import { toast } from "sonner";
-import { generatePixPayload } from "@/lib/pixEmv";
-import { supabase } from "@/integrations/supabase/client";
-import logoMv from "@/assets/logo-mv.png";
 import PixAccessGate from "@/components/PixAccessGate";
+import logoMv from "@/assets/logo-mv.png";
 
-interface PixConfig {
-  pixKey: string;
-  receiverName: string;
-  receiverCity: string;
-  amount: string;
-  description: string;
-  txid: string;
+function sanitizeBrCode(raw: string): string {
+  return raw.replace(/[\r\n\t\u00A0\u200B\u200C\u200D\uFEFF]+/g, "").trim();
 }
 
 export default function PixCheckout() {
-  const [copied, setCopied] = useState(false);
-  const [showDiag, setShowDiag] = useState(false);
-  const [loading, setLoading] = useState(true);
-  const [config, setConfig] = useState<PixConfig>({
-    pixKey: "", receiverName: "", receiverCity: "", amount: "", description: "", txid: "EBOOK",
-  });
+  const [step, setStep] = useState<"form" | "qr">("form");
+  const [amount, setAmount] = useState("");
+  const [description, setDescription] = useState("");
+  const [pixKey, setPixKey] = useState("");
+  const [merchantName, setMerchantName] = useState("");
+  const [merchantCity] = useState("SAO PAULO");
+  const [payload, setPayload] = useState("");
+  const [copiedPayload, setCopiedPayload] = useState(false);
+  const [copiedKey, setCopiedKey] = useState(false);
+  const [brCodeRaw, setBrCodeRaw] = useState("");
+  const [useBrCode, setUseBrCode] = useState(false);
 
-  useEffect(() => {
-    const fetchConfig = async () => {
-      const { data } = await supabase
-        .from("site_settings")
-        .select("key, value")
-        .in("key", ["pix_key", "pix_receiver_name", "pix_receiver_city", "pix_amount", "pix_description", "pix_txid"]);
+  // Locks
+  const [lockPixKey, setLockPixKey] = useState(false);
+  const [lockName, setLockName] = useState(false);
 
-      if (data) {
-        const map: Record<string, string> = {};
-        data.forEach((r) => { map[r.key] = r.value; });
-        setConfig({
-          pixKey: map["pix_key"] || "",
-          receiverName: map["pix_receiver_name"] || "",
-          receiverCity: map["pix_receiver_city"] || "",
-          amount: (map["pix_amount"] || "").replace(",", "."),
-          description: map["pix_description"] || "",
-          txid: map["pix_txid"] || "EBOOK",
-        });
-      }
-      setLoading(false);
-    };
-    fetchConfig();
-  }, []);
+  const sanitizedBrCode = useMemo(() => sanitizeBrCode(brCodeRaw), [brCodeRaw]);
+  const brCodeValid = sanitizedBrCode.length >= 20 && sanitizedBrCode.startsWith("000201") && sanitizedBrCode.includes("6304");
 
-  const isConfigured = !!(config.pixKey && config.receiverName && config.receiverCity);
+  const buildShareUrl = () => {
+    const baseUrl = `${window.location.origin}/pix-checkout`;
+    if (step !== "qr" || !payload) return baseUrl;
 
-  const pixPayload = useMemo(() => {
-    if (!isConfigured) return null;
-    try {
-      return generatePixPayload({
-        chave: config.pixKey,
-        nomeRecebedor: config.receiverName,
-        cidade: config.receiverCity,
-        valor: config.amount || undefined,
-        descricao: config.description || undefined,
-        txid: config.txid || undefined,
-      });
-    } catch {
-      return null;
+    const params = new URLSearchParams();
+    params.set("pix_payload", payload);
+    params.set("pix_mode", useBrCode ? "br" : "manual");
+
+    if (!useBrCode) {
+      if (pixKey) params.set("pix_key", pixKey);
+      if (merchantName) params.set("pix_name", merchantName);
+      if (amount) params.set("pix_amount", amount);
+      if (description) params.set("pix_desc", description);
     }
-  }, [isConfigured, config]);
 
-  const crcValue = useMemo(() => {
-    if (!pixPayload) return null;
-    return pixPayload.slice(-4);
-  }, [pixPayload]);
-
-  const handleCopy = () => {
-    if (!pixPayload) return;
-    navigator.clipboard.writeText(pixPayload);
-    setCopied(true);
-    toast.success("Pix copiado com sucesso!");
-    setTimeout(() => setCopied(false), 2500);
+    return `${baseUrl}?${params.toString()}`;
   };
 
-  if (loading) {
-    return (
-      <div className="min-h-screen flex flex-col bg-background">
-        <Navbar />
-        <main className="flex-1 pt-24 pb-16 flex items-center justify-center">
-          <Loader2 className="w-8 h-8 animate-spin text-primary" />
-        </main>
-        <Footer />
-      </div>
-    );
-  }
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const sharedPayload = params.get("pix_payload");
+    if (!sharedPayload) return;
+
+    const payloadLooksValid = sharedPayload.startsWith("000201") && sharedPayload.includes("6304");
+    if (!payloadLooksValid) return;
+
+    const sharedMode = params.get("pix_mode");
+    const isBrMode = sharedMode === "br";
+
+    setUseBrCode(isBrMode);
+    setPayload(sharedPayload);
+    setStep("qr");
+
+    if (isBrMode) {
+      setBrCodeRaw(sharedPayload);
+      return;
+    }
+
+    setPixKey(params.get("pix_key") ?? "");
+    setMerchantName(params.get("pix_name") ?? "");
+    setAmount(params.get("pix_amount") ?? "");
+    setDescription(params.get("pix_desc") ?? "");
+  }, []);
+
+  const handleSharePage = async () => {
+    const shareUrl = buildShareUrl();
+    try {
+      if (navigator.share) {
+        await navigator.share({ title: "Pix Checkout", url: shareUrl });
+      } else {
+        await navigator.clipboard.writeText(shareUrl);
+        toast.success("Link copiado!");
+      }
+    } catch { /* user cancelled */ }
+  };
+
+  const handleShareKey = async () => {
+    if (!pixKey) return;
+    try {
+      if (navigator.share) {
+        await navigator.share({ title: "Chave Pix", text: `Chave Pix: ${pixKey}` });
+      } else {
+        await navigator.clipboard.writeText(pixKey);
+        toast.success("Chave copiada!");
+      }
+    } catch { /* user cancelled */ }
+  };
+
+  const handleGenerate = () => {
+    if (useBrCode) {
+      if (!brCodeRaw.trim()) {
+        toast.error("Cole o código Pix Copia e Cola");
+        return;
+      }
+      if (!brCodeValid) {
+        toast.error("Código Pix inválido. Cole o Pix Copia e Cola completo (BR Code).");
+        return;
+      }
+      setPayload(sanitizedBrCode);
+    } else {
+      if (!pixKey) {
+        toast.error("Informe a chave Pix");
+        return;
+      }
+
+      const numAmount = parseFloat(amount.replace(",", "."));
+      if (amount && (isNaN(numAmount) || numAmount <= 0)) {
+        toast.error("Valor inválido");
+        return;
+      }
+
+      const txid = generateTxId();
+      const pixPayload = generatePixPayload({
+        chave: pixKey,
+        nomeRecebedor: merchantName || "RECEBEDOR",
+        cidade: merchantCity,
+        valor: numAmount ? numAmount.toFixed(2) : undefined,
+        txid,
+        descricao: description || undefined,
+      });
+
+      setPayload(pixPayload);
+    }
+
+    setStep("qr");
+  };
+
+  const handleCopyPayload = async () => {
+    try {
+      await navigator.clipboard.writeText(payload);
+      setCopiedPayload(true);
+      toast.success("Pix copiado com sucesso!");
+      setTimeout(() => setCopiedPayload(false), 2000);
+    } catch {
+      toast.error("Erro ao copiar. Tente manualmente.");
+    }
+  };
+
+  const handleCopyKey = async () => {
+    try {
+      await navigator.clipboard.writeText(pixKey);
+      setCopiedKey(true);
+      toast.success("Chave Pix copiada!");
+      setTimeout(() => setCopiedKey(false), 2000);
+    } catch {
+      toast.error("Erro ao copiar. Tente manualmente.");
+    }
+  };
+
+  const handleReset = () => {
+    setStep("form");
+    setPayload("");
+    if (!useBrCode) {
+      setAmount("");
+      setDescription("");
+    }
+    setCopiedPayload(false);
+    setCopiedKey(false);
+  };
 
   return (
     <div className="min-h-screen flex flex-col bg-background">
       <Navbar />
-      <main className="flex-1 pt-24 pb-16">
-        <div className="container mx-auto px-4 max-w-lg">
-          <PixAccessGate>
-          {/* Header */}
-          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="text-center mb-8">
-            <div className="flex items-center justify-center gap-3 mb-3">
-              <img src={logoMv} alt="Mente Variável" className="w-10 h-10 rounded-full" />
-              <h1 className="text-2xl md:text-3xl font-bold font-[Orbitron]">
-                Pagamento via <span className="text-primary">Pix</span>
+      <main className="flex-1 pt-24 pb-16 flex items-center justify-center px-4">
+        <PixAccessGate>
+          <div className="w-full max-w-md">
+            {/* Header */}
+            <div className="flex flex-col items-center mb-8">
+              <img src={logoMv} alt="Mente Variável" className="w-16 h-16 rounded-full mb-4" />
+              <h1 className="text-2xl font-bold font-[Orbitron]">
+                Pix <span className="text-primary">Checkout</span>
               </h1>
+              <p className="text-muted-foreground text-sm mt-1">Pagamento instantâneo via QR Code</p>
             </div>
-            {config.amount && parseFloat(config.amount) > 0 && (
-              <p className="text-3xl font-bold text-primary mt-2">
-                R$ {parseFloat(config.amount).toFixed(2)}
-              </p>
-            )}
-            {config.description && (
-              <p className="text-muted-foreground text-sm mt-1">{config.description}</p>
-            )}
-          </motion.div>
 
-          {!isConfigured ? (
-            <Card className="border-destructive/50">
-              <CardContent className="pt-6 text-center">
-                <p className="text-destructive font-semibold">⚠️ Pix não configurado</p>
-                <p className="text-muted-foreground text-sm mt-2">
-                  O administrador precisa configurar os dados do Pix no painel administrativo.
-                </p>
-                <ul className="text-xs text-muted-foreground mt-3 space-y-1">
-                  {!config.pixKey && <li>❌ Chave Pix não definida</li>}
-                  {!config.receiverName && <li>❌ Nome do recebedor não definido</li>}
-                  {!config.receiverCity && <li>❌ Cidade do recebedor não definida</li>}
-                </ul>
-              </CardContent>
-            </Card>
-          ) : pixPayload ? (
-            <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}>
-              <Card className="border-primary/30">
-                <CardContent className="pt-6">
-                  {/* QR Code */}
-                  <div className="flex flex-col items-center mb-6">
-                    <div className="p-4 bg-white rounded-xl border border-border mb-3">
-                      <QRCodeSVG value={pixPayload} size={260} level="M" includeMargin={false} />
+            {/* Card */}
+            <div className="bg-card rounded-xl p-6 border border-border shadow-lg">
+              {step === "form" ? (
+                <div className="space-y-5">
+                  {/* Toggle: Gerar ou Colar */}
+                  <div className="flex items-center justify-between p-3 rounded-lg bg-secondary border border-border">
+                    <Label className="text-sm font-medium text-foreground flex items-center gap-1.5">
+                      <FileText className="h-3.5 w-3.5 text-primary" />
+                      Usar Copia e Cola pronto
+                    </Label>
+                    <Switch checked={useBrCode} onCheckedChange={setUseBrCode} />
+                  </div>
+
+                  {useBrCode ? (
+                    <div className="space-y-2">
+                      <Label htmlFor="brCode" className="text-sm font-medium text-foreground">
+                        Pix Copia e Cola (BR Code)
+                      </Label>
+                      <Textarea
+                        id="brCode"
+                        placeholder="Cole aqui o código Pix Copia e Cola completo..."
+                        value={brCodeRaw}
+                        onChange={(e) => setBrCodeRaw(e.target.value)}
+                        className="bg-secondary border-border focus:ring-primary font-mono text-xs min-h-[100px]"
+                      />
+                      {brCodeRaw && !brCodeValid && (
+                        <p className="text-destructive text-xs">
+                          Código inválido. Cole o Pix Copia e Cola completo (deve começar com 000201).
+                        </p>
+                      )}
                     </div>
-                    <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                      <QrCode className="w-3.5 h-3.5" />
-                      Escaneie o QR Code com o app do seu banco
+                  ) : (
+                    <>
+                      {/* Chave Pix */}
+                      <div className="space-y-2">
+                        <div className="flex items-center justify-between">
+                          <Label htmlFor="pixKey" className="text-sm font-medium text-foreground">
+                            Chave Pix
+                          </Label>
+                          <div className="flex items-center gap-2">
+                            <Lock className={`h-3 w-3 ${lockPixKey ? "text-primary" : "text-muted-foreground"}`} />
+                            <span className="text-xs text-muted-foreground">Fixar</span>
+                            <Switch checked={lockPixKey} onCheckedChange={setLockPixKey} className="scale-75" />
+                          </div>
+                        </div>
+                        <Input
+                          id="pixKey"
+                          placeholder="CPF, e-mail, telefone ou chave aleatória"
+                          value={pixKey}
+                          onChange={(e) => setPixKey(e.target.value)}
+                          disabled={lockPixKey && !!pixKey}
+                          className="bg-secondary border-border focus:ring-primary"
+                        />
+                      </div>
+
+                      {/* Nome do Recebedor */}
+                      <div className="space-y-2">
+                        <div className="flex items-center justify-between">
+                          <Label htmlFor="merchantName" className="text-sm font-medium text-foreground">
+                            Nome do Recebedor
+                          </Label>
+                          <div className="flex items-center gap-2">
+                            <Lock className={`h-3 w-3 ${lockName ? "text-primary" : "text-muted-foreground"}`} />
+                            <span className="text-xs text-muted-foreground">Fixar</span>
+                            <Switch checked={lockName} onCheckedChange={setLockName} className="scale-75" />
+                          </div>
+                        </div>
+                        <Input
+                          id="merchantName"
+                          placeholder="Nome que aparecerá no Pix"
+                          value={merchantName}
+                          onChange={(e) => setMerchantName(e.target.value)}
+                          disabled={lockName && !!merchantName}
+                          className="bg-secondary border-border focus:ring-primary"
+                        />
+                      </div>
+
+                      {/* Valor */}
+                      <div className="space-y-2">
+                        <Label htmlFor="amount" className="text-sm font-medium text-foreground">
+                          Valor (R$)
+                        </Label>
+                        <Input
+                          id="amount"
+                          placeholder="0,00 (opcional)"
+                          value={amount}
+                          onChange={(e) => setAmount(e.target.value)}
+                          className="bg-secondary border-border focus:ring-primary font-mono"
+                        />
+                      </div>
+
+                      {/* Descrição */}
+                      <div className="space-y-2">
+                        <Label htmlFor="description" className="text-sm font-medium text-foreground">
+                          Descrição
+                        </Label>
+                        <Input
+                          id="description"
+                          placeholder="Ex: Pagamento serviço (opcional)"
+                          value={description}
+                          onChange={(e) => setDescription(e.target.value)}
+                          className="bg-secondary border-border focus:ring-primary"
+                          maxLength={50}
+                        />
+                      </div>
+                    </>
+                  )}
+
+                  <Button onClick={handleGenerate} className="w-full font-semibold h-12 text-base gap-2" size="lg">
+                    <QrCode className="h-5 w-5" />
+                    Gerar QR Code Pix
+                  </Button>
+                </div>
+              ) : (
+                <div className="space-y-5">
+                  <button
+                    onClick={handleReset}
+                    className="flex items-center text-muted-foreground hover:text-foreground text-sm transition-colors"
+                  >
+                    <ArrowLeft className="mr-1 h-4 w-4" />
+                    Voltar
+                  </button>
+
+                  {!useBrCode && amount && (
+                    <div className="text-center">
+                      <p className="text-muted-foreground text-sm">Valor a pagar</p>
+                      <p className="text-3xl font-bold text-primary font-mono">
+                        {formatCurrency(parseFloat(amount.replace(",", ".")))}
+                      </p>
+                    </div>
+                  )}
+
+                  {!useBrCode && description && (
+                    <p className="text-center text-sm text-muted-foreground">{description}</p>
+                  )}
+
+                  {/* QR Code */}
+                  <div className="flex justify-center">
+                    <div className="bg-white p-4 rounded-xl">
+                      <QRCodeSVG value={payload} size={220} level="M" includeMargin={false} />
                     </div>
                   </div>
+
+                  {/* Chave Pix Tradicional */}
+                  {!useBrCode && pixKey && (
+                    <div className="space-y-2">
+                      <Label className="text-sm text-muted-foreground flex items-center gap-1.5">
+                        <Key className="h-3.5 w-3.5" />
+                        Chave Pix
+                      </Label>
+                      <div className="relative">
+                        <input
+                          readOnly
+                          value={pixKey}
+                          className="w-full bg-secondary text-foreground text-sm font-mono p-3 pr-12 rounded-lg border border-border"
+                        />
+                        <Button
+                          size="icon"
+                          variant="ghost"
+                          onClick={handleCopyKey}
+                          className="absolute right-1 top-1/2 -translate-y-1/2 h-8 w-8 text-primary hover:text-primary"
+                        >
+                          {copiedKey ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+                        </Button>
+                      </div>
+                    </div>
+                  )}
 
                   {/* Pix Copia e Cola */}
-                  <div className="bg-secondary/50 rounded-lg p-3 mb-4">
-                    <p className="text-xs text-muted-foreground mb-1.5 text-center font-medium">Pix Copia e Cola</p>
-                    <textarea
-                      readOnly
-                      value={pixPayload}
-                      rows={3}
-                      className="w-full bg-transparent font-mono text-xs break-all text-center resize-none focus:outline-none text-foreground leading-relaxed"
-                    />
+                  <div className="space-y-2">
+                    <Label className="text-sm text-muted-foreground flex items-center gap-1.5">
+                      <QrCode className="h-3.5 w-3.5" />
+                      Pix Copia e Cola
+                    </Label>
+                    <div className="relative">
+                      <input
+                        readOnly
+                        value={payload}
+                        className="w-full bg-secondary text-foreground text-xs font-mono p-3 pr-12 rounded-lg border border-border truncate"
+                      />
+                      <Button
+                        size="icon"
+                        variant="ghost"
+                        onClick={handleCopyPayload}
+                        className="absolute right-1 top-1/2 -translate-y-1/2 h-8 w-8 text-primary hover:text-primary"
+                      >
+                        {copiedPayload ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+                      </Button>
+                    </div>
                   </div>
 
-                  {/* Copy button */}
-                  <Button onClick={handleCopy} className="w-full gap-2 mb-6" size="lg">
-                    {copied ? <CheckCircle className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
-                    {copied ? "Copiado!" : "Copiar Pix Copia e Cola"}
-                  </Button>
-
-                  {/* Instructions */}
-                  <div className="border-t border-border pt-5">
-                    <p className="text-sm font-semibold mb-3 flex items-center gap-2">
-                      <ShieldCheck className="w-4 h-4 text-primary" />
-                      Como pagar
-                    </p>
-                    <ol className="space-y-2 text-sm text-muted-foreground list-decimal list-inside">
-                      <li>Abra o app do seu banco e escolha <strong className="text-foreground">Pagar com Pix</strong>.</li>
-                      <li>Aponte a câmera para o QR Code ou copie o código Pix.</li>
-                      <li>Confirme o pagamento e aguarde a validação.</li>
-                    </ol>
-                  </div>
-
-                  {/* Diagnóstico */}
-                  <div className="mt-5 border-t border-border pt-4">
-                    <button
-                      onClick={() => setShowDiag(!showDiag)}
-                      className="flex items-center gap-2 text-xs text-muted-foreground hover:text-foreground transition-colors w-full"
-                    >
-                      {showDiag ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
-                      Diagnóstico
-                    </button>
-                    {showDiag && (
-                      <div className="mt-3 space-y-2 text-xs">
-                        <div>
-                          <p className="text-muted-foreground mb-1">Payload completo:</p>
-                          <pre className="bg-secondary/50 rounded p-2 font-mono break-all whitespace-pre-wrap text-foreground">{pixPayload}</pre>
-                        </div>
-                        <div>
-                          <p className="text-muted-foreground mb-1">CRC16:</p>
-                          <code className="bg-secondary/50 rounded px-2 py-1 font-mono text-foreground">{crcValue}</code>
-                        </div>
-                        <div>
-                          <p className="text-muted-foreground mb-1">Tamanho:</p>
-                          <code className="bg-secondary/50 rounded px-2 py-1 font-mono text-foreground">{pixPayload.length} chars</code>
-                        </div>
-                      </div>
+                  {/* Share buttons */}
+                  <div className="flex gap-2">
+                    <Button variant="outline" className="flex-1 text-sm" onClick={handleSharePage}>
+                      <Share2 className="mr-1.5 h-4 w-4" />
+                      Compartilhar página
+                    </Button>
+                    {!useBrCode && pixKey && (
+                      <Button variant="outline" className="flex-1 text-sm" onClick={handleShareKey}>
+                        <Key className="mr-1.5 h-4 w-4" />
+                        Compartilhar chave
+                      </Button>
                     )}
                   </div>
-                </CardContent>
-              </Card>
-            </motion.div>
-          ) : null}
-          </PixAccessGate>
-        </div>
+
+                  <p className="text-center text-xs text-muted-foreground">
+                    Escaneie o QR Code{!useBrCode && pixKey ? ", copie a chave" : ""} ou use o Copia e Cola para pagar
+                  </p>
+                </div>
+              )}
+            </div>
+          </div>
+        </PixAccessGate>
       </main>
       <Footer />
     </div>

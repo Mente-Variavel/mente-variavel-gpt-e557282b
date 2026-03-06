@@ -1,3 +1,4 @@
+import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { QrCode, Zap, Shield, Copy, CreditCard, CheckCircle, Play, ShoppingBag } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -5,6 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import { Link } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
 
 const vantagens = [
   { icon: Zap, text: "Geração rápida de QR Code Pix" },
@@ -20,6 +22,20 @@ const fadeUp = {
 };
 
 export default function PixCheckoutProduct() {
+  const [videoUrl, setVideoUrl] = useState("");
+
+  useEffect(() => {
+    const fetch = async () => {
+      const { data } = await supabase
+        .from("site_settings")
+        .select("value")
+        .eq("key", "pix_product_video_url")
+        .maybeSingle();
+      if (data?.value) setVideoUrl(data.value);
+    };
+    fetch();
+  }, []);
+
   return (
     <div className="min-h-screen flex flex-col bg-background">
       <Navbar />
@@ -163,7 +179,7 @@ export default function PixCheckoutProduct() {
             </div>
           </motion.div>
 
-          {/* Video placeholder */}
+          {/* Video */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -173,12 +189,21 @@ export default function PixCheckoutProduct() {
             <h2 className="text-2xl font-bold text-center mb-6">Veja como funciona</h2>
             <Card className="border-border/50 overflow-hidden">
               <CardContent className="p-0">
-                <div className="aspect-video bg-secondary/30 flex flex-col items-center justify-center gap-3">
-                  <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center">
-                    <Play className="w-8 h-8 text-primary ml-1" />
+                {videoUrl ? (
+                  <video
+                    src={videoUrl}
+                    controls
+                    className="w-full aspect-video"
+                    preload="metadata"
+                  />
+                ) : (
+                  <div className="aspect-video bg-secondary/30 flex flex-col items-center justify-center gap-3">
+                    <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center">
+                      <Play className="w-8 h-8 text-primary ml-1" />
+                    </div>
+                    <p className="text-sm text-muted-foreground">Vídeo em breve</p>
                   </div>
-                  <p className="text-sm text-muted-foreground">Vídeo em breve</p>
-                </div>
+                )}
               </CardContent>
             </Card>
           </motion.div>
