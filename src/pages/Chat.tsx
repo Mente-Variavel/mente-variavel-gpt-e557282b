@@ -1,4 +1,5 @@
 import { useRef, useEffect, useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
 import { useLocation } from "react-router-dom";
 import { Plus, Trash2, Info, Gift, X } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
@@ -137,11 +138,15 @@ const Chat = () => {
       const controller = new AbortController();
       const timeout = setTimeout(() => controller.abort(), 60000);
 
+      // Get current session token for admin bypass
+      const { data: { session } } = await supabase.auth.getSession();
+      const authToken = session?.access_token || import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
+
       const resp = await fetch(IMAGE_URL, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+          Authorization: `Bearer ${authToken}`,
         },
         body: JSON.stringify({ prompt, referenceImages }),
         signal: controller.signal,
