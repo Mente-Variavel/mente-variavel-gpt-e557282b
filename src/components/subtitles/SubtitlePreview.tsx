@@ -20,10 +20,12 @@ const SAFE_MARGIN = 4; // percent
 const SubtitlePreview = ({ videoUrl, subtitles, onTimeUpdate, styleConfig }: SubtitlePreviewProps) => {
   const videoRef = useRef<HTMLVideoElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
+  const subtitleRef = useRef<HTMLSpanElement>(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentTime, setCurrentTimeLocal] = useState(0);
   const [activeSub, setActiveSub] = useState<SubtitleLine | null>(null);
   const [subKey, setSubKey] = useState(0);
+  const [textScale, setTextScale] = useState(1);
 
   useEffect(() => { loadSubtitleFonts(); }, []);
 
@@ -50,6 +52,24 @@ const SubtitlePreview = ({ videoUrl, subtitles, onTimeUpdate, styleConfig }: Sub
     if (video.paused) { video.play(); setIsPlaying(true); }
     else { video.pause(); setIsPlaying(false); }
   };
+
+  // Auto-scale subtitle text to fit within container
+  useEffect(() => {
+    const span = subtitleRef.current;
+    const container = containerRef.current;
+    if (!span || !container || !activeSub) { setTextScale(1); return; }
+    requestAnimationFrame(() => {
+      const containerWidth = container.clientWidth;
+      const safeWidth = containerWidth * (1 - 2 * SAFE_MARGIN / 100);
+      const spanWidth = span.scrollWidth;
+      if (spanWidth > safeWidth) {
+        setTextScale(Math.max(0.5, safeWidth / spanWidth));
+      } else {
+        setTextScale(1);
+      }
+    });
+  }, [activeSub, subKey, styleConfig.fontSize, styleConfig.fontId, styleConfig.letterSpacing]);
+
 
   const fontFamily = getFontFamily(styleConfig.fontId);
   const highlightColor = getHighlightCSS(styleConfig.highlightColor);
@@ -159,7 +179,8 @@ const SubtitlePreview = ({ videoUrl, subtitles, onTimeUpdate, styleConfig }: Sub
               right: `${SAFE_MARGIN}%`,
             }}
           >
-            <span
+             <span
+              ref={subtitleRef}
               key={subKey}
               className={`inline-flex items-center justify-center text-center ${animationClass}`}
               style={{
@@ -169,8 +190,9 @@ const SubtitlePreview = ({ videoUrl, subtitles, onTimeUpdate, styleConfig }: Sub
                 letterSpacing: `${styleConfig.letterSpacing}px`,
                 textTransform: "uppercase",
                 whiteSpace: "nowrap",
-                maxWidth: `${styleConfig.backgroundMaxWidth}%`,
-                overflow: "hidden",
+                overflow: "visible",
+                transform: `scale(${textScale})`,
+                transformOrigin: "center center",
                 padding: styleConfig.showBackground
                   ? `${styleConfig.backgroundPadding}px ${styleConfig.backgroundPadding * 2}px`
                   : `${styleConfig.backgroundPadding * 0.5}px ${styleConfig.backgroundPadding}px`,
