@@ -94,20 +94,32 @@ function sanitizeArtistReferences(text: string): string {
   return result;
 }
 
+const genreDetails: Record<string, string> = {
+  "Sertanejo": "acoustic guitar, viola caipira, accordion, bass, drums, emotional male/female vocals, country-style harmonies, rhythmic groove, sertanejo universitário vibe",
+  "Gospel": "piano, organ, choir harmonies, bass guitar, drums, uplifting strings, powerful vocals, worship atmosphere, spiritual intensity",
+  "Pop": "synth pads, electric guitar, bass, programmed drums, catchy hooks, layered vocals, polished production, modern pop arrangement",
+  "Rock": "distorted electric guitars, bass guitar, powerful drums, crash cymbals, raw vocals, guitar solo, driving rhythm, high energy",
+  "Trap": "808 bass, hi-hats, snare rolls, dark synths, autotune vocals, ad-libs, heavy sub-bass, atmospheric pads, modern trap production",
+  "Funk": "funk carioca beat, bass-heavy 808, atabaque percussion, shaker, MC-style vocals, rhythmic flow, Brazilian funk groove",
+  "MPB": "nylon guitar, piano, flute, light percussion, smooth bass, poetic vocals, bossa nova influence, sophisticated harmony, Brazilian rhythms",
+};
+
 function buildSunoPrompt(genero: string, tema: string, titulo: string, estilo: string): string {
   const sanitizedEstilo = estilo ? sanitizeArtistReferences(estilo) : "";
+  const instruments = genreDetails[genero] || "full band arrangement";
   
-  let prompt = `${genero}, ${tema}, emotional, Portuguese lyrics. Title: "${titulo}".`;
-  if (sanitizedEstilo) prompt += ` Style: ${sanitizedEstilo}.`;
-  prompt += ` Full band arrangement with verse-chorus-bridge structure.`;
+  let prompt = `${genero}, ${tema}, emotional depth, Portuguese lyrics. Title: "${titulo}". `;
+  prompt += `Instruments and production: ${instruments}. `;
+  prompt += `Song structure: intro, verse 1, pre-chorus build, powerful chorus, verse 2 with variation, chorus with harmonies, emotional bridge, final chorus with full arrangement, outro. `;
+  if (sanitizedEstilo) prompt += `Vocal style and mood: ${sanitizedEstilo}. `;
+  prompt += `Dynamic progression from intimate verses to anthemic chorus. Rich layering, professional mixing, radio-ready quality.`;
 
-  // Compress if over 1000 chars
   if (prompt.length > 1000) {
-    prompt = `${genero}, ${tema}, Portuguese. "${titulo}".`;
+    prompt = `${genero}, ${tema}, Portuguese. "${titulo}". ${instruments}. `;
     if (sanitizedEstilo && prompt.length + sanitizedEstilo.length + 10 < 1000) {
-      prompt += ` ${sanitizedEstilo}.`;
+      prompt += `${sanitizedEstilo}. `;
     }
-    prompt += ` Full arrangement.`;
+    prompt += `Verse-chorus-bridge, dynamic, professional production.`;
   }
 
   return prompt.slice(0, 1000);
