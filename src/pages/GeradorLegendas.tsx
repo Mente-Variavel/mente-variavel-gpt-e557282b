@@ -53,6 +53,8 @@ const GeradorLegendas = () => {
 
   const { usage, refetchUsage } = useSubtitleUsage();
 
+  useEffect(() => { loadSubtitleFonts(); }, []);
+
   const handleExportMP4 = useCallback(async () => {
     if (!videoUrl || subtitles.length === 0) return;
     setIsExporting(true);
