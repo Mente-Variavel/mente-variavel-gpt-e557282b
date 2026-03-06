@@ -68,7 +68,13 @@ export default function ConversorMoedas() {
     }
   }, [toast]);
 
-  useEffect(() => { fetchRates(); }, []);
+  useEffect(() => {
+    fetchRates();
+    const interval = setInterval(() => {
+      fetchRates();
+    }, 60_000); // atualiza a cada 1 minuto
+    return () => clearInterval(interval);
+  }, [fetchRates]);
 
   const swap = () => {
     setFrom(to);
