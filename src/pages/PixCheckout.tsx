@@ -1,4 +1,5 @@
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo, useEffect, useRef } from "react";
+import { useNavigate } from "react-router-dom";
 import { QRCodeSVG } from "qrcode.react";
 import { generatePixPayload, formatCurrency, generateTxId } from "@/lib/pixEmv";
 import { Button } from "@/components/ui/button";
@@ -18,6 +19,8 @@ function sanitizeBrCode(raw: string): string {
 }
 
 export default function PixCheckout() {
+  const navigate = useNavigate();
+  const isFromPlan = useRef(false);
   const [step, setStep] = useState<"form" | "qr">("form");
   const [amount, setAmount] = useState("");
   const [description, setDescription] = useState("");
@@ -66,6 +69,12 @@ export default function PixCheckout() {
     const sharedMode = params.get("pix_mode");
     const isBrMode = sharedMode === "br";
 
+    // Detect if coming from a subscription plan
+    const desc = params.get("pix_desc") ?? "";
+    if (desc.includes("Plano")) {
+      isFromPlan.current = true;
+    }
+
     setUseBrCode(isBrMode);
     setPayload(sharedPayload);
     setStep("qr");
@@ -78,7 +87,7 @@ export default function PixCheckout() {
     setPixKey(params.get("pix_key") ?? "");
     setMerchantName(params.get("pix_name") ?? "");
     setAmount(params.get("pix_amount") ?? "");
-    setDescription(params.get("pix_desc") ?? "");
+    setDescription(desc);
   }, []);
 
   const handleSharePage = async () => {
@@ -308,11 +317,17 @@ export default function PixCheckout() {
               ) : (
                 <div className="space-y-5">
                   <button
-                    onClick={handleReset}
+                    onClick={() => {
+                      if (isFromPlan.current) {
+                        navigate("/produtos/pix-checkout");
+                      } else {
+                        handleReset();
+                      }
+                    }}
                     className="flex items-center text-muted-foreground hover:text-foreground text-sm transition-colors"
                   >
                     <ArrowLeft className="mr-1 h-4 w-4" />
-                    Voltar
+                    {isFromPlan.current ? "Voltar para planos" : "Voltar"}
                   </button>
 
                   {!useBrCode && amount && (
@@ -397,11 +412,13 @@ export default function PixCheckout() {
                     )}
                   </div>
 
-                  {/* Novo Pix */}
-                  <Button variant="secondary" className="w-full text-sm gap-2" onClick={handleReset}>
-                    <RefreshCw className="h-4 w-4" />
-                    Novo Pix
-                  </Button>
+                  {/* Novo Pix - only show when NOT from a plan */}
+                  {!isFromPlan.current && (
+                    <Button variant="secondary" className="w-full text-sm gap-2" onClick={handleReset}>
+                      <RefreshCw className="h-4 w-4" />
+                      Novo Pix
+                    </Button>
+                  )}
 
                   <p className="text-center text-xs text-muted-foreground">
                     Escaneie o QR Code{!useBrCode && pixKey ? ", copie a chave" : ""} ou use o Copia e Cola para pagar
