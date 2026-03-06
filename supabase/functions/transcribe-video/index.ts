@@ -27,6 +27,30 @@ serve(async (req) => {
     const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, serviceRoleKey);
 
+    // Check if user is admin
+    const authHeader = req.headers.get("authorization") ?? "";
+    let isAdmin = false;
+    if (authHeader.startsWith("Bearer ")) {
+      const token = authHeader.replace("Bearer ", "");
+      const anonKey = Deno.env.get("SUPABASE_ANON_KEY") ?? "";
+      if (token !== anonKey) {
+        const userClient = createClient(supabaseUrl, anonKey, {
+          global: { headers: { Authorization: `Bearer ${token}` } },
+        });
+        const { data: { user } } = await userClient.auth.getUser();
+        if (user) {
+          const { data: roles } = await supabase
+            .from("user_roles")
+            .select("role")
+            .eq("user_id", user.id)
+            .eq("role", "admin");
+          if (roles && roles.length > 0) {
+            isAdmin = true;
+          }
+        }
+      }
+    }
+
     const ip =
       req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
       req.headers.get("cf-connecting-ip") ||
@@ -35,22 +59,25 @@ serve(async (req) => {
     const now = new Date();
     const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
 
-    const { count, error: countError } = await supabase
-      .from("subtitle_usage")
-      .select("*", { count: "exact", head: true })
-      .eq("ip_address", ip)
-      .gte("created_at", startOfMonth);
+    // Only check limit for non-admin users
+    if (!isAdmin) {
+      const { count, error: countError } = await supabase
+        .from("subtitle_usage")
+        .select("*", { count: "exact", head: true })
+        .eq("ip_address", ip)
+        .gte("created_at", startOfMonth);
 
-    if (countError) throw countError;
+      if (countError) throw countError;
 
-    if ((count ?? 0) >= FREE_LIMIT) {
-      return new Response(
-        JSON.stringify({
-          error: "Você atingiu o limite gratuito. Assine o plano para continuar gerando legendas.",
-          limit_reached: true,
-        }),
-        { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+      if ((count ?? 0) >= FREE_LIMIT) {
+        return new Response(
+          JSON.stringify({
+            error: "Você atingiu o limite gratuito. Assine o plano para continuar gerando legendas.",
+            limit_reached: true,
+          }),
+          { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
     }
 
     const formData = await req.formData();
@@ -87,7 +114,10 @@ serve(async (req) => {
 
     const result = await response.json();
 
-    await supabase.from("subtitle_usage").insert({ ip_address: ip });
+    // Only track usage for non-admin users
+    if (!isAdmin) {
+      await supabase.from("subtitle_usage").insert({ ip_address: ip });
+    }
 
     const subtitles = (result.segments || []).map((seg: any) => ({
       id: crypto.randomUUID(),
@@ -102,12 +132,16 @@ serve(async (req) => {
       .eq("ip_address", ip)
       .gte("created_at", startOfMonth);
 
+    const usageInfo = isAdmin
+      ? { used: 0, limit: 999999, remaining: 999999 }
+      : { used: newCount ?? 1, limit: FREE_LIMIT, remaining: Math.max(0, FREE_LIMIT - (newCount ?? 1)) };
+
     return new Response(
       JSON.stringify({
         subtitles,
         language: result.language,
         duration: result.duration,
-        usage: { used: newCount ?? 1, limit: FREE_LIMIT, remaining: Math.max(0, FREE_LIMIT - (newCount ?? 1)) },
+        usage: usageInfo,
       }),
       { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
