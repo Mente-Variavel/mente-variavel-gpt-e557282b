@@ -1,11 +1,13 @@
 import {
   type SubtitleStyleConfig,
   type SubtitlePosition,
+  type SubtitleFontId,
   SUBTITLE_STYLES,
   HIGHLIGHT_COLORS,
+  SUBTITLE_FONTS,
   DEFAULT_STYLE_CONFIG,
 } from "@/lib/subtitle-styles";
-import { Palette, Type, ArrowUpDown, Sparkles, Square, Minus, ArrowLeftRight, Save, RotateCcw } from "lucide-react";
+import { Palette, Type, ArrowUpDown, Sparkles, Square, Minus, ArrowLeftRight, Save, RotateCcw, LetterText } from "lucide-react";
 import { toast } from "sonner";
 
 const STORAGE_KEY = "mv-subtitle-full-settings";
@@ -67,6 +69,21 @@ const SubtitleCustomizer = ({ config, onChange, watermarkEnabled }: SubtitleCust
         </div>
       </div>
 
+      {/* Font Selection */}
+      <div>
+        <label className="mb-2 flex items-center gap-1.5 text-xs font-medium text-muted-foreground uppercase tracking-wide"><LetterText className="h-3 w-3" /> Fonte</label>
+        <div className="grid grid-cols-2 gap-1.5">
+          {SUBTITLE_FONTS.map((font) => (
+            <button key={font.id} onClick={() => set("fontId", font.id as SubtitleFontId)}
+              className={`rounded-lg border px-2 py-2 text-xs font-semibold transition-all ${config.fontId === font.id ? "border-primary bg-primary/10 text-primary" : "border-border bg-secondary/30 text-muted-foreground hover:text-foreground hover:border-primary/30"}`}
+              style={{ fontFamily: font.cssFamily }}>
+              {font.name}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Style Selection */}
       <div>
         <label className="mb-2 block text-xs font-medium text-muted-foreground uppercase tracking-wide">Estilo da Legenda</label>
         <div className="grid grid-cols-2 gap-2">
@@ -81,6 +98,7 @@ const SubtitleCustomizer = ({ config, onChange, watermarkEnabled }: SubtitleCust
         </div>
       </div>
 
+      {/* Highlight Color */}
       <div>
         <label className="mb-2 flex items-center gap-1.5 text-xs font-medium text-muted-foreground uppercase tracking-wide"><Sparkles className="h-3 w-3" /> Cor de Destaque</label>
         <div className="flex gap-2">
@@ -92,11 +110,13 @@ const SubtitleCustomizer = ({ config, onChange, watermarkEnabled }: SubtitleCust
         </div>
       </div>
 
+      {/* Font Size */}
       <div>
         <label className="mb-2 flex items-center gap-1.5 text-xs font-medium text-muted-foreground uppercase tracking-wide"><Type className="h-3 w-3" /> Tamanho — {config.fontSize}px</label>
         <input type="range" min={14} max={32} step={1} value={config.fontSize} onChange={(e) => set("fontSize", Number(e.target.value))} className="w-full accent-primary" />
       </div>
 
+      {/* Position */}
       <div>
         <label className="mb-2 flex items-center gap-1.5 text-xs font-medium text-muted-foreground uppercase tracking-wide"><ArrowUpDown className="h-3 w-3" /> Posição</label>
         <div className="flex gap-2">
@@ -109,11 +129,13 @@ const SubtitleCustomizer = ({ config, onChange, watermarkEnabled }: SubtitleCust
         </div>
       </div>
 
+      {/* Vertical Offset */}
       <div>
         <label className="mb-2 flex items-center gap-1.5 text-xs font-medium text-muted-foreground uppercase tracking-wide"><Minus className="h-3 w-3" /> Ajuste Vertical — {config.verticalOffset}%</label>
         <input type="range" min={0} max={40} step={1} value={config.verticalOffset} onChange={(e) => set("verticalOffset", Number(e.target.value))} className="w-full accent-primary" />
       </div>
 
+      {/* Background */}
       <div>
         <div className="mb-2 flex items-center justify-between">
           <label className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground uppercase tracking-wide"><Square className="h-3 w-3" /> Fundo da Legenda</label>
