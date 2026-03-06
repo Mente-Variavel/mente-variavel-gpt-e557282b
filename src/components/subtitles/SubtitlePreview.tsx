@@ -180,6 +180,7 @@ const SubtitlePreview = ({ videoUrl, subtitles, onTimeUpdate, styleConfig }: Sub
             }}
           >
              <span
+              ref={subtitleRef}
               key={subKey}
               className={`inline-flex items-center justify-center text-center ${animationClass}`}
               style={{
@@ -189,8 +190,9 @@ const SubtitlePreview = ({ videoUrl, subtitles, onTimeUpdate, styleConfig }: Sub
                 letterSpacing: `${styleConfig.letterSpacing}px`,
                 textTransform: "uppercase",
                 whiteSpace: "nowrap",
-                maxWidth: "92%",
                 overflow: "visible",
+                transform: `scale(${textScale})`,
+                transformOrigin: "center center",
                 padding: styleConfig.showBackground
                   ? `${styleConfig.backgroundPadding}px ${styleConfig.backgroundPadding * 2}px`
                   : `${styleConfig.backgroundPadding * 0.5}px ${styleConfig.backgroundPadding}px`,
