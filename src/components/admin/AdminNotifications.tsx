@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { Bell, Check, X, CreditCard, ChevronDown, ChevronUp } from "lucide-react";
+import { Bell, Check, X, CreditCard, ChevronDown, ChevronUp, Megaphone } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
@@ -127,7 +127,9 @@ export default function AdminNotifications() {
             notifications.map((n) => {
               const meta = n.metadata as Record<string, string>;
               const isSubscription = n.type === "subscription";
+              const isAdRequest = n.type === "ad_request";
               const isPending = isSubscription && !n.is_read;
+              const Icon = isAdRequest ? Megaphone : CreditCard;
 
               return (
                 <div
@@ -135,25 +137,37 @@ export default function AdminNotifications() {
                   className={`glass rounded-xl p-4 border transition-all ${
                     n.is_read
                       ? "border-border/50 opacity-60"
+                      : isAdRequest
+                      ? "border-accent/30 bg-accent/5"
                       : "border-primary/30 bg-primary/5"
                   }`}
                 >
                   <div className="flex items-start justify-between gap-3">
                     <div className="flex items-start gap-3 min-w-0">
-                      <CreditCard className={`w-5 h-5 mt-0.5 shrink-0 ${n.is_read ? "text-muted-foreground" : "text-primary"}`} />
+                      <Icon className={`w-5 h-5 mt-0.5 shrink-0 ${n.is_read ? "text-muted-foreground" : isAdRequest ? "text-accent" : "text-primary"}`} />
                       <div className="min-w-0">
                         <p className={`text-sm font-semibold ${n.is_read ? "text-muted-foreground" : "text-foreground"}`}>
                           {n.title}
                         </p>
-                        <p className="text-xs text-muted-foreground mt-0.5">{n.message}</p>
+                        <p className="text-xs text-muted-foreground mt-0.5 whitespace-pre-wrap">{n.message}</p>
                         {meta?.user_email && (
                           <p className="text-xs text-muted-foreground mt-1">
                             👤 {meta.user_email}
                           </p>
                         )}
+                        {meta?.email && isAdRequest && (
+                          <p className="text-xs text-muted-foreground mt-1">
+                            📧 {meta.email} {meta.phone ? `| 📱 ${meta.phone}` : ""}
+                          </p>
+                        )}
                         {meta?.plan && (
                           <Badge variant="outline" className="mt-1 text-xs">
                             Plano {meta.plan === "anual" ? "Anual — R$ 79,90" : "Mensal — R$ 19,90"}
+                          </Badge>
+                        )}
+                        {meta?.plan_price && isAdRequest && (
+                          <Badge variant="outline" className="mt-1 text-xs">
+                            {meta.plan_label} — {meta.plan_price}
                           </Badge>
                         )}
                       </div>

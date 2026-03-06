@@ -1,34 +1,33 @@
-import { Link } from "react-router-dom";
-import { Check, Mail, Megaphone, ArrowRight, Shield, Star, FileText, Building2, Lock, Eye, MousePointer, LayoutGrid } from "lucide-react";
-import { motion } from "framer-motion";
+import { useState } from "react";
+import { Check, Megaphone, ArrowRight, Shield, Star, FileText, Building2, Lock, Eye, MousePointer, LayoutGrid } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
-
-const CONTACT_EMAIL = "comercial@klickview.com.br";
+import AdPlanForm from "@/components/AdPlanForm";
 
 const pricingSlots = [
   {
     page: "Ferramentas",
     slots: [
-      { position: "Banner Topo", price: "R$ 189,90", desc: "Primeiro elemento visível, máxima exposição" },
-      { position: "Rodapé", price: "R$ 99,90", desc: "Final da página, exposição complementar" },
+      { position: "Banner Topo", price: "R$ 189,90", priceNum: "189.90", desc: "Primeiro elemento visível, máxima exposição" },
+      { position: "Rodapé", price: "R$ 99,90", priceNum: "99.90", desc: "Final da página, exposição complementar" },
     ],
   },
   {
     page: "Blog",
     slots: [
-      { position: "Banner Topo", price: "R$ 169,90", desc: "Destaque antes dos artigos" },
-      { position: "Inline", price: "R$ 129,90", desc: "Entre os artigos do blog" },
-      { position: "Sidebar", price: "R$ 109,90", desc: "Coluna lateral fixa" },
-      { position: "Rodapé", price: "R$ 89,90", desc: "Parte inferior da página" },
+      { position: "Banner Topo", price: "R$ 169,90", priceNum: "169.90", desc: "Destaque antes dos artigos" },
+      { position: "Inline", price: "R$ 129,90", priceNum: "129.90", desc: "Entre os artigos do blog" },
+      { position: "Sidebar", price: "R$ 109,90", priceNum: "109.90", desc: "Coluna lateral fixa" },
+      { position: "Rodapé", price: "R$ 89,90", priceNum: "89.90", desc: "Parte inferior da página" },
     ],
   },
   {
     page: "Guias de IA",
     slots: [
-      { position: "Banner Topo", price: "R$ 159,90", desc: "Antes da lista de guias" },
-      { position: "Inline", price: "R$ 119,90", desc: "Entre os guias" },
-      { position: "Rodapé", price: "R$ 89,90", desc: "Final da página de guias" },
+      { position: "Banner Topo", price: "R$ 159,90", priceNum: "159.90", desc: "Antes da lista de guias" },
+      { position: "Inline", price: "R$ 119,90", priceNum: "119.90", desc: "Entre os guias" },
+      { position: "Rodapé", price: "R$ 89,90", priceNum: "89.90", desc: "Final da página de guias" },
     ],
   },
 ];
@@ -40,8 +39,22 @@ const exclusivityRules = [
   "Prioridade para contratos de maior duração",
 ];
 
+export interface SelectedPlan {
+  label: string;
+  price: string;
+  priceNum: string;
+  details: string;
+}
+
 const Anuncie = () => {
-  const mailtoLink = `mailto:${CONTACT_EMAIL}?subject=${encodeURIComponent("Quero anunciar no Mente Variável GPT")}&body=${encodeURIComponent("Olá! Gostaria de saber mais sobre os planos de anúncio no site Mente Variável GPT.\n\nEmpresa:\nSite:\nPlano de interesse:\n\nAguardo retorno!")}`;
+  const [selectedPlan, setSelectedPlan] = useState<SelectedPlan | null>(null);
+
+  const openForm = (plan: SelectedPlan) => {
+    setSelectedPlan(plan);
+    setTimeout(() => {
+      document.getElementById("ad-plan-form")?.scrollIntoView({ behavior: "smooth" });
+    }, 100);
+  };
 
   return (
     <div className="flex flex-col min-h-screen">
@@ -64,14 +77,14 @@ const Anuncie = () => {
             <p className="text-lg text-foreground/70 max-w-2xl mx-auto mb-8">
               Alcance milhares de entusiastas de Inteligência Artificial. Divulgue sua empresa, produto ou serviço para um público engajado e qualificado.
             </p>
-            <a
-              href={mailtoLink}
+            <button
+              onClick={() => document.getElementById("pricing")?.scrollIntoView({ behavior: "smooth" })}
               className="inline-flex items-center gap-2 px-8 py-4 rounded-xl bg-primary text-primary-foreground font-semibold text-sm hover:bg-primary/90 transition-all glow-cyan group"
             >
-              <Mail className="w-4 h-4" />
-              Entrar em contato
+              <Megaphone className="w-4 h-4" />
+              Ver planos e contratar
               <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-            </a>
+            </button>
           </motion.div>
         </section>
 
@@ -105,7 +118,7 @@ const Anuncie = () => {
         </section>
 
         {/* Tabela de Preços por Posição */}
-        <section className="container mx-auto px-4 py-16">
+        <section id="pricing" className="container mx-auto px-4 py-16">
           <h2 className="font-display text-2xl md:text-3xl font-bold text-foreground text-center mb-4">
             Valores por Posição
           </h2>
@@ -147,13 +160,18 @@ const Anuncie = () => {
                         <span className="text-2xl font-black text-primary">{slot.price}</span>
                         <span className="text-xs text-muted-foreground">/mês</span>
                       </div>
-                      <a
-                        href={`mailto:${CONTACT_EMAIL}?subject=${encodeURIComponent(`Interesse: ${slot.position} - ${group.page}`)}&body=${encodeURIComponent(`Olá! Tenho interesse na posição "${slot.position}" na página ${group.page} (${slot.price}/mês).\n\nEmpresa:\nSite:\nSegmento:\n\nAguardo retorno!`)}`}
+                      <button
+                        onClick={() => openForm({
+                          label: `${slot.position} — ${group.page}`,
+                          price: slot.price,
+                          priceNum: slot.priceNum,
+                          details: `Posição: ${slot.position} | Página: ${group.page}`,
+                        })}
                         className="w-full inline-flex items-center justify-center gap-2 px-3 py-2.5 rounded-lg bg-secondary text-secondary-foreground hover:bg-secondary/80 font-semibold text-xs transition-all"
                       >
-                        <Mail className="w-3.5 h-3.5" />
-                        Reservar posição
-                      </a>
+                        <Megaphone className="w-3.5 h-3.5" />
+                        Contratar posição
+                      </button>
                     </div>
                   ))}
                 </div>
@@ -195,13 +213,18 @@ const Anuncie = () => {
                       <span className="text-xs text-muted-foreground">/mês</span>
                     </div>
                     <p className="text-xs text-muted-foreground mb-4">Cancele quando quiser. Sem fidelidade.</p>
-                    <a
-                      href={`mailto:${CONTACT_EMAIL}?subject=${encodeURIComponent("Interesse: Ferramenta Patrocinada - Mensal")}&body=${encodeURIComponent("Olá! Tenho interesse em incluir minha ferramenta/serviço na página de Ferramentas (plano mensal R$ 129,90/mês).\n\nNome da ferramenta:\nURL:\nDescrição curta:\nEmpresa:\n\nAguardo retorno!")}`}
+                    <button
+                      onClick={() => openForm({
+                        label: "Ferramenta Patrocinada — Mensal",
+                        price: "R$ 129,90",
+                        priceNum: "129.90",
+                        details: "Ferramenta Patrocinada na página de Ferramentas (mensal)",
+                      })}
                       className="w-full inline-flex items-center justify-center gap-2 px-3 py-2.5 rounded-lg bg-secondary text-secondary-foreground hover:bg-secondary/80 font-semibold text-xs transition-all"
                     >
-                      <Mail className="w-3.5 h-3.5" />
+                      <Megaphone className="w-3.5 h-3.5" />
                       Contratar mensal
-                    </a>
+                    </button>
                   </div>
                   <div className="glass rounded-xl p-6 border border-primary/40 ring-1 ring-primary/20">
                     <div className="flex items-center gap-2 mb-1">
@@ -213,13 +236,18 @@ const Anuncie = () => {
                       <span className="text-xs text-muted-foreground"> único</span>
                     </div>
                     <p className="text-xs text-muted-foreground mb-4">Equivalente a ~27 meses. Sua ferramenta para sempre no site.</p>
-                    <a
-                      href={`mailto:${CONTACT_EMAIL}?subject=${encodeURIComponent("Interesse: Ferramenta Patrocinada - Vitalício")}&body=${encodeURIComponent("Olá! Tenho interesse no plano vitalício para incluir minha ferramenta/serviço na página de Ferramentas (R$ 3.499,90 único).\n\nNome da ferramenta:\nURL:\nDescrição curta:\nEmpresa:\nSegmento de atuação:\n\nAguardo retorno!")}`}
+                    <button
+                      onClick={() => openForm({
+                        label: "Ferramenta Patrocinada — Vitalício",
+                        price: "R$ 3.499,90",
+                        priceNum: "3499.90",
+                        details: "Ferramenta Patrocinada na página de Ferramentas (vitalício)",
+                      })}
                       className="w-full inline-flex items-center justify-center gap-2 px-3 py-2.5 rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 font-semibold text-xs transition-all"
                     >
-                      <Mail className="w-3.5 h-3.5" />
+                      <Megaphone className="w-3.5 h-3.5" />
                       Contratar vitalício
-                    </a>
+                    </button>
                   </div>
                 </div>
 
@@ -231,7 +259,7 @@ const Anuncie = () => {
           </motion.div>
         </section>
 
-        {/* Plano Vitalício */}
+        {/* Plano Vitalício — Barra de Ferramentas */}
         <section className="container mx-auto px-4 py-16">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -256,7 +284,6 @@ const Anuncie = () => {
                 </p>
 
                 <div className="grid md:grid-cols-2 gap-8 mb-8">
-                  {/* Benefícios */}
                   <div>
                     <h3 className="font-display text-lg font-semibold text-foreground mb-4 flex items-center gap-2">
                       <Check className="w-5 h-5 text-accent" /> O que está incluso
@@ -278,7 +305,6 @@ const Anuncie = () => {
                     </ul>
                   </div>
 
-                  {/* Requisitos */}
                   <div>
                     <h3 className="font-display text-lg font-semibold text-foreground mb-4 flex items-center gap-2">
                       <Shield className="w-5 h-5 text-primary" /> Requisitos e análise
@@ -338,19 +364,40 @@ const Anuncie = () => {
                     <span className="text-2xl font-black text-primary">Valor sob consulta</span>
                     <p className="text-xs text-muted-foreground mt-1">O valor é definido após a análise de compatibilidade</p>
                   </div>
-                  <a
-                    href={`mailto:${CONTACT_EMAIL}?subject=${encodeURIComponent("Interesse no Plano Vitalício - Barra de Ferramentas")}&body=${encodeURIComponent("Olá! Tenho interesse no Plano Vitalício com inclusão na Barra de Ferramentas.\n\nDados para análise:\n\nNome da empresa:\nCNPJ:\nRamo de atuação:\nSite:\nDescrição dos serviços:\nContato do responsável:\n\nAguardo retorno!")}`}
+                  <button
+                    onClick={() => openForm({
+                      label: "Plano Vitalício — Barra de Ferramentas",
+                      price: "Sob consulta",
+                      priceNum: "",
+                      details: "Plano Vitalício com inclusão na Barra de Ferramentas (sujeito a análise)",
+                    })}
                     className="inline-flex items-center gap-2 px-8 py-4 rounded-xl bg-primary text-primary-foreground font-semibold text-sm hover:bg-primary/90 transition-all glow-cyan group shrink-0"
                   >
-                    <Mail className="w-4 h-4" />
+                    <Megaphone className="w-4 h-4" />
                     Solicitar análise
                     <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-                  </a>
+                  </button>
                 </div>
               </div>
             </div>
           </motion.div>
         </section>
+
+        {/* Formulário de contratação */}
+        <AnimatePresence>
+          {selectedPlan && (
+            <section id="ad-plan-form" className="container mx-auto px-4 py-16">
+              <motion.div
+                initial={{ opacity: 0, y: 30 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: 30 }}
+                className="max-w-2xl mx-auto"
+              >
+                <AdPlanForm plan={selectedPlan} onClose={() => setSelectedPlan(null)} />
+              </motion.div>
+            </section>
+          )}
+        </AnimatePresence>
 
         {/* Contact CTA */}
         <section className="container mx-auto px-4 py-16">
@@ -364,14 +411,14 @@ const Anuncie = () => {
               Quer uma proposta personalizada?
             </h2>
             <p className="text-foreground/70 max-w-xl mx-auto mb-8">
-              Entre em contato diretamente pelo email e montamos um plano sob medida para sua empresa.
+              Preencha o formulário acima ou entre em contato diretamente pelo email.
             </p>
             <a
-              href={mailtoLink}
+              href="mailto:comercial@klickviews.com?subject=Quero%20anunciar%20no%20Mente%20Vari%C3%A1vel%20GPT"
               className="inline-flex items-center gap-2 px-8 py-4 rounded-xl bg-primary text-primary-foreground font-semibold text-sm hover:bg-primary/90 transition-all glow-cyan group"
             >
-              <Mail className="w-4 h-4" />
-              {CONTACT_EMAIL}
+              <Megaphone className="w-4 h-4" />
+              comercial@klickviews.com
               <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
             </a>
           </motion.div>
