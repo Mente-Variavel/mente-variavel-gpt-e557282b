@@ -239,30 +239,7 @@ function drawSubtitle(
   const maxY = canvasHeight * (1 - SAFE_MARGIN) - totalH / 2;
   blockY = Math.max(minY, Math.min(maxY, blockY));
 
-  // Full-width anti-watermark bar (uses independent offset)
-  if (config.fullWidthBackground) {
-    const bgRgba = BACKGROUND_COLORS_MAP[config.backgroundColorId ?? "dark"] ?? "0, 0, 0";
-    const opacity = config.backgroundOpacity / 100;
-    const barH = (config.fullWidthBarHeight ?? 60) * scale;
-    const barOffsetPx = Math.max(config.fullWidthBarOffset ?? config.verticalOffset, 4) / 100 * canvasHeight;
-    let barCenterY: number;
-    switch (config.position) {
-      case "top": barCenterY = barOffsetPx + barH / 2; break;
-      case "center": barCenterY = canvasHeight / 2; break;
-      default: barCenterY = canvasHeight - barOffsetPx - barH / 2; break;
-    }
-    const barWidthPct = (config.fullWidthBarWidth ?? 100) / 100;
-    const barW = canvasWidth * barWidthPct;
-    const barX = (canvasWidth - barW) / 2;
-    ctx.fillStyle = `rgba(${bgRgba}, ${opacity})`;
-    if (barWidthPct < 1) {
-      const r = (config.borderRadius ?? 8) * scale;
-      roundRect(ctx, barX, barCenterY - barH / 2, barW, barH, r);
-      ctx.fill();
-    } else {
-      ctx.fillRect(0, barCenterY - barH / 2, canvasWidth, barH);
-    }
-  }
+  // (full-width bar is now drawn independently in drawFullWidthBar)
 
   // Background (inline, not full-width)
   if (config.showBackground && !config.fullWidthBackground) {
