@@ -15,6 +15,8 @@ import { exportVideoWithSubtitles } from "@/lib/mp4-export";
 import { DEFAULT_STYLE_CONFIG, type SubtitleStyleConfig } from "@/lib/subtitle-styles";
 import { useSubtitleUsage } from "@/hooks/useSubtitleUsage";
 
+const SETTINGS_STORAGE_KEY = "mv-subtitle-full-settings";
+
 const MAX_DURATION_SECONDS = 60;
 
 const GeradorLegendas = () => {
@@ -24,11 +26,29 @@ const GeradorLegendas = () => {
   const [isProcessing, setIsProcessing] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
   const [step, setStep] = useState<"upload" | "editor">("upload");
-  const [styleConfig, setStyleConfig] = useState<SubtitleStyleConfig>(DEFAULT_STYLE_CONFIG);
+  const [styleConfig, setStyleConfig] = useState<SubtitleStyleConfig>(() => {
+    try {
+      const saved = localStorage.getItem(SETTINGS_STORAGE_KEY);
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        return { ...DEFAULT_STYLE_CONFIG, ...parsed.styleConfig };
+      }
+    } catch {}
+    return DEFAULT_STYLE_CONFIG;
+  });
   const [isExporting, setIsExporting] = useState(false);
   const [exportProgress, setExportProgress] = useState(0);
   const [showPlanModal, setShowPlanModal] = useState(false);
-  const [watermarkEnabled, setWatermarkEnabled] = useState(true);
+  const [watermarkEnabled, setWatermarkEnabled] = useState(() => {
+    try {
+      const saved = localStorage.getItem(SETTINGS_STORAGE_KEY);
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        return parsed.watermarkEnabled ?? true;
+      }
+    } catch {}
+    return true;
+  });
 
   const { usage, refetchUsage } = useSubtitleUsage();
 
@@ -199,7 +219,7 @@ const GeradorLegendas = () => {
 
             <div className="grid gap-6 lg:grid-cols-[280px_1fr_1.2fr]">
               <div className="order-2 lg:order-1">
-                <SubtitleCustomizer config={styleConfig} onChange={setStyleConfig} />
+                <SubtitleCustomizer config={styleConfig} onChange={setStyleConfig} watermarkEnabled={watermarkEnabled} />
               </div>
 
               <div className="order-1 lg:order-2">
