@@ -149,7 +149,7 @@ const SubtitleCustomizer = ({ config, onChange, watermarkEnabled, onResegment }:
         </div>
       </div>
 
-      {/* Subtitle Size — single simple slider */}
+      {/* Subtitle Size */}
       <div>
         <div className="flex items-center justify-between">
           <span className="text-[9px] font-medium uppercase tracking-wide text-muted-foreground">Tamanho</span>
@@ -162,6 +162,23 @@ const SubtitleCustomizer = ({ config, onChange, watermarkEnabled, onResegment }:
           step={1}
           value={config.fontSize}
           onChange={(e) => set("fontSize", Number(e.target.value))}
+          className="mt-0.5 w-full accent-primary h-3"
+        />
+      </div>
+
+      {/* Vertical Offset */}
+      <div>
+        <div className="flex items-center justify-between">
+          <span className="text-[9px] font-medium uppercase tracking-wide text-muted-foreground">Altura</span>
+          <span className="text-[9px] text-muted-foreground">{config.verticalOffset ?? 0}%</span>
+        </div>
+        <input
+          type="range"
+          min={-40}
+          max={40}
+          step={1}
+          value={config.verticalOffset ?? 0}
+          onChange={(e) => set("verticalOffset", Number(e.target.value))}
           className="mt-0.5 w-full accent-primary h-3"
         />
       </div>
