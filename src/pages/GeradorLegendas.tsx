@@ -220,16 +220,13 @@ const GeradorLegendas = () => {
               <ArrowLeft className="h-4 w-4" /> Novo vídeo
             </button>
 
-            <div className="grid gap-6 lg:grid-cols-[280px_1fr_1.2fr]">
-              <div className="order-2 lg:order-1">
+            <div className="grid gap-6 lg:grid-cols-[1fr_1.2fr]">
+              <div className="order-1 flex flex-col gap-4">
+                <SubtitlePreview videoUrl={videoUrl} subtitles={subtitles} onTimeUpdate={setCurrentTime} styleConfig={styleConfig} />
                 <SubtitleCustomizer config={styleConfig} onChange={setStyleConfig} watermarkEnabled={watermarkEnabled} />
               </div>
 
-              <div className="order-1 lg:order-2">
-                <SubtitlePreview videoUrl={videoUrl} subtitles={subtitles} onTimeUpdate={setCurrentTime} styleConfig={styleConfig} />
-              </div>
-
-              <div className="order-3 flex flex-col gap-4">
+              <div className="order-2 flex flex-col gap-4">
                 {usage && <UsageBadge used={usage.used} limit={usage.limit} onPlanClick={() => setShowPlanModal(true)} />}
 
                 <SubtitleEditor subtitles={subtitles} onUpdate={setSubtitles} currentTime={currentTime} />

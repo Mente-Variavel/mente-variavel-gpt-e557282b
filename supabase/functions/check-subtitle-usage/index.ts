@@ -17,6 +17,38 @@ serve(async (req) => {
     const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, serviceRoleKey);
 
+    // Check if user is admin via auth token
+    const authHeader = req.headers.get("authorization") ?? "";
+    let isAdmin = false;
+    if (authHeader.startsWith("Bearer ")) {
+      const token = authHeader.replace("Bearer ", "");
+      const anonKey = Deno.env.get("SUPABASE_ANON_KEY") ?? "";
+      // Only check if it's not the anon key (i.e., it's a user token)
+      if (token !== anonKey) {
+        const userClient = createClient(supabaseUrl, anonKey, {
+          global: { headers: { Authorization: `Bearer ${token}` } },
+        });
+        const { data: { user } } = await userClient.auth.getUser();
+        if (user) {
+          const { data: roles } = await supabase
+            .from("user_roles")
+            .select("role")
+            .eq("user_id", user.id)
+            .eq("role", "admin");
+          if (roles && roles.length > 0) {
+            isAdmin = true;
+          }
+        }
+      }
+    }
+
+    if (isAdmin) {
+      return new Response(
+        JSON.stringify({ used: 0, limit: 999999, remaining: 999999 }),
+        { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
     const ip =
       req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
       req.headers.get("cf-connecting-ip") ||
