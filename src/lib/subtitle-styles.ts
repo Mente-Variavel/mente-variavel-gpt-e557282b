@@ -294,6 +294,8 @@ export const DEFAULT_STYLE_CONFIG: SubtitleStyleConfig = {
   textAlign: "center",
   borderRadius: 8,
   layoutMode: "single-line",
+  fullWidthBackground: false,
+  fullWidthBarHeight: 60,
 };
 
 /** Get the CSS font-family string for a given fontId */
