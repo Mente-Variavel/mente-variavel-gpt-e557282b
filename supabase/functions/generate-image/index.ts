@@ -74,14 +74,15 @@ serve(async (req) => {
 
     const hasRefImages = referenceImages && referenceImages.length > 0;
     
-    // Build aspect ratio instruction
-    const ratioMap: Record<string, string> = {
-      "16:9": "wide landscape format (16:9 aspect ratio, like a YouTube thumbnail or banner)",
-      "9:16": "tall vertical/portrait format (9:16 aspect ratio, like Instagram Reels or TikTok)",
-      "1:1": "square format (1:1 aspect ratio)",
+    // Build aspect ratio instruction with pixel dimensions for better compliance
+    const ratioMap: Record<string, { desc: string; pixels: string }> = {
+      "16:9": { desc: "wide landscape 16:9", pixels: "1920x1080 pixels" },
+      "9:16": { desc: "tall vertical portrait 9:16", pixels: "1080x1920 pixels" },
+      "1:1": { desc: "square 1:1", pixels: "1024x1024 pixels" },
     };
-    const ratioInstruction = aspectRatio && ratioMap[aspectRatio] 
-      ? ` The image MUST be in ${ratioMap[aspectRatio]}.` 
+    const ratioInfo = aspectRatio ? ratioMap[aspectRatio] : null;
+    const ratioInstruction = ratioInfo 
+      ? ` CRITICAL REQUIREMENT: The output image MUST be in ${ratioInfo.desc} format (${ratioInfo.pixels}). Do NOT generate a square image. The width and height ratio must be exactly ${aspectRatio}.` 
       : "";
 
     console.log(`[generate-image] prompt: "${prompt.slice(0, 80)}...", refs: ${hasRefImages ? referenceImages.length : 0}, ip: ${ip}, ratio: ${aspectRatio || "default"}`);
@@ -108,8 +109,11 @@ serve(async (req) => {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: "google/gemini-2.5-flash-image",
-        messages: [{ role: "user", content: userContent }],
+        model: aspectRatio && aspectRatio !== "1:1" ? "google/gemini-3-pro-image-preview" : "google/gemini-2.5-flash-image",
+        messages: [
+          { role: "system", content: ratioInstruction ? `You are an image generator. You MUST output images in the exact aspect ratio requested. ${ratioInfo ? `Output dimensions: ${ratioInfo.pixels}.` : ""}` : "You are an image generator." },
+          { role: "user", content: userContent },
+        ],
         modalities: ["image", "text"],
       }),
     });
