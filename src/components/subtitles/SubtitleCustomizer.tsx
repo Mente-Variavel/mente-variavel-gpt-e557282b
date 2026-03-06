@@ -8,11 +8,12 @@ import {
 import { Palette, Type, ArrowUpDown, Sparkles, Square, Minus, ArrowLeftRight, Save, RotateCcw } from "lucide-react";
 import { toast } from "sonner";
 
-const STORAGE_KEY = "mv-subtitle-style-memory";
+const STORAGE_KEY = "mv-subtitle-full-settings";
 
 interface SubtitleCustomizerProps {
   config: SubtitleStyleConfig;
   onChange: (config: SubtitleStyleConfig) => void;
+  watermarkEnabled?: boolean;
 }
 
 const positions: { id: SubtitlePosition; label: string }[] = [
@@ -21,21 +22,28 @@ const positions: { id: SubtitlePosition; label: string }[] = [
   { id: "bottom", label: "Baixo" },
 ];
 
-const SubtitleCustomizer = ({ config, onChange }: SubtitleCustomizerProps) => {
+const SubtitleCustomizer = ({ config, onChange, watermarkEnabled }: SubtitleCustomizerProps) => {
   const set = <K extends keyof SubtitleStyleConfig>(key: K, value: SubtitleStyleConfig[K]) =>
     onChange({ ...config, [key]: value });
 
   const hasSaved = (() => { try { return !!localStorage.getItem(STORAGE_KEY); } catch { return false; } })();
 
   const saveConfig = () => {
-    try { localStorage.setItem(STORAGE_KEY, JSON.stringify(config)); toast.success("Configuração salva!"); }
-    catch { toast.error("Erro ao salvar"); }
+    try {
+      const fullSettings = { styleConfig: config, watermarkEnabled: watermarkEnabled ?? true };
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(fullSettings));
+      toast.success("Todas as configurações salvas!");
+    } catch { toast.error("Erro ao salvar"); }
   };
 
   const restoreConfig = () => {
     try {
       const saved = localStorage.getItem(STORAGE_KEY);
-      if (saved) { onChange({ ...DEFAULT_STYLE_CONFIG, ...JSON.parse(saved) }); toast.success("Configuração restaurada!"); }
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        onChange({ ...DEFAULT_STYLE_CONFIG, ...(parsed.styleConfig || parsed) });
+        toast.success("Configurações restauradas!");
+      }
     } catch { toast.error("Erro ao restaurar"); }
   };
 
