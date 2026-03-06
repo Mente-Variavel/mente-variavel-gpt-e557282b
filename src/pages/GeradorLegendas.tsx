@@ -14,6 +14,7 @@ import { downloadSRT, downloadTXT } from "@/lib/srt-export";
 import { exportVideoWithSubtitles } from "@/lib/mp4-export";
 import { DEFAULT_STYLE_CONFIG, type SubtitleStyleConfig } from "@/lib/subtitle-styles";
 import { useSubtitleUsage } from "@/hooks/useSubtitleUsage";
+import { loadSubtitleFonts } from "@/lib/subtitle-fonts-loader";
 
 const SETTINGS_STORAGE_KEY = "mv-subtitle-full-settings";
 
