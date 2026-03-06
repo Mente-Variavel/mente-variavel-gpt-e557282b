@@ -14,7 +14,7 @@ export type SubtitleStyleId =
 
 export type SubtitlePosition = "top" | "center" | "bottom";
 
-export type HighlightColor = "neon-blue" | "neon-green" | "white" | "yellow";
+export type HighlightColor = "neon-blue" | "neon-green" | "white" | "yellow" | "pink" | "black" | "red";
 
 export type SubtitleFontId =
   | "orbitron"
@@ -83,6 +83,9 @@ export const HIGHLIGHT_COLORS: { id: HighlightColor; name: string; color: string
   { id: "neon-green", name: "Verde Neon", color: "hsl(155 100% 45%)" },
   { id: "white", name: "Branco", color: "hsl(0 0% 100%)" },
   { id: "yellow", name: "Amarelo", color: "hsl(50 100% 55%)" },
+  { id: "pink", name: "Rosa Pink", color: "hsl(330 100% 50%)" },
+  { id: "black", name: "Preto", color: "hsl(0 0% 0%)" },
+  { id: "red", name: "Vermelho", color: "hsl(0 100% 50%)" },
 ];
 
 export const DEFAULT_STYLE_CONFIG: SubtitleStyleConfig = {
