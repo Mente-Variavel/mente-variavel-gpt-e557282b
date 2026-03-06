@@ -5,8 +5,11 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
-import { Link } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
+import { toast } from "sonner";
+import { generatePixPayload, generateTxId } from "@/lib/pixEmv";
 
 const vantagens = [
   { icon: Zap, text: "Geração rápida de QR Code Pix" },
@@ -21,8 +24,16 @@ const fadeUp = {
   visible: (i: number) => ({ opacity: 1, y: 0, transition: { delay: i * 0.1 } }),
 };
 
+const PLANS = {
+  mensal: { label: "Mensal", price: "19.90", display: "R$ 19,90", period: "por mês" },
+  anual: { label: "Anual", price: "79.90", display: "R$ 79,90", period: "por ano" },
+};
+
 export default function PixCheckoutProduct() {
   const [videoUrl, setVideoUrl] = useState("");
+  const [subscribing, setSubscribing] = useState<string | null>(null);
+  const navigate = useNavigate();
+  const { user } = useAuth();
 
   useEffect(() => {
     const fetch = async () => {
@@ -35,6 +46,90 @@ export default function PixCheckoutProduct() {
     };
     fetch();
   }, []);
+
+  const handleSubscribe = async (plan: "mensal" | "anual") => {
+    if (!user) {
+      toast.error("Faça login para assinar um plano.");
+      navigate("/auth");
+      return;
+    }
+
+    setSubscribing(plan);
+    try {
+      // Fetch pix config from site_settings
+      const { data: settings } = await supabase
+        .from("site_settings")
+        .select("key, value")
+        .in("key", ["pix_key", "pix_receiver_name", "pix_receiver_city"]);
+
+      const config: Record<string, string> = {};
+      settings?.forEach((s) => { config[s.key] = s.value; });
+
+      const pixKey = config.pix_key;
+      const receiverName = config.pix_receiver_name || "MENTE VARIAVEL";
+      const city = config.pix_receiver_city || "SAO PAULO";
+      const planInfo = PLANS[plan];
+
+      if (!pixKey) {
+        toast.error("Configuração de pagamento não encontrada.");
+        return;
+      }
+
+      // Create pending subscription
+      const { data: sub, error: subError } = await supabase
+        .from("pix_checkout_subscriptions")
+        .insert({
+          user_id: user.id,
+          plan,
+          status: "pending",
+        })
+        .select()
+        .single();
+
+      if (subError) throw subError;
+
+      // Create admin notification
+      await supabase.from("admin_notifications").insert({
+        type: "subscription",
+        title: `Nova assinatura: Plano ${planInfo.label}`,
+        message: `Usuário solicitou o plano ${planInfo.label} (${planInfo.display}). Verifique o pagamento.`,
+        metadata: {
+          subscription_id: sub.id,
+          user_id: user.id,
+          user_email: user.email || "",
+          plan,
+          amount: planInfo.price,
+        },
+      });
+
+      // Generate Pix payload
+      const txid = generateTxId();
+      const payload = generatePixPayload({
+        chave: pixKey,
+        nomeRecebedor: receiverName,
+        cidade: city,
+        valor: planInfo.price,
+        txid,
+        descricao: `Pix Checkout ${planInfo.label}`,
+      });
+
+      // Navigate to pix-checkout with pre-filled data
+      const params = new URLSearchParams();
+      params.set("pix_payload", payload);
+      params.set("pix_mode", "manual");
+      params.set("pix_key", pixKey);
+      params.set("pix_name", receiverName);
+      params.set("pix_amount", planInfo.price);
+      params.set("pix_desc", `Plano ${planInfo.label} - Pix Checkout`);
+
+      navigate(`/pix-checkout?${params.toString()}`);
+    } catch (err) {
+      console.error(err);
+      toast.error("Erro ao processar. Tente novamente.");
+    } finally {
+      setSubscribing(null);
+    }
+  };
 
   return (
     <div className="min-h-screen flex flex-col bg-background">
@@ -141,16 +236,17 @@ export default function PixCheckoutProduct() {
                   <CardTitle className="text-lg">Plano Mensal</CardTitle>
                 </CardHeader>
                 <CardContent className="text-center">
-                  <p className="text-4xl font-bold text-primary mb-1">
-                    R$ 19,90
-                  </p>
+                  <p className="text-4xl font-bold text-primary mb-1">R$ 19,90</p>
                   <p className="text-sm text-muted-foreground mb-6">por mês</p>
-                  <Link to="/pix-checkout">
-                    <Button className="w-full gap-2" size="lg">
-                      <CreditCard className="w-4 h-4" />
-                      Assinar Plano Mensal
-                    </Button>
-                  </Link>
+                  <Button
+                    className="w-full gap-2"
+                    size="lg"
+                    onClick={() => handleSubscribe("mensal")}
+                    disabled={subscribing === "mensal"}
+                  >
+                    <CreditCard className="w-4 h-4" />
+                    {subscribing === "mensal" ? "Processando..." : "Assinar Plano Mensal"}
+                  </Button>
                 </CardContent>
               </Card>
 
@@ -164,16 +260,17 @@ export default function PixCheckoutProduct() {
                   <CardTitle className="text-lg">Plano Anual</CardTitle>
                 </CardHeader>
                 <CardContent className="text-center">
-                  <p className="text-4xl font-bold text-green-500 mb-1">
-                    R$ 79,90
-                  </p>
+                  <p className="text-4xl font-bold text-green-500 mb-1">R$ 79,90</p>
                   <p className="text-sm text-muted-foreground mb-6">por ano</p>
-                  <Link to="/pix-checkout">
-                    <Button className="w-full gap-2 bg-green-600 hover:bg-green-700" size="lg">
-                      <CreditCard className="w-4 h-4" />
-                      Assinar Plano Anual
-                    </Button>
-                  </Link>
+                  <Button
+                    className="w-full gap-2 bg-green-600 hover:bg-green-700"
+                    size="lg"
+                    onClick={() => handleSubscribe("anual")}
+                    disabled={subscribing === "anual"}
+                  >
+                    <CreditCard className="w-4 h-4" />
+                    {subscribing === "anual" ? "Processando..." : "Assinar Plano Anual"}
+                  </Button>
                 </CardContent>
               </Card>
             </div>
@@ -215,12 +312,10 @@ export default function PixCheckoutProduct() {
             transition={{ delay: 0.5 }}
             className="text-center"
           >
-            <Link to="/pix-checkout">
-              <Button size="lg" className="gap-2">
-                <QrCode className="w-5 h-5" />
-                Experimentar Grátis por 3 Dias
-              </Button>
-            </Link>
+            <Button size="lg" className="gap-2" onClick={() => navigate("/pix-checkout")}>
+              <QrCode className="w-5 h-5" />
+              Experimentar Grátis por 3 Dias
+            </Button>
           </motion.div>
         </div>
       </main>

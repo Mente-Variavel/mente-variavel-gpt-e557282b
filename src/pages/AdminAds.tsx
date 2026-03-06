@@ -8,6 +8,7 @@ import Footer from "@/components/Footer";
 import AdEditor from "@/components/admin/AdEditor";
 import PixConfigAdmin from "@/components/admin/PixConfigAdmin";
 import VideoUploadAdmin from "@/components/admin/VideoUploadAdmin";
+import AdminNotifications from "@/components/admin/AdminNotifications";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -335,6 +336,9 @@ const AdminAds = () => {
         <h1 className="font-display text-2xl md:text-3xl font-bold text-foreground mb-4">
           Painel Administrativo
         </h1>
+
+        {/* === Notificações === */}
+        <AdminNotifications />
 
         {/* === API Usage Stats === */}
         <div className="mb-6">
