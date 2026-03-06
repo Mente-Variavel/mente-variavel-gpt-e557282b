@@ -237,20 +237,37 @@ const SubtitleCustomizer = ({ config, onChange, watermarkEnabled, onResegment }:
           </button>
         </div>
         {config.fullWidthBackground && (
-          <div className="mt-1">
-            <div className="flex items-center justify-between">
-              <span className="text-[8px] text-muted-foreground">Espessura</span>
-              <span className="text-[8px] text-muted-foreground">{config.fullWidthBarHeight ?? 60}px</span>
+          <div className="mt-1 flex flex-col gap-1.5">
+            <div>
+              <div className="flex items-center justify-between">
+                <span className="text-[8px] text-muted-foreground">Espessura</span>
+                <span className="text-[8px] text-muted-foreground">{config.fullWidthBarHeight ?? 60}px</span>
+              </div>
+              <input
+                type="range"
+                min={30}
+                max={150}
+                step={2}
+                value={config.fullWidthBarHeight ?? 60}
+                onChange={(e) => set("fullWidthBarHeight", Number(e.target.value))}
+                className="mt-0.5 w-full accent-primary h-3"
+              />
             </div>
-            <input
-              type="range"
-              min={30}
-              max={150}
-              step={2}
-              value={config.fullWidthBarHeight ?? 60}
-              onChange={(e) => set("fullWidthBarHeight", Number(e.target.value))}
-              className="mt-0.5 w-full accent-primary h-3"
-            />
+            <div>
+              <div className="flex items-center justify-between">
+                <span className="text-[8px] text-muted-foreground">Posição da Barra</span>
+                <span className="text-[8px] text-muted-foreground">{config.fullWidthBarOffset ?? 10}%</span>
+              </div>
+              <input
+                type="range"
+                min={0}
+                max={50}
+                step={1}
+                value={config.fullWidthBarOffset ?? 10}
+                onChange={(e) => set("fullWidthBarOffset", Number(e.target.value))}
+                className="mt-0.5 w-full accent-primary h-3"
+              />
+            </div>
           </div>
         )}
       </div>
