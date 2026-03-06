@@ -34,6 +34,8 @@ const Footer = () => (
           <h4 className="font-display text-xs font-bold text-foreground mb-3 uppercase tracking-wider">Plataforma</h4>
           <div className="flex flex-col gap-2 text-sm text-muted-foreground">
             <Link to="/criador-prompt" className="hover:text-primary transition-colors">Criador de Prompt</Link>
+            <Link to="/guias" className="hover:text-primary transition-colors">Guias</Link>
+            <Link to="/blog" className="hover:text-primary transition-colors">Blog</Link>
             <Link to="/sobre" className="hover:text-primary transition-colors">Sobre o Projeto</Link>
             <Link to="/contato" className="hover:text-primary transition-colors">Contato</Link>
           </div>

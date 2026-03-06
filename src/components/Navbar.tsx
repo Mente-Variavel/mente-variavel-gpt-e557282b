@@ -1,5 +1,5 @@
 import { Link, useLocation } from "react-router-dom";
-import { Menu, X, Sun, Moon, ChevronDown, Settings, MessageSquare, Megaphone, Music, Info, ShoppingBag } from "lucide-react";
+import { Menu, X, Sun, Moon, ChevronDown, Settings, MessageSquare, Megaphone, Music } from "lucide-react";
 import { useState, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useTheme } from "@/hooks/useTheme";
@@ -23,17 +23,13 @@ const produtosItems = [
   { to: "/produtos/pix-checkout", label: "Pix Checkout" },
 ];
 
-const infoItems = [
-  { to: "/guias", label: "Guias" },
-  { to: "/blog", label: "Blog" },
-];
 
 const Navbar = () => {
   const [open, setOpen] = useState(false);
   const [financasOpen, setFinancasOpen] = useState(false);
   const [servicosOpen, setServicosOpen] = useState(false);
   const [produtosOpen, setProdutosOpen] = useState(false);
-  const [infoOpen, setInfoOpen] = useState(false);
+  
   const location = useLocation();
   const { theme, toggleTheme } = useTheme();
   const { user } = useAuth();
@@ -41,20 +37,19 @@ const Navbar = () => {
   const financasRef = useRef<HTMLDivElement>(null);
   const servicosRef = useRef<HTMLDivElement>(null);
   const produtosRef = useRef<HTMLDivElement>(null);
-  const infoRef = useRef<HTMLDivElement>(null);
+  
 
   useEffect(() => {
     const handler = (e: MouseEvent) => {
       if (financasRef.current && !financasRef.current.contains(e.target as Node)) setFinancasOpen(false);
       if (servicosRef.current && !servicosRef.current.contains(e.target as Node)) setServicosOpen(false);
       if (produtosRef.current && !produtosRef.current.contains(e.target as Node)) setProdutosOpen(false);
-      if (infoRef.current && !infoRef.current.contains(e.target as Node)) setInfoOpen(false);
     };
     document.addEventListener("mousedown", handler);
     return () => document.removeEventListener("mousedown", handler);
   }, []);
 
-  const closeAll = () => { setFinancasOpen(false); setServicosOpen(false); setProdutosOpen(false); setInfoOpen(false); };
+  const closeAll = () => { setFinancasOpen(false); setServicosOpen(false); setProdutosOpen(false); };
 
   const isActive = (path: string) => location.pathname === path;
   const isInSection = (prefix: string) => location.pathname.startsWith(prefix);
@@ -127,7 +122,7 @@ const Navbar = () => {
 
           <Link to="/servicos/criador-musica" className={`${navLinkClass("/servicos/criador-musica")} flex items-center gap-1`}>
             <Music className="w-3.5 h-3.5" />
-            Criador de Música IA
+            Criador de Música
           </Link>
 
           <DropdownMenu
@@ -157,14 +152,6 @@ const Navbar = () => {
             dropdownRef={produtosRef}
           />
 
-          <DropdownMenu
-            items={infoItems}
-            isOpen={infoOpen}
-            label="Info"
-            prefix="/info-section"
-            toggle={() => { closeAll(); setInfoOpen(!infoOpen); }}
-            dropdownRef={infoRef}
-          />
 
           <Link to="/anuncie" className={`${navLinkClass("/anuncie")} flex items-center gap-1.5`}>
             <Megaphone className="w-4 h-4 text-green-500" />
@@ -215,7 +202,7 @@ const Navbar = () => {
               </Link>
               <Link to="/servicos/criador-musica" onClick={() => setOpen(false)} className={`px-4 py-3 rounded-lg text-sm font-medium transition-all flex items-center gap-1.5 ${isActive("/servicos/criador-musica") ? "text-primary bg-primary/10" : "text-muted-foreground hover:text-foreground hover:bg-secondary"}`}>
                 <Music className="w-4 h-4" />
-                Criador de Música IA
+                Criador de Música
               </Link>
 
               <p className="px-4 pt-3 pb-1 text-xs font-bold text-muted-foreground uppercase tracking-wider">Finanças</p>
@@ -239,12 +226,6 @@ const Navbar = () => {
                 </Link>
               ))}
 
-              <p className="px-4 pt-3 pb-1 text-xs font-bold text-muted-foreground uppercase tracking-wider">Info</p>
-              {infoItems.map((item) => (
-                <Link key={item.to} to={item.to} onClick={() => setOpen(false)} className={`px-6 py-2.5 rounded-lg text-sm transition-all ${isActive(item.to) ? "text-primary bg-primary/10" : "text-muted-foreground hover:text-foreground hover:bg-secondary"}`}>
-                  {item.label}
-                </Link>
-              ))}
 
               <Link to="/anuncie" onClick={() => setOpen(false)} className={`px-4 py-3 rounded-lg text-sm font-medium transition-all flex items-center gap-1.5 ${isActive("/anuncie") ? "text-primary bg-primary/10" : "text-muted-foreground hover:text-foreground hover:bg-secondary"}`}>
                 <Megaphone className="w-4 h-4 text-green-500" />
