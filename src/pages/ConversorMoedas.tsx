@@ -18,7 +18,7 @@ const currencies = [
   { code: "BTC", name: "Bitcoin", symbol: "₿", flag: "₿" },
 ];
 
-const BTC_RATE_IN_USD = 85000;
+
 
 export default function ConversorMoedas() {
   const [from, setFrom] = useState("USD");
@@ -50,10 +50,7 @@ export default function ConversorMoedas() {
       if (!res.ok) throw new Error("API error");
 
       const data = await res.json();
-      // Add BTC rate
-      const usdRate = 1;
-      const btcRate = usdRate / BTC_RATE_IN_USD;
-      const allRates = { ...data.rates, BTC: btcRate, USD: 1 };
+      const allRates = { ...data.rates, USD: 1 };
 
       setRates(allRates);
       setSource(data.source || "");
@@ -62,7 +59,7 @@ export default function ConversorMoedas() {
     } catch {
       setApiError(true);
       // Use hardcoded fallback rates (USD base)
-      setRates({ USD: 1, BRL: 5.18, EUR: 0.85, GBP: 0.74, JPY: 157.0, BTC: 1 / BTC_RATE_IN_USD });
+      setRates({ USD: 1, BRL: 5.18, EUR: 0.85, GBP: 0.74, JPY: 157.0, BTC: 1 / 100000 });
       setSource("fallback (offline)");
       setLastUpdated("N/A");
       toast({ title: "⚠️ Erro ao buscar taxas", description: "Usando valores aproximados.", variant: "destructive" });
