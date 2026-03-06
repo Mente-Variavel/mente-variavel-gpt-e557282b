@@ -405,11 +405,6 @@ const Chat = () => {
                 ))}
               </div>
 
-              <div className="glass rounded-lg px-4 py-3 max-w-md">
-                <p className="text-xs text-muted-foreground/70">
-                  ⚠️ O assistente pode não possuir informações em tempo real. As respostas geradas podem conter limitações e não substituem aconselhamento profissional.
-                </p>
-              </div>
             </motion.div>
           )}
           {messages.map((msg, i) => (
