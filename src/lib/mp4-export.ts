@@ -149,7 +149,7 @@ function drawSubtitle(
   ctx.font = `bold ${fontSize}px ${fontFamily}`;
   ctx.textBaseline = "middle";
 
-  // Measure full text width to check fit
+  // Measure full text width
   const wordStyles = getWordStyles(words, activeWordIndex, config, highlightColor, fontSize);
   let totalTextWidth = 0;
   for (let i = 0; i < words.length; i++) {
@@ -158,10 +158,10 @@ function drawSubtitle(
     totalTextWidth += ctx.measureText(words[i]).width + (i < words.length - 1 ? fontSize * 0.3 + letterSpacing : 0);
   }
 
-  // Scale down if too wide
+  // Text should already be pre-segmented to fit; only minor scale if needed
   let renderScale = 1;
   if (totalTextWidth > maxWidth - padding * 3) {
-    renderScale = (maxWidth - padding * 3) / totalTextWidth;
+    renderScale = Math.max(0.75, (maxWidth - padding * 3) / totalTextWidth);
   }
 
   const scaledTextWidth = totalTextWidth * renderScale;
