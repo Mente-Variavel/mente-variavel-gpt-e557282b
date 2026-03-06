@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
+import { supabase } from "@/integrations/supabase/client";
 
 interface UsageInfo {
   used: number;
@@ -12,11 +13,15 @@ export function useSubtitleUsage() {
 
   const fetchUsage = useCallback(async () => {
     try {
+      // Get current session token to pass for admin check
+      const { data: { session } } = await supabase.auth.getSession();
+      const token = session?.access_token || import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
+
       const res = await fetch(
         `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/check-subtitle-usage`,
         {
           headers: {
-            Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+            Authorization: `Bearer ${token}`,
           },
         }
       );
