@@ -17,7 +17,7 @@ import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
-import { LogIn, AlertTriangle, Clock, Plus, Sparkles, Trash2, Save, Mail, MailOpen, ChevronDown, ChevronUp, Users, Bug, BarChart3, Image, MessageSquare, DollarSign, Settings } from "lucide-react";
+import { LogIn, AlertTriangle, Clock, Plus, Sparkles, Trash2, Save, Mail, MailOpen, ChevronDown, ChevronUp, Users, Bug, BarChart3, Image, MessageSquare, DollarSign, Settings, Globe, Eye } from "lucide-react";
 
 const getAdStatus = (planEnd: string | null) => {
   if (!planEnd) return null;
@@ -122,9 +122,11 @@ const AdminAds = () => {
 
   const [showMessages, setShowMessages] = useState(true);
   const [showUsers, setShowUsers] = useState(false);
+  const [showVisitors, setShowVisitors] = useState(false);
   const [showStats, setShowStats] = useState(true);
   const [showSettings, setShowSettings] = useState(true);
   const [expandedMessage, setExpandedMessage] = useState<string | null>(null);
+  const [visitorDays, setVisitorDays] = useState(7);
 
 
   const saveTool = useMutation({
