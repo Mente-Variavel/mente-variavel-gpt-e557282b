@@ -33,8 +33,51 @@ import Privacy from "./pages/Privacy";
 import Terms from "./pages/Terms";
 import NotFound from "./pages/NotFound";
 import GoogleAnalytics from "./components/GoogleAnalytics";
+import { useVisitorTracking } from "./hooks/useVisitorTracking";
 
 const queryClient = new QueryClient();
+
+function AppContent() {
+  useVisitorTracking();
+  return (
+    <>
+      <GoogleAnalytics />
+      <Routes>
+        <Route path="/" element={<Index />} />
+        <Route path="/assistente" element={<Chat />} />
+        <Route path="/ferramentas" element={<Tools />} />
+        <Route path="/logo-render" element={<LogoRender />} />
+        <Route path="/financas/educacao" element={<EducacaoFinanceira />} />
+        <Route path="/financas/controle" element={<ControleGastos />} />
+        <Route path="/financas/conversor" element={<ConversorMoedas />} />
+        <Route path="/servicos/removedor-fundo" element={<RemovedorFundo />} />
+        <Route path="/servicos/gerador-slides" element={<GeradorSlides />} />
+        <Route path="/ebook-download" element={<EbookDownload />} />
+        <Route path="/pix-checkout" element={<PixCheckout />} />
+        <Route path="/produtos/pix-checkout" element={<PixCheckoutProduct />} />
+        <Route path="/servicos/criador-musica" element={<CriadorMusica />} />
+        <Route path="/servicos/criador-prompt" element={<CriadorPrompt />} />
+        <Route path="/criador-prompt" element={<CriadorPrompt />} />
+        <Route path="/produtos/gerador-legendas" element={<GeradorLegendas />} />
+        <Route path="/blog" element={<Blog />} />
+        <Route path="/blog/:slug" element={<BlogPost />} />
+        <Route path="/guias" element={<Guides />} />
+        <Route path="/guias/:slug" element={<GuideArticle />} />
+        <Route path="/parceiro" element={<Parceiro />} />
+        <Route path="/anuncie" element={<Parceiro />} />
+        <Route path="/sobre" element={<About />} />
+        <Route path="/contato" element={<Contact />} />
+        <Route path="/ferramentas/calculadora-preco" element={<CalculadoraPreco />} />
+        
+        <Route path="/auth" element={<Auth />} />
+        <Route path="/admin/anuncios" element={<AdminAds />} />
+        <Route path="/privacidade" element={<Privacy />} />
+        <Route path="/termos" element={<Terms />} />
+        <Route path="*" element={<NotFound />} />
+      </Routes>
+    </>
+  );
+}
 
 function App() {
   return (
@@ -43,40 +86,7 @@ function App() {
         <Toaster />
         <Sonner />
         <BrowserRouter>
-          <GoogleAnalytics />
-          <Routes>
-            <Route path="/" element={<Index />} />
-            <Route path="/assistente" element={<Chat />} />
-            <Route path="/ferramentas" element={<Tools />} />
-            <Route path="/logo-render" element={<LogoRender />} />
-            <Route path="/financas/educacao" element={<EducacaoFinanceira />} />
-            <Route path="/financas/controle" element={<ControleGastos />} />
-            <Route path="/financas/conversor" element={<ConversorMoedas />} />
-            <Route path="/servicos/removedor-fundo" element={<RemovedorFundo />} />
-            <Route path="/servicos/gerador-slides" element={<GeradorSlides />} />
-            <Route path="/ebook-download" element={<EbookDownload />} />
-            <Route path="/pix-checkout" element={<PixCheckout />} />
-            <Route path="/produtos/pix-checkout" element={<PixCheckoutProduct />} />
-            <Route path="/servicos/criador-musica" element={<CriadorMusica />} />
-            <Route path="/servicos/criador-prompt" element={<CriadorPrompt />} />
-            <Route path="/criador-prompt" element={<CriadorPrompt />} />
-            <Route path="/produtos/gerador-legendas" element={<GeradorLegendas />} />
-            <Route path="/blog" element={<Blog />} />
-            <Route path="/blog/:slug" element={<BlogPost />} />
-            <Route path="/guias" element={<Guides />} />
-            <Route path="/guias/:slug" element={<GuideArticle />} />
-            <Route path="/parceiro" element={<Parceiro />} />
-            <Route path="/anuncie" element={<Parceiro />} />
-            <Route path="/sobre" element={<About />} />
-            <Route path="/contato" element={<Contact />} />
-            <Route path="/ferramentas/calculadora-preco" element={<CalculadoraPreco />} />
-            
-            <Route path="/auth" element={<Auth />} />
-            <Route path="/admin/anuncios" element={<AdminAds />} />
-            <Route path="/privacidade" element={<Privacy />} />
-            <Route path="/termos" element={<Terms />} />
-            <Route path="*" element={<NotFound />} />
-          </Routes>
+          <AppContent />
         </BrowserRouter>
       </TooltipProvider>
     </QueryClientProvider>
