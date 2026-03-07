@@ -152,7 +152,7 @@ const Tools = () => {
                 rel="noopener noreferrer"
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: (tools.length + i) * 0.1 }}
+                transition={{ delay: (externalTools.length + i) * 0.1 }}
                 className="glass rounded-xl p-6 border border-primary/30 hover:border-primary/60 transition-all group flex flex-col gap-4 relative"
               >
                 <Badge variant="secondary" className="absolute top-3 right-3 gap-1 text-[10px] px-2 py-0.5">
