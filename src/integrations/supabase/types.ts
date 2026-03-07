@@ -284,6 +284,48 @@ export type Database = {
         }
         Relationships: []
       }
+      saved_calculations: {
+        Row: {
+          category: string
+          created_at: string
+          final_price: number
+          id: string
+          labor_cost: number
+          material_cost: number
+          other_costs: number
+          profit_pct: number
+          service_description: string
+          tax_pct: number
+          user_id: string
+        }
+        Insert: {
+          category?: string
+          created_at?: string
+          final_price?: number
+          id?: string
+          labor_cost?: number
+          material_cost?: number
+          other_costs?: number
+          profit_pct?: number
+          service_description?: string
+          tax_pct?: number
+          user_id: string
+        }
+        Update: {
+          category?: string
+          created_at?: string
+          final_price?: number
+          id?: string
+          labor_cost?: number
+          material_cost?: number
+          other_costs?: number
+          profit_pct?: number
+          service_description?: string
+          tax_pct?: number
+          user_id?: string
+        }
+        Relationships: []
+      }
       site_settings: {
         Row: {
           key: string
