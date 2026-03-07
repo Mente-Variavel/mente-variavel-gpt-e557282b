@@ -145,7 +145,6 @@ const AdminAds = () => {
   const [showStats, setShowStats] = useState(true);
   const [showSettings, setShowSettings] = useState(true);
   const [expandedMessage, setExpandedMessage] = useState<string | null>(null);
-  const [visitorDays, setVisitorDays] = useState(7);
 
 
   const saveTool = useMutation({
