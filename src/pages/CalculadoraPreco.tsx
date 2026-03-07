@@ -1,11 +1,13 @@
-import { useState, useMemo, useCallback } from "react";
-import { motion } from "framer-motion";
-import { Calculator, RefreshCw, TrendingUp, DollarSign, Percent, Package, Briefcase, Sparkles, Loader2, FileText } from "lucide-react";
+import { useState, useMemo, useCallback, useEffect } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import { Calculator, RefreshCw, TrendingUp, DollarSign, Percent, Package, Briefcase, Sparkles, Loader2, FileText, Save, Trash2, ChevronDown } from "lucide-react";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import MicInput from "@/components/MicInput";
 import logoMv2 from "@/assets/logo-mv2.png";
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
 
 const SERVICE_CATEGORIES = [
   { label: "Serviço manual / técnico (instalação, manutenção, envelopamento, pintura)", tax: 6, range: [150, 800] },
@@ -21,7 +23,21 @@ function formatBRL(v: number) {
 
 const ESTIMATE_TAX_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/estimate-tax`;
 
+interface SavedCalc {
+  id: string;
+  category: string;
+  service_description: string;
+  material_cost: number;
+  labor_cost: number;
+  other_costs: number;
+  tax_pct: number;
+  profit_pct: number;
+  final_price: number;
+  created_at: string;
+}
+
 export default function CalculadoraPreco() {
+  const { user } = useAuth();
   const [serviceIdx, setServiceIdx] = useState(0);
   const [serviceDescription, setServiceDescription] = useState("");
   const [materialCost, setMaterialCost] = useState("");
@@ -31,6 +47,9 @@ export default function CalculadoraPreco() {
   const [customTax, setCustomTax] = useState<number | null>(null);
   const [taxJustification, setTaxJustification] = useState("");
   const [estimatingTax, setEstimatingTax] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [savedCalcs, setSavedCalcs] = useState<SavedCalc[]>([]);
+  const [showHistory, setShowHistory] = useState(false);
 
   const selected = SERVICE_CATEGORIES[serviceIdx];
   const activeTax = customTax !== null ? customTax : selected.tax;
@@ -49,6 +68,18 @@ export default function CalculadoraPreco() {
   }, [materialCost, laborCost, otherCosts, profitPct, activeTax]);
 
   const hasInput = calc.totalCost > 0;
+
+  // Load saved calculations
+  useEffect(() => {
+    if (!user) return;
+    supabase
+      .from("saved_calculations")
+      .select("*")
+      .order("created_at", { ascending: false })
+      .then(({ data }) => {
+        if (data) setSavedCalcs(data as SavedCalc[]);
+      });
+  }, [user]);
 
   const estimateTax = useCallback(async (description?: string) => {
     const desc = description ?? serviceDescription;
@@ -69,6 +100,16 @@ export default function CalculadoraPreco() {
           category: selected.label,
         }),
       });
+
+      if (resp.status === 429) {
+        toast.error("Muitas requisições. Tente novamente em alguns segundos.");
+        return;
+      }
+      if (resp.status === 402) {
+        toast.error("Créditos insuficientes para IA.");
+        return;
+      }
+
       const data = await resp.json();
       if (data.error) {
         toast.error("Não foi possível estimar o imposto agora.");
@@ -83,6 +124,46 @@ export default function CalculadoraPreco() {
       setEstimatingTax(false);
     }
   }, [serviceDescription, selected.label]);
+
+  const saveCalculation = async () => {
+    if (!user) {
+      toast.error("Faça login para salvar seus cálculos.");
+      return;
+    }
+    if (!hasInput) return;
+
+    setSaving(true);
+    const { error } = await supabase.from("saved_calculations").insert({
+      user_id: user.id,
+      category: selected.label,
+      service_description: serviceDescription,
+      material_cost: parseFloat(materialCost) || 0,
+      labor_cost: parseFloat(laborCost) || 0,
+      other_costs: parseFloat(otherCosts) || 0,
+      tax_pct: activeTax,
+      profit_pct: parseFloat(profitPct) || 0,
+      final_price: calc.finalPrice,
+    });
+    setSaving(false);
+
+    if (error) {
+      toast.error("Erro ao salvar. Tente novamente.");
+    } else {
+      toast.success("Cálculo salvo com sucesso!");
+      // Refresh list
+      const { data } = await supabase
+        .from("saved_calculations")
+        .select("*")
+        .order("created_at", { ascending: false });
+      if (data) setSavedCalcs(data as SavedCalc[]);
+    }
+  };
+
+  const deleteCalc = async (id: string) => {
+    await supabase.from("saved_calculations").delete().eq("id", id);
+    setSavedCalcs((prev) => prev.filter((c) => c.id !== id));
+    toast.success("Cálculo removido.");
+  };
 
   const reset = () => {
     setMaterialCost("");
@@ -294,14 +375,24 @@ export default function CalculadoraPreco() {
                   </p>
                 </div>
 
-                {/* Recalculate */}
-                <button
-                  onClick={reset}
-                  className="w-full h-11 rounded-xl bg-secondary hover:bg-secondary/80 text-foreground text-sm font-medium flex items-center justify-center gap-2 transition-all"
-                >
-                  <RefreshCw className="w-4 h-4" />
-                  Recalcular
-                </button>
+                {/* Action buttons */}
+                <div className="flex gap-2">
+                  <button
+                    onClick={saveCalculation}
+                    disabled={saving}
+                    className="flex-1 h-11 rounded-xl bg-primary hover:bg-primary/90 text-primary-foreground text-sm font-medium flex items-center justify-center gap-2 transition-all disabled:opacity-50"
+                  >
+                    {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+                    Salvar cálculo
+                  </button>
+                  <button
+                    onClick={reset}
+                    className="h-11 px-4 rounded-xl bg-secondary hover:bg-secondary/80 text-foreground text-sm font-medium flex items-center justify-center gap-2 transition-all"
+                  >
+                    <RefreshCw className="w-4 h-4" />
+                    Limpar
+                  </button>
+                </div>
               </motion.div>
             )}
 
@@ -312,6 +403,66 @@ export default function CalculadoraPreco() {
               </div>
             )}
           </motion.div>
+
+          {/* Saved calculations */}
+          {user && savedCalcs.length > 0 && (
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.2 }}
+              className="mt-6"
+            >
+              <button
+                onClick={() => setShowHistory(!showHistory)}
+                className="w-full flex items-center justify-between px-4 py-3 rounded-xl bg-card/80 border border-border/50 text-sm font-medium text-foreground hover:bg-secondary/50 transition-all"
+              >
+                <span className="flex items-center gap-2">
+                  <Save className="w-4 h-4 text-primary" />
+                  Meus cálculos salvos ({savedCalcs.length})
+                </span>
+                <ChevronDown className={`w-4 h-4 text-muted-foreground transition-transform ${showHistory ? "rotate-180" : ""}`} />
+              </button>
+
+              <AnimatePresence>
+                {showHistory && (
+                  <motion.div
+                    initial={{ opacity: 0, height: 0 }}
+                    animate={{ opacity: 1, height: "auto" }}
+                    exit={{ opacity: 0, height: 0 }}
+                    className="overflow-hidden"
+                  >
+                    <div className="space-y-2 mt-2">
+                      {savedCalcs.map((c) => (
+                        <div
+                          key={c.id}
+                          className="rounded-xl border border-border/50 bg-card/60 p-4 flex items-center justify-between gap-3"
+                        >
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-semibold text-primary truncate">
+                              {formatBRL(c.final_price)}
+                            </p>
+                            <p className="text-xs text-muted-foreground truncate">
+                              {c.service_description || c.category}
+                            </p>
+                            <p className="text-[10px] text-muted-foreground/60">
+                              {new Date(c.created_at).toLocaleDateString("pt-BR")} • Imposto: {c.tax_pct}% • Lucro: {c.profit_pct}%
+                            </p>
+                          </div>
+                          <button
+                            onClick={() => deleteCalc(c.id)}
+                            className="shrink-0 h-8 w-8 rounded-lg text-muted-foreground hover:text-destructive hover:bg-destructive/10 flex items-center justify-center transition-all"
+                            title="Remover"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </motion.div>
+          )}
 
           {/* Footer text */}
           <p className="text-center text-xs text-muted-foreground mt-8">
