@@ -1,6 +1,6 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { Settings, Loader2, LogOut } from "lucide-react";
+import { Settings, Loader2, LogOut, Eye } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
@@ -13,7 +13,23 @@ const Footer = () => {
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const { user, signOut } = useAuth();
+  const [totalVisits, setTotalVisits] = useState<number | null>(null);
   const navigate = useNavigate();
+
+  useEffect(() => {
+    const trackVisit = async () => {
+      const visited = sessionStorage.getItem("mv_visited");
+      if (!visited) {
+        sessionStorage.setItem("mv_visited", "1");
+        const { data } = await supabase.rpc("increment_visits");
+        if (typeof data === "number") setTotalVisits(data);
+      } else {
+        const { data } = await supabase.from("visit_counter").select("total_visits").eq("id", 1).single();
+        if (data) setTotalVisits(data.total_visits);
+      }
+    };
+    trackVisit();
+  }, []);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -136,9 +152,17 @@ const Footer = () => {
           )}
         </div>
 
-        <p className="text-xs text-muted-foreground/60 text-center mt-4 max-w-lg mx-auto">
-          Este site utiliza Inteligência Artificial. As respostas geradas podem conter limitações e não substituem aconselhamento profissional.
-        </p>
+        <div className="flex flex-col items-center gap-2 mt-4">
+          {totalVisits !== null && (
+            <p className="text-xs text-muted-foreground/50 flex items-center gap-1.5">
+              <Eye className="w-3 h-3" />
+              {totalVisits.toLocaleString("pt-BR")} visitas
+            </p>
+          )}
+          <p className="text-xs text-muted-foreground/60 text-center max-w-lg mx-auto">
+            Este site utiliza Inteligência Artificial. As respostas geradas podem conter limitações e não substituem aconselhamento profissional.
+          </p>
+        </div>
       </div>
     </footer>
   );
