@@ -434,6 +434,21 @@ export type Database = {
         }
         Relationships: []
       }
+      visit_counter: {
+        Row: {
+          id: number
+          total_visits: number
+        }
+        Insert: {
+          id?: number
+          total_visits?: number
+        }
+        Update: {
+          id?: number
+          total_visits?: number
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
@@ -446,6 +461,7 @@ export type Database = {
         }
         Returns: boolean
       }
+      increment_visits: { Args: never; Returns: number }
     }
     Enums: {
       app_role: "admin" | "moderator" | "user"
