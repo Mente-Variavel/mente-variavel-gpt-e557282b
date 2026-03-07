@@ -528,6 +528,97 @@ const AdminAds = () => {
           )}
         </div>
 
+        {/* === Visitantes (Leads) === */}
+        <div className="mb-8">
+          <button
+            onClick={() => setShowVisitors(!showVisitors)}
+            className="flex items-center gap-2 font-display text-xl font-bold text-foreground mb-4 hover:text-primary transition-colors"
+          >
+            <Globe className="w-5 h-5 text-primary" />
+            Visitantes / Leads
+            {visitorLogs && <Badge className="ml-2">{visitorLogs.length}</Badge>}
+            {showVisitors ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+          </button>
+          {showVisitors && (
+            <div className="space-y-3">
+              <div className="flex items-center gap-2 mb-3">
+                <span className="text-xs text-muted-foreground">Período:</span>
+                {[1, 7, 30].map((d) => (
+                  <button
+                    key={d}
+                    onClick={() => setVisitorDays(d)}
+                    className={`px-3 py-1 text-xs rounded-lg transition-colors ${visitorDays === d ? "bg-primary text-primary-foreground" : "bg-secondary text-muted-foreground hover:bg-secondary/80"}`}
+                  >
+                    {d === 1 ? "Hoje" : `${d} dias`}
+                  </button>
+                ))}
+              </div>
+
+              {/* Summary cards */}
+              {visitorLogs && visitorLogs.length > 0 && (
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-3 mb-3">
+                  <div className="glass rounded-xl p-3 border border-border/50 text-center">
+                    <Eye className="w-5 h-5 mx-auto mb-1 text-primary" />
+                    <p className="text-xl font-bold text-foreground">{visitorLogs.length}</p>
+                    <p className="text-[10px] text-muted-foreground">Acessos</p>
+                  </div>
+                  <div className="glass rounded-xl p-3 border border-border/50 text-center">
+                    <Users className="w-5 h-5 mx-auto mb-1 text-primary" />
+                    <p className="text-xl font-bold text-foreground">
+                      {new Set(visitorLogs.map((v: any) => v.ip_address)).size}
+                    </p>
+                    <p className="text-[10px] text-muted-foreground">IPs únicos</p>
+                  </div>
+                  <div className="glass rounded-xl p-3 border border-border/50 text-center">
+                    <Globe className="w-5 h-5 mx-auto mb-1 text-primary" />
+                    <p className="text-xl font-bold text-foreground">
+                      {new Set(visitorLogs.map((v: any) => v.page)).size}
+                    </p>
+                    <p className="text-[10px] text-muted-foreground">Páginas visitadas</p>
+                  </div>
+                </div>
+              )}
+
+              {!visitorLogs || visitorLogs.length === 0 ? (
+                <p className="text-sm text-muted-foreground">Nenhum registro de visitante no período.</p>
+              ) : (
+                <div className="glass rounded-xl border border-border/50 overflow-hidden">
+                  <div className="overflow-x-auto max-h-96 overflow-y-auto">
+                    <table className="w-full text-sm">
+                      <thead className="sticky top-0 bg-card">
+                        <tr className="border-b border-border/50 bg-muted/30">
+                          <th className="text-left px-4 py-3 font-medium text-muted-foreground">IP</th>
+                          <th className="text-left px-4 py-3 font-medium text-muted-foreground">Página</th>
+                          <th className="text-left px-4 py-3 font-medium text-muted-foreground">Dispositivo</th>
+                          <th className="text-left px-4 py-3 font-medium text-muted-foreground">Data/Hora</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {visitorLogs.map((v: any) => {
+                          const ua = v.user_agent || "";
+                          const isMobile = /mobile|android|iphone/i.test(ua);
+                          const browser = /chrome/i.test(ua) ? "Chrome" : /firefox/i.test(ua) ? "Firefox" : /safari/i.test(ua) ? "Safari" : /edge/i.test(ua) ? "Edge" : "Outro";
+                          return (
+                            <tr key={v.id} className="border-b border-border/30 last:border-0 hover:bg-muted/20 transition-colors">
+                              <td className="px-4 py-2 text-foreground font-mono text-xs">{v.ip_address}</td>
+                              <td className="px-4 py-2 text-muted-foreground text-xs max-w-[200px] truncate">{v.page}</td>
+                              <td className="px-4 py-2 text-muted-foreground text-xs">
+                                {isMobile ? "📱 Mobile" : "💻 Desktop"} · {browser}
+                              </td>
+                              <td className="px-4 py-2 text-muted-foreground text-xs whitespace-nowrap">
+                                {new Date(v.created_at).toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" })}
+                              </td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
 
         {/* === Ferramentas Patrocinadas === */}
         <h2 className="font-display text-xl md:text-2xl font-bold text-foreground mb-4 flex items-center gap-2">
