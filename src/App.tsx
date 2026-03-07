@@ -69,6 +69,7 @@ function App() {
             <Route path="/anuncie" element={<Parceiro />} />
             <Route path="/sobre" element={<About />} />
             <Route path="/contato" element={<Contact />} />
+            <Route path="/ferramentas/calculadora-preco" element={<CalculadoraPreco />} />
             
             <Route path="/auth" element={<Auth />} />
             <Route path="/admin/anuncios" element={<AdminAds />} />
