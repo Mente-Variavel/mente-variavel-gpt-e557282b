@@ -91,6 +91,24 @@ const AdminAds = () => {
     refetchInterval: 30_000,
   });
 
+  // Visitor logs
+  const { data: visitorLogs } = useQuery({
+    queryKey: ["admin-visitor-logs", visitorDays],
+    queryFn: async () => {
+      const since = new Date();
+      since.setDate(since.getDate() - visitorDays);
+      const { data, error } = await supabase
+        .from("visitor_logs")
+        .select("*")
+        .gte("created_at", since.toISOString())
+        .order("created_at", { ascending: false })
+        .limit(500);
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!user,
+  });
+
   // Google Analytics setting
   const { data: gaSettings } = useQuery({
     queryKey: ["site-settings-ga"],
