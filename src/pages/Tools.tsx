@@ -4,11 +4,12 @@ import { supabase } from "@/integrations/supabase/client";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import AdPlaceholder from "@/components/AdPlaceholder";
-import { ExternalLink, ImageMinus, Mail, Wallet, Sparkles, ArrowLeftRight, GraduationCap } from "lucide-react";
+import { ExternalLink, ImageMinus, Mail, Wallet, Sparkles, ArrowLeftRight, GraduationCap, Calculator } from "lucide-react";
 import { motion } from "framer-motion";
 import { Badge } from "@/components/ui/badge";
+import { Link } from "react-router-dom";
 
-const tools = [
+const externalTools = [
   {
     name: "Removedor de Fundos de Imagens",
     description: "Remova o fundo de qualquer imagem de forma rápida e gratuita usando Inteligência Artificial.",
@@ -38,6 +39,15 @@ const tools = [
     description: "Aprenda sobre finanças de forma interativa e inteligente com a ajuda da IA.",
     url: "https://mente-educ.lovable.app/",
     icon: GraduationCap,
+  },
+];
+
+const internalTools = [
+  {
+    name: "Service Price Calculator",
+    description: "Descubra quanto cobrar pelo seu serviço em segundos. Calculadora inteligente para freelancers.",
+    to: "/ferramentas/calculadora-preco",
+    icon: Calculator,
   },
 ];
 
