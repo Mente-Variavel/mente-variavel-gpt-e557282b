@@ -67,7 +67,7 @@ const Footer = () => {
               <Link to="/servicos/removedor-fundo" className="hover:text-primary transition-colors">Removedor de Fundo</Link>
               <Link to="/servicos/gerador-slides" className="hover:text-primary transition-colors">Gerador de Slides & E-book</Link>
               <Link to="/servicos/criador-musica" className="hover:text-primary transition-colors">Criador de Música IA</Link>
-              <Link to="/ferramentas/calculadora-preco" className="hover:text-primary transition-colors">Calculadora de Preço</Link>
+              <Link to="/ferramentas/calculadora-preco" className="hover:text-primary transition-colors">Calculadora de Lucro</Link>
             </div>
           </div>
           <div>
