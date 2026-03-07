@@ -90,6 +90,7 @@ const AdminAds = () => {
     enabled: !!user,
     refetchInterval: 30_000,
   });
+  const [visitorDays, setVisitorDays] = useState(7);
 
   // Visitor logs
   const { data: visitorLogs } = useQuery({
