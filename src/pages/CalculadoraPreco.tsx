@@ -193,7 +193,7 @@ export default function CalculadoraPreco() {
               Calculadora de Lucro
             </h1>
             <p className="text-muted-foreground text-sm sm:text-base">
-              Descubra quanto cobrar pelo seu serviço em segundos.
+              Calcule seus custos, impostos e lucro de forma inteligente.
             </p>
           </motion.div>
 
