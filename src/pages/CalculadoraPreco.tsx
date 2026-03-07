@@ -283,14 +283,16 @@ export default function CalculadoraPreco() {
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <CostField
                 icon={<Package className="w-4 h-4 text-primary" />}
-                label="Custo do material (R$)"
+                label="Insumos e ferramentas (R$)"
+                hint="Material, assinaturas, plataformas, matéria-prima..."
                 value={materialCost}
                 onChange={setMaterialCost}
                 placeholder="0,00"
               />
               <CostField
                 icon={<DollarSign className="w-4 h-4 text-primary" />}
-                label="Custo da mão de obra (R$)"
+                label="Mão de obra (R$)"
+                hint="Seu tempo, equipe, terceirizados..."
                 value={laborCost}
                 onChange={setLaborCost}
                 placeholder="0,00"
@@ -298,6 +300,7 @@ export default function CalculadoraPreco() {
               <CostField
                 icon={<DollarSign className="w-4 h-4 text-primary" />}
                 label="Outros custos (R$)"
+                hint="Deslocamento, energia, aluguel proporcional..."
                 value={otherCosts}
                 onChange={setOtherCosts}
                 placeholder="0,00"
@@ -475,8 +478,8 @@ export default function CalculadoraPreco() {
   );
 }
 
-function CostField({ icon, label, value, onChange, placeholder }: {
-  icon: React.ReactNode; label: string; value: string;
+function CostField({ icon, label, hint, value, onChange, placeholder }: {
+  icon: React.ReactNode; label: string; hint?: string; value: string;
   onChange: (v: string) => void; placeholder: string;
 }) {
   return (
@@ -484,6 +487,7 @@ function CostField({ icon, label, value, onChange, placeholder }: {
       <label className="text-xs font-medium text-foreground flex items-center gap-1.5">
         {icon} {label}
       </label>
+      {hint && <p className="text-[10px] text-muted-foreground/70 -mt-0.5">{hint}</p>}
       <input
         type="number"
         inputMode="decimal"
