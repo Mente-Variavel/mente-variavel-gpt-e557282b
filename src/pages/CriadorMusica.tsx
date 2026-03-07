@@ -122,6 +122,18 @@ function sanitizeArtistReferences(text: string): string {
     "u2": "rock alternativo com vocais masculinos emotivos e épicos, guitarra com efeitos atmosféricos, baixo pulsante e bateria dinâmica, atmosfera grandiosa e inspiradora, ritmo moderado",
     "mick jagger": "rock blues com voz masculina provocante e carismática, textura vocal nasalada e rítmica, guitarra blues rock e harmonica, atmosfera rebelde e festiva, ritmo médio-rápido e groovy",
     "rolling stones": "rock blues com vocais masculinos carismáticos e provocantes, guitarra blues rock com riffs icônicos, groove pesado e bateria rock, atmosfera rebelde e clássica, ritmo médio-rápido",
+    // Gospel nacional
+    "fernandinho": "gospel worship com voz masculina potente e apaixonada, textura vocal intensa e espiritual, guitarra elétrica e acústica, bateria enérgica e teclado atmosférico, coro congregacional, atmosfera de adoração fervorosa e avivamento, ritmo moderado a rápido",
+    "aline barros": "gospel pop com voz feminina potente e cristalina, textura vocal doce e virtuosa com melismas, teclado e orquestra, coro infantil e adulto, atmosfera de louvor alegre e inspiradora, ritmo moderado e melódico",
+    "anderson freire": "gospel emocional com voz masculina potente e rasgada, textura vocal intensa e dramática, piano e cordas cinematográficas, atmosfera de adoração profunda e entrega, ritmo lento a moderado e crescente",
+    "bruna karla": "gospel devocional com voz feminina suave e emotiva, textura vocal delicada e espiritual, piano e violão acústico, atmosfera de oração íntima e contemplativa, ritmo lento e sereno",
+    "gabriela rocha": "gospel worship moderno com voz feminina potente e etérea, textura vocal limpa e emotiva com falsete, produção contemporânea com pads e guitarra, atmosfera celestial e envolvente, ritmo moderado e atmosférico",
+    "thalles roberto": "gospel pop rock com voz masculina enérgica e carismática, textura vocal vibrante e festiva, guitarra elétrica e bateria pesada, atmosfera de celebração e alegria, ritmo rápido e contagiante",
+    "eli soares": "gospel soul com voz masculina grave e aveludada, textura vocal sofisticada e jazzy, piano e baixo groovy, atmosfera intimista e espiritual, ritmo moderado e suave",
+    "nívea soares": "gospel worship com voz feminina potente e profética, textura vocal intensa e ungida, teclado e guitarra atmosférica, coro de adoração, atmosfera de avivamento e reverência, ritmo moderado e crescente",
+    "isadora pompeo": "gospel pop jovem com voz feminina doce e moderna, textura vocal leve e acessível, produção pop contemporânea com sintetizadores, atmosfera positiva e esperançosa, ritmo moderado e dançante",
+    "marina de oliveira": "gospel clássico com voz feminina lírica e potente, textura vocal operística e grandiosa, orquestra e piano, atmosfera majestosa e emocional, ritmo moderado e dramático",
+    "rodolfo abrantes": "gospel rock com voz masculina intensa e rasgada, textura vocal crua e visceral com influência punk rock, guitarra distorcida e bateria pesada, atmosfera de adoração radical e apaixonada, ritmo rápido e enérgico",
   };
 
   let result = text;
