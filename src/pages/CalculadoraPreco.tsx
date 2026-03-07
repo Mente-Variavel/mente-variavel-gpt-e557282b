@@ -63,7 +63,7 @@ export default function CalculadoraPreco() {
             <img src={logoMv2} alt="Mente Variável" className="w-16 h-16 mx-auto mb-4 rounded-full" />
             <p className="text-xs uppercase tracking-widest text-primary font-semibold mb-2">Mente Variável</p>
             <h1 className="text-2xl sm:text-3xl font-display font-bold text-foreground mb-2">
-              Service Price Calculator
+              Calculadora de Lucro
             </h1>
             <p className="text-muted-foreground text-sm sm:text-base">
               Descubra quanto cobrar pelo seu serviço em segundos.

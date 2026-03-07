@@ -44,7 +44,7 @@ const externalTools = [
 
 const internalTools = [
   {
-    name: "Service Price Calculator",
+    name: "Calculadora de Lucro",
     description: "Descubra quanto cobrar pelo seu serviço em segundos. Calculadora inteligente para freelancers.",
     to: "/ferramentas/calculadora-preco",
     icon: Calculator,
