@@ -1,11 +1,13 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useCallback } from "react";
 import { motion } from "framer-motion";
-import { Calculator, RefreshCw, TrendingUp, DollarSign, Percent, Package, Briefcase } from "lucide-react";
+import { Calculator, RefreshCw, TrendingUp, DollarSign, Percent, Package, Briefcase, Sparkles, Loader2, FileText } from "lucide-react";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
+import MicInput from "@/components/MicInput";
 import logoMv2 from "@/assets/logo-mv2.png";
+import { toast } from "sonner";
 
-const SERVICE_TYPES = [
+const SERVICE_CATEGORIES = [
   { label: "Serviço manual / técnico (instalação, manutenção, envelopamento, pintura)", tax: 6, range: [150, 800] },
   { label: "Serviço criativo / digital (design, social media, marketing)", tax: 6, range: [200, 2000] },
   { label: "Alimentação / produção (doces, marmitas, restaurante)", tax: 8, range: [80, 500] },
@@ -17,14 +19,21 @@ function formatBRL(v: number) {
   return v.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 }
 
+const ESTIMATE_TAX_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/estimate-tax`;
+
 export default function CalculadoraPreco() {
   const [serviceIdx, setServiceIdx] = useState(0);
+  const [serviceDescription, setServiceDescription] = useState("");
   const [materialCost, setMaterialCost] = useState("");
   const [laborCost, setLaborCost] = useState("");
   const [otherCosts, setOtherCosts] = useState("");
   const [profitPct, setProfitPct] = useState("40");
+  const [customTax, setCustomTax] = useState<number | null>(null);
+  const [taxJustification, setTaxJustification] = useState("");
+  const [estimatingTax, setEstimatingTax] = useState(false);
 
-  const selected = SERVICE_TYPES[serviceIdx];
+  const selected = SERVICE_CATEGORIES[serviceIdx];
+  const activeTax = customTax !== null ? customTax : selected.tax;
 
   const calc = useMemo(() => {
     const mat = parseFloat(materialCost) || 0;
@@ -32,14 +41,48 @@ export default function CalculadoraPreco() {
     const oth = parseFloat(otherCosts) || 0;
     const profit = parseFloat(profitPct) || 0;
     const totalCost = mat + lab + oth;
-    const taxValue = totalCost * (selected.tax / 100);
+    const taxValue = totalCost * (activeTax / 100);
     const profitValue = totalCost * (profit / 100);
     const finalPrice = totalCost + taxValue + profitValue;
     const profitBar = totalCost > 0 ? Math.min((profitValue / finalPrice) * 100, 100) : 0;
     return { totalCost, taxValue, profitValue, finalPrice, profitBar };
-  }, [materialCost, laborCost, otherCosts, profitPct, selected]);
+  }, [materialCost, laborCost, otherCosts, profitPct, activeTax]);
 
   const hasInput = calc.totalCost > 0;
+
+  const estimateTax = useCallback(async (description?: string) => {
+    const desc = description ?? serviceDescription;
+    if (!desc.trim()) {
+      toast.info("Descreva seu serviço para estimar o imposto com IA.");
+      return;
+    }
+    setEstimatingTax(true);
+    try {
+      const resp = await fetch(ESTIMATE_TAX_URL, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+        },
+        body: JSON.stringify({
+          description: desc,
+          category: selected.label,
+        }),
+      });
+      const data = await resp.json();
+      if (data.error) {
+        toast.error("Não foi possível estimar o imposto agora.");
+        return;
+      }
+      setCustomTax(data.tax);
+      setTaxJustification(data.justification || "");
+      toast.success(`Imposto estimado em ${data.tax}%`);
+    } catch {
+      toast.error("Erro ao estimar imposto. Tente novamente.");
+    } finally {
+      setEstimatingTax(false);
+    }
+  }, [serviceDescription, selected.label]);
 
   const reset = () => {
     setMaterialCost("");
@@ -47,6 +90,9 @@ export default function CalculadoraPreco() {
     setOtherCosts("");
     setProfitPct("40");
     setServiceIdx(0);
+    setServiceDescription("");
+    setCustomTax(null);
+    setTaxJustification("");
   };
 
   return (
@@ -77,50 +123,105 @@ export default function CalculadoraPreco() {
             transition={{ delay: 0.1 }}
             className="rounded-2xl border border-border/50 bg-card/80 backdrop-blur-xl shadow-lg p-6 sm:p-8 space-y-6"
           >
-            {/* Service type */}
+            {/* Category */}
             <div className="space-y-2">
               <label className="text-sm font-medium text-foreground flex items-center gap-2">
                 <Briefcase className="w-4 h-4 text-primary" />
-                Tipo de serviço
+                Categoria
               </label>
               <select
                 value={serviceIdx}
-                onChange={(e) => setServiceIdx(Number(e.target.value))}
+                onChange={(e) => {
+                  setServiceIdx(Number(e.target.value));
+                  setCustomTax(null);
+                  setTaxJustification("");
+                }}
                 className="w-full h-11 rounded-xl border border-border bg-secondary/50 px-3 text-sm text-foreground outline-none focus:ring-2 focus:ring-primary/40 transition-all"
               >
-                {SERVICE_TYPES.map((s, i) => (
+                {SERVICE_CATEGORIES.map((s, i) => (
                   <option key={i} value={i}>{s.label}</option>
                 ))}
               </select>
+            </div>
+
+            {/* Service description + mic */}
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-foreground flex items-center gap-2">
+                <FileText className="w-4 h-4 text-primary" />
+                Descreva seu serviço
+              </label>
+              <div className="relative">
+                <textarea
+                  value={serviceDescription}
+                  onChange={(e) => setServiceDescription(e.target.value)}
+                  placeholder="Ex: Faço envelopamento automotivo completo, trabalho com vinil importado..."
+                  rows={3}
+                  className="w-full rounded-xl border border-border bg-secondary/50 px-3 py-3 pr-20 text-sm text-foreground outline-none focus:ring-2 focus:ring-primary/40 placeholder:text-muted-foreground/50 transition-all resize-none"
+                />
+                <div className="absolute right-2 top-2 flex items-center gap-1">
+                  <MicInput
+                    onTranscript={(text) => {
+                      setServiceDescription((prev) => (prev ? prev + " " + text : text));
+                    }}
+                  />
+                  <button
+                    onClick={() => estimateTax()}
+                    disabled={estimatingTax || !serviceDescription.trim()}
+                    className="h-8 w-8 rounded-lg bg-primary/10 hover:bg-primary/20 text-primary flex items-center justify-center transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+                    title="Estimar imposto com IA"
+                  >
+                    {estimatingTax ? (
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                    ) : (
+                      <Sparkles className="w-4 h-4" />
+                    )}
+                  </button>
+                </div>
+              </div>
               <p className="text-xs text-muted-foreground">
-                Imposto estimado: <span className="text-primary font-semibold">{selected.tax}%</span>
+                Descreva o que faz e clique em <Sparkles className="w-3 h-3 inline text-primary" /> para estimar o imposto com IA.
               </p>
+            </div>
+
+            {/* Tax info */}
+            <div className="rounded-lg bg-secondary/40 border border-border/30 p-3 space-y-1">
+              <p className="text-xs text-muted-foreground">
+                Imposto estimado: <span className="text-primary font-bold text-sm">{activeTax}%</span>
+                {customTax !== null && (
+                  <span className="ml-2 inline-flex items-center gap-1 text-primary/70">
+                    <Sparkles className="w-3 h-3" /> estimado por IA
+                  </span>
+                )}
+              </p>
+              {taxJustification && (
+                <p className="text-xs text-muted-foreground/80 italic">{taxJustification}</p>
+              )}
             </div>
 
             {/* Cost fields */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <Field
+              <CostField
                 icon={<Package className="w-4 h-4 text-primary" />}
                 label="Custo do material (R$)"
                 value={materialCost}
                 onChange={setMaterialCost}
                 placeholder="0,00"
               />
-              <Field
+              <CostField
                 icon={<DollarSign className="w-4 h-4 text-primary" />}
                 label="Custo da mão de obra (R$)"
                 value={laborCost}
                 onChange={setLaborCost}
                 placeholder="0,00"
               />
-              <Field
+              <CostField
                 icon={<DollarSign className="w-4 h-4 text-primary" />}
                 label="Outros custos (R$)"
                 value={otherCosts}
                 onChange={setOtherCosts}
                 placeholder="0,00"
               />
-              <Field
+              <CostField
                 icon={<Percent className="w-4 h-4 text-primary" />}
                 label="Lucro desejado (%)"
                 value={profitPct}
@@ -223,7 +324,7 @@ export default function CalculadoraPreco() {
   );
 }
 
-function Field({ icon, label, value, onChange, placeholder }: {
+function CostField({ icon, label, value, onChange, placeholder }: {
   icon: React.ReactNode; label: string; value: string;
   onChange: (v: string) => void; placeholder: string;
 }) {
