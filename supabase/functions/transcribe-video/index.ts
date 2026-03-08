@@ -7,7 +7,7 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
-const FREE_LIMIT = 3;
+const FREE_LIMIT_MINUTES = 3; // 3 free minutes per month
 
 serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -59,20 +59,20 @@ serve(async (req) => {
     const now = new Date();
     const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
 
-    // Only check limit for non-admin users
+    // Check minutes usage for non-admin users
     if (!isAdmin) {
-      const { count, error: countError } = await supabase
+      const { data: usageRows } = await supabase
         .from("subtitle_usage")
-        .select("*", { count: "exact", head: true })
+        .select("minutes_used")
         .eq("ip_address", ip)
         .gte("created_at", startOfMonth);
 
-      if (countError) throw countError;
+      const totalMinutesUsed = (usageRows || []).reduce((sum: number, r: any) => sum + (r.minutes_used || 0), 0);
 
-      if ((count ?? 0) >= FREE_LIMIT) {
+      if (totalMinutesUsed >= FREE_LIMIT_MINUTES) {
         return new Response(
           JSON.stringify({
-            error: "Você atingiu o limite gratuito. Assine o plano para continuar gerando legendas.",
+            error: "Você atingiu o limite gratuito de minutos. Assine o plano para continuar gerando legendas.",
             limit_reached: true,
           }),
           { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } }
@@ -113,10 +113,14 @@ serve(async (req) => {
     }
 
     const result = await response.json();
+    const videoDurationMinutes = (result.duration || 0) / 60;
 
-    // Only track usage for non-admin users
+    // Track usage in minutes for non-admin users
     if (!isAdmin) {
-      await supabase.from("subtitle_usage").insert({ ip_address: ip });
+      await supabase.from("subtitle_usage").insert({
+        ip_address: ip,
+        minutes_used: Math.round(videoDurationMinutes * 100) / 100,
+      });
     }
 
     const subtitles = (result.segments || []).map((seg: any) => ({
@@ -126,15 +130,22 @@ serve(async (req) => {
       text: seg.text.trim(),
     }));
 
-    const { count: newCount } = await supabase
+    // Recalculate total usage after insert
+    const { data: newUsageRows } = await supabase
       .from("subtitle_usage")
-      .select("*", { count: "exact", head: true })
+      .select("minutes_used")
       .eq("ip_address", ip)
       .gte("created_at", startOfMonth);
 
+    const newTotalMinutes = (newUsageRows || []).reduce((sum: number, r: any) => sum + (r.minutes_used || 0), 0);
+
     const usageInfo = isAdmin
       ? { used: 0, limit: 999999, remaining: 999999 }
-      : { used: newCount ?? 1, limit: FREE_LIMIT, remaining: Math.max(0, FREE_LIMIT - (newCount ?? 1)) };
+      : {
+          used: Math.round(newTotalMinutes * 10) / 10,
+          limit: FREE_LIMIT_MINUTES,
+          remaining: Math.max(0, Math.round((FREE_LIMIT_MINUTES - newTotalMinutes) * 10) / 10),
+        };
 
     return new Response(
       JSON.stringify({

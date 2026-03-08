@@ -1,4 +1,4 @@
-import { useRef, useEffect, useState } from "react";
+import { useRef, useEffect, useState, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useLocation } from "react-router-dom";
 import { Plus, Trash2, Info, Gift, X } from "lucide-react";
@@ -9,6 +9,7 @@ import type { ChatAttachment } from "@/components/ChatInput";
 import TypingIndicator from "@/components/TypingIndicator";
 import Navbar from "@/components/Navbar";
 import chatLogo from "@/assets/logo.png";
+import { useAuth } from "@/hooks/useAuth";
 
 import ReferenceAnalysis, { type AnalysisData } from "@/components/ReferenceAnalysis";
 
@@ -34,7 +35,10 @@ const IMAGE_TRIGGERS = [
   "usar esse logo", "use esse logo", "com esse logo", "usando esse logo",
   "usar essa imagem", "use essa imagem", "com essa imagem", "usando essa imagem",
   "mockup", "estampa", "estampar", "personalizar", "personalização",
-  // Broader triggers
+];
+
+// Broader triggers that ONLY apply when combined with visual context
+const IMAGE_BROAD_TRIGGERS = [
   "cria um", "cria uma", "crie um", "crie uma",
   "gera um", "gera uma", "gere um", "gere uma",
   "faz um", "faz uma", "faça um", "faça uma",
@@ -44,6 +48,25 @@ const IMAGE_TRIGGERS = [
   "arte de", "arte do", "arte da",
   "ilustração de", "ilustração do", "ilustração da",
   "picture of", "image of", "photo of",
+];
+
+// Text-only triggers: if these appear, do NOT generate image even if broad triggers match
+const TEXT_ONLY_INDICATORS = [
+  "descrição", "descreva", "descrever", "texto", "escreva", "escrever",
+  "redação", "artigo", "roteiro", "script", "copy", "legenda",
+  "resumo", "resumir", "traduz", "traduzir", "tradução",
+  "explique", "explicar", "explicação", "analise", "analisar", "análise",
+  "liste", "listar", "lista de", "enumere", "enumerar",
+  "sugira", "sugerir", "sugestão", "sugestões",
+  "crie um texto", "crie uma descrição", "crie um roteiro", "crie um artigo",
+  "crie uma legenda", "crie um resumo", "crie uma copy",
+  "gere um texto", "gere uma descrição", "gere um roteiro", "gere um artigo",
+  "faça um texto", "faça uma descrição", "faça um roteiro", "faça um artigo",
+  "description", "describe", "write", "text", "article", "script",
+  "summarize", "summary", "translate", "explain", "list",
+  "título", "hashtag", "hashtags", "caption", "bio",
+  "plano de", "planejamento", "estratégia", "ideia", "ideias",
+  "nome para", "nomes para", "slogan",
 ];
 
 // If user attached images, also check these lighter triggers
@@ -70,12 +93,24 @@ const IMAGE_PROMPT_INDICATORS = [
 
 function isImageRequest(text: string, hasAttachments: boolean): boolean {
   const lower = text.toLowerCase();
-  if (IMAGE_TRIGGERS.some((t) => lower.includes(t))) return true;
+
+  // Check if text explicitly requests text-only content
+  const isTextRequest = TEXT_ONLY_INDICATORS.some((t) => lower.includes(t));
+
+  // Explicit image triggers always win (unless it's clearly a text request)
+  if (!isTextRequest && IMAGE_TRIGGERS.some((t) => lower.includes(t))) return true;
+
+  // With attachments, route to image generation
   if (hasAttachments && IMAGE_WITH_ATTACHMENT_TRIGGERS.some((t) => lower.includes(t))) return true;
   if (hasAttachments) return true;
+
+  // Broad triggers only if NOT a text request
+  if (!isTextRequest && IMAGE_BROAD_TRIGGERS.some((t) => lower.includes(t))) return true;
+
   // Detect structured image prompts with multiple indicators
   const indicatorCount = IMAGE_PROMPT_INDICATORS.filter((t) => lower.includes(t)).length;
   if (indicatorCount >= 2) return true;
+
   return false;
 }
 
@@ -111,11 +146,58 @@ async function fileToBase64(file: File): Promise<string> {
 
 const Chat = () => {
   const location = useLocation();
+  const { user } = useAuth();
   const [messages, setMessages] = useState<Msg[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [showWelcome, setShowWelcome] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
   const initialSent = useRef(false);
+  const conversationId = useRef<string | null>(null);
+  const saveTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Load conversation for logged-in users
+  useEffect(() => {
+    if (!user) return;
+    const loadConversation = async () => {
+      const { data } = await supabase
+        .from("chat_conversations")
+        .select("id, messages")
+        .eq("user_id", user.id)
+        .order("updated_at", { ascending: false })
+        .limit(1);
+      if (data && data.length > 0) {
+        conversationId.current = data[0].id;
+        const savedMsgs = data[0].messages as any[];
+        if (savedMsgs && savedMsgs.length > 0) {
+          setMessages(savedMsgs);
+        }
+      }
+    };
+    loadConversation();
+  }, [user]);
+
+  // Save conversation with debounce
+  const saveConversation = useCallback((msgs: Msg[]) => {
+    if (!user || msgs.length === 0) return;
+    if (saveTimeout.current) clearTimeout(saveTimeout.current);
+    saveTimeout.current = setTimeout(async () => {
+      // Strip non-serializable fields
+      const toSave = msgs.map(({ role, content, imageUrl }) => ({ role, content, imageUrl }));
+      if (conversationId.current) {
+        await supabase
+          .from("chat_conversations")
+          .update({ messages: toSave as any, updated_at: new Date().toISOString() })
+          .eq("id", conversationId.current);
+      } else {
+        const { data } = await supabase
+          .from("chat_conversations")
+          .insert({ user_id: user.id, messages: toSave as any })
+          .select("id")
+          .single();
+        if (data) conversationId.current = data.id;
+      }
+    }, 1500);
+  }, [user]);
 
   // Show welcome popup once
   useEffect(() => {
@@ -142,7 +224,6 @@ const Chat = () => {
   const generateImage = async (prompt: string, referenceImages?: string[], aspectRatio?: string) => {
     setIsLoading(true);
     try {
-      // Validate references before sending
       if (referenceImages && referenceImages.length > 0) {
         for (const img of referenceImages) {
           if (!img || !img.startsWith("data:image")) {
@@ -156,7 +237,6 @@ const Chat = () => {
         }
       }
 
-      // Show generating state
       setMessages((prev) => [
         ...prev,
         { role: "assistant", content: "🎨 **Gerando imagem…** Isso pode levar alguns segundos." },
@@ -165,7 +245,6 @@ const Chat = () => {
       const controller = new AbortController();
       const timeout = setTimeout(() => controller.abort(), 60000);
 
-      // Get current session token for admin bypass
       const { data: { session } } = await supabase.auth.getSession();
       const authToken = session?.access_token || import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
 
@@ -194,9 +273,8 @@ const Chat = () => {
 
       const hasAnalysis = data.analysis && referenceImages && referenceImages.length > 0;
 
-      // Remove the "generating" message and add the real results
       setMessages((prev) => {
-        const withoutGenerating = prev.slice(0, -1); // remove "Gerando imagem…"
+        const withoutGenerating = prev.slice(0, -1);
         const result: Msg[] = [...withoutGenerating];
 
         if (hasAnalysis) {
@@ -213,6 +291,7 @@ const Chat = () => {
           imageUrl: data.imageUrl,
         });
 
+        saveConversation(result);
         return result;
       });
     } catch (e: any) {
@@ -221,7 +300,6 @@ const Chat = () => {
         ? "⏱️ **Tempo limite atingido** (60s). A geração demorou demais."
         : `❌ **Falha ao gerar a imagem:** ${e.message}`;
 
-      // Remove the "generating" message and add error with retry
       setMessages((prev) => {
         const withoutGenerating = prev[prev.length - 1]?.content?.includes("Gerando imagem")
           ? prev.slice(0, -1)
@@ -246,7 +324,6 @@ const Chat = () => {
   };
 
   const sendMessage = async (input: string, attachments?: ChatAttachment[]) => {
-    // Convert attachments to base64 previews for display
     const attachmentPreviews: string[] = [];
     const imageBase64List: string[] = [];
 
@@ -260,8 +337,6 @@ const Chat = () => {
       }
     }
 
-    console.log("[Chat] sendMessage called, input:", input, "attachments:", attachments?.length ?? 0, "imageBase64List:", imageBase64List.length);
-
     const userMsg: Msg = {
       role: "user",
       content: input,
@@ -272,10 +347,8 @@ const Chat = () => {
     const hasImages = imageBase64List.length > 0;
     const triggerMatch = isImageRequest(input, hasImages);
 
-    // CRITICAL: If user attached images, ALWAYS route to image generation
     if (hasImages || triggerMatch) {
       const detectedRatio = detectAspectRatio(input);
-      console.log("[Chat] Routing to image generation. hasImages:", hasImages, "triggerMatch:", triggerMatch, "aspectRatio:", detectedRatio);
       await generateImage(input, hasImages ? imageBase64List : undefined, detectedRatio);
       return;
     }
@@ -284,7 +357,6 @@ const Chat = () => {
     let assistantSoFar = "";
 
     try {
-      // No images here (they were routed to generateImage above)
       const lastUserContent = input;
 
       const apiMessages = [
@@ -341,6 +413,12 @@ const Chat = () => {
           }
         }
       }
+
+      // Save after streaming completes
+      setMessages((prev) => {
+        saveConversation(prev);
+        return prev;
+      });
     } catch (e) {
       console.error(e);
       setMessages((prev) => [
@@ -349,6 +427,17 @@ const Chat = () => {
       ]);
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const clearChat = () => {
+    setMessages([]);
+    if (user && conversationId.current) {
+      supabase
+        .from("chat_conversations")
+        .delete()
+        .eq("id", conversationId.current)
+        .then(() => { conversationId.current = null; });
     }
   };
 
@@ -410,13 +499,13 @@ const Chat = () => {
           </h1>
           <div className="flex gap-2">
             <button
-              onClick={() => setMessages([])}
+              onClick={clearChat}
               className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs text-muted-foreground hover:text-foreground hover:bg-secondary transition-all border border-border/50"
             >
               <Plus className="w-3.5 h-3.5" /> Novo Chat
             </button>
             <button
-              onClick={() => setMessages([])}
+              onClick={clearChat}
               className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-all border border-border/50"
             >
               <Trash2 className="w-3.5 h-3.5" /> Limpar
