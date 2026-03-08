@@ -7,6 +7,8 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
+const FREE_LIMIT_MINUTES = 3;
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -23,7 +25,6 @@ serve(async (req) => {
     if (authHeader.startsWith("Bearer ")) {
       const token = authHeader.replace("Bearer ", "");
       const anonKey = Deno.env.get("SUPABASE_ANON_KEY") ?? "";
-      // Only check if it's not the anon key (i.e., it's a user token)
       if (token !== anonKey) {
         const userClient = createClient(supabaseUrl, anonKey, {
           global: { headers: { Authorization: `Bearer ${token}` } },
@@ -57,20 +58,20 @@ serve(async (req) => {
     const now = new Date();
     const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
 
-    const { count, error } = await supabase
+    const { data: usageRows, error } = await supabase
       .from("subtitle_usage")
-      .select("*", { count: "exact", head: true })
+      .select("minutes_used")
       .eq("ip_address", ip)
       .gte("created_at", startOfMonth);
 
     if (error) throw error;
 
-    const used = count ?? 0;
-    const limit = 3;
-    const remaining = Math.max(0, limit - used);
+    const totalMinutes = (usageRows || []).reduce((sum: number, r: any) => sum + (r.minutes_used || 0), 0);
+    const used = Math.round(totalMinutes * 10) / 10;
+    const remaining = Math.max(0, Math.round((FREE_LIMIT_MINUTES - totalMinutes) * 10) / 10);
 
     return new Response(
-      JSON.stringify({ used, limit, remaining }),
+      JSON.stringify({ used, limit: FREE_LIMIT_MINUTES, remaining }),
       { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   } catch (e) {

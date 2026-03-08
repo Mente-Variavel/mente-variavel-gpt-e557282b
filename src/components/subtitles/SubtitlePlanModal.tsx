@@ -10,10 +10,10 @@ interface SubtitlePlanModalProps {
 }
 
 const features = [
-  "Até 300 vídeos por mês",
-  "Máximo 60 segundos por vídeo",
+  "~80 minutos de processamento por mês",
+  "Vídeos de até 5 minutos",
   "Marca d'água removida",
-  "Exportar MP4 e SRT",
+  "Exportar MP4 e SRT com áudio",
   "Processamento prioritário",
 ];
 
@@ -63,6 +63,7 @@ const SubtitlePlanModal = ({ open, onClose }: SubtitlePlanModalProps) => {
             <span className="font-display text-5xl font-bold text-foreground">$5</span>
             <span className="text-lg text-muted-foreground">/mês</span>
           </div>
+          <p className="mt-1 text-sm text-primary font-semibold">~80 minutos de legendas/mês</p>
         </div>
 
         <div className="mb-6 space-y-3">
@@ -77,9 +78,9 @@ const SubtitlePlanModal = ({ open, onClose }: SubtitlePlanModalProps) => {
         </div>
 
         <div className="mb-6 rounded-xl border border-border bg-secondary/30 p-4 text-sm leading-relaxed text-muted-foreground">
-          <p>Por apenas <span className="font-semibold text-foreground">$5 por mês</span> você pode gerar até <span className="font-semibold text-primary">300 vídeos</span> com legendas automáticas.</p>
-          <p className="mt-2">Cada vídeo pode ter até 60 segundos. Isso equivale a mais de <span className="font-semibold text-accent">5 horas</span> de vídeos legendados todos os meses usando inteligência artificial.</p>
-          <p className="mt-2">Ideal para quem cria conteúdo frequentemente e precisa de uma solução rápida e profissional.</p>
+          <p>Por apenas <span className="font-semibold text-foreground">$5 por mês</span> você recebe aproximadamente <span className="font-semibold text-primary">80 minutos</span> de processamento de legendas com IA.</p>
+          <p className="mt-2">O uso é descontado com base na duração de cada vídeo. Por exemplo: um vídeo de 2 minutos consome 2 minutos do seu plano.</p>
+          <p className="mt-2">Vídeos de até <span className="font-semibold text-foreground">5 minutos</span> são suportados. Ideal para quem cria conteúdo frequentemente.</p>
         </div>
 
         <button onClick={handleSubscribe} disabled={loading}
@@ -88,7 +89,7 @@ const SubtitlePlanModal = ({ open, onClose }: SubtitlePlanModalProps) => {
           {loading ? "Processando..." : user ? "Assinar Plano Criador" : "Faça login para assinar"}
         </button>
 
-        <p className="mt-3 text-center text-xs text-muted-foreground">Cancele a qualquer momento • Créditos renovam mensalmente</p>
+        <p className="mt-3 text-center text-xs text-muted-foreground">Cancele a qualquer momento • Minutos renovam mensalmente</p>
       </div>
     </div>
   );

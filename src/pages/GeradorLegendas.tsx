@@ -20,7 +20,7 @@ import { loadSubtitleFonts } from "@/lib/subtitle-fonts-loader";
 
 const SETTINGS_STORAGE_KEY = "mv-subtitle-full-settings";
 
-const MAX_DURATION_SECONDS = 60;
+const MAX_DURATION_SECONDS = 300; // 5 minutes
 
 const GeradorLegendas = () => {
   const [videoFile, setVideoFile] = useState<File | null>(null);
@@ -52,7 +52,6 @@ const GeradorLegendas = () => {
     } catch {}
     return true;
   });
-  // Store raw (unsegmented) subtitles for re-segmentation when mode changes
   const rawSubtitlesRef = useRef<SubtitleLine[]>([]);
 
   const { usage, refetchUsage } = useSubtitleUsage();
@@ -88,7 +87,7 @@ const GeradorLegendas = () => {
     video.src = url;
     video.onloadedmetadata = () => {
       if (video.duration > MAX_DURATION_SECONDS) {
-        toast.error(`Vídeo excede o limite de ${MAX_DURATION_SECONDS} segundos. Duração: ${Math.round(video.duration)}s`);
+        toast.error(`Vídeo excede o limite de ${Math.floor(MAX_DURATION_SECONDS / 60)} minutos. Duração: ${Math.round(video.duration)}s`);
         URL.revokeObjectURL(url);
         return;
       }
@@ -107,7 +106,7 @@ const GeradorLegendas = () => {
   const handleGenerate = useCallback(async () => {
     if (!videoFile) return;
     if (usage && usage.remaining <= 0) {
-      toast.error("Você atingiu o limite gratuito. Assine o plano para continuar gerando legendas.");
+      toast.error("Você atingiu o limite de minutos gratuitos. Assine o plano para continuar gerando legendas.");
       setShowPlanModal(true);
       return;
     }
@@ -187,7 +186,7 @@ const GeradorLegendas = () => {
                 <span className="rounded-full border border-border px-3 py-1">YouTube Shorts</span>
               </div>
               <p className="mt-4 text-sm text-muted-foreground">
-                Envie seu vídeo, gere a legenda automaticamente e exporte o vídeo pronto para postar.
+                Envie seu vídeo (até 5 minutos), gere a legenda automaticamente e exporte o vídeo pronto para postar.
               </p>
             </div>
 
@@ -219,9 +218,9 @@ const GeradorLegendas = () => {
                 Plano Criador — $5/mês
               </h2>
               <div className="space-y-2 text-sm leading-relaxed text-muted-foreground">
-                <p>Por apenas <span className="font-semibold text-foreground">$5 por mês</span> você pode gerar até <span className="font-semibold text-primary">300 vídeos</span> com legendas automáticas.</p>
-                <p>Cada vídeo pode ter até 60 segundos.</p>
-                <p>Isso equivale a mais de <span className="font-semibold text-accent">5 horas</span> de vídeos legendados todos os meses usando inteligência artificial.</p>
+                <p>Por apenas <span className="font-semibold text-foreground">$5 por mês</span> você recebe <span className="font-semibold text-primary">~80 minutos</span> de processamento de legendas com IA.</p>
+                <p>Vídeos de até <span className="font-semibold text-foreground">5 minutos</span> são suportados.</p>
+                <p>O uso é descontado de acordo com a duração de cada vídeo processado. Um vídeo de 2 minutos consome 2 minutos do plano.</p>
                 <p>Ideal para quem cria conteúdo frequentemente e precisa de uma solução rápida e profissional.</p>
               </div>
               <button onClick={() => setShowPlanModal(true)}

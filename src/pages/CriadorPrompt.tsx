@@ -26,6 +26,7 @@ const frameworks = [
   { name: "PAIN", desc: "Problem, Action, Information, Next steps" },
   { name: "COAST", desc: "Context, Objective, Actions, Scenario, Task" },
   { name: "ROSES", desc: "Role, Objective, Scenario, Expected Solution, Steps" },
+  { name: "Criativo para Redes Sociais", desc: "Marketing, Ads, Social Media Content" },
 ];
 
 const languages = [

@@ -136,9 +136,6 @@ function getWordStyles(
   });
 }
 
-/**
- * Draw the full-width anti-watermark bar (always visible, independent of subtitles).
- */
 function drawFullWidthBar(
   ctx: CanvasRenderingContext2D, config: SubtitleStyleConfig,
   canvasWidth: number, canvasHeight: number
@@ -167,9 +164,6 @@ function drawFullWidthBar(
   }
 }
 
-/**
- * Draw subtitle on canvas. Supports single-line and two-line modes.
- */
 function drawSubtitle(
   ctx: CanvasRenderingContext2D, sub: SubtitleLine, time: number,
   config: SubtitleStyleConfig, canvasWidth: number, canvasHeight: number
@@ -191,7 +185,6 @@ function drawSubtitle(
   ctx.font = `bold ${fontSize}px ${fontFamily}`;
   ctx.textBaseline = "middle";
 
-  // Split into lines for two-line mode
   let lines: string[][];
   if (isTwoLine && words.length > 3) {
     const mid = Math.ceil(words.length / 2);
@@ -200,7 +193,6 @@ function drawSubtitle(
     lines = [words];
   }
 
-  // Measure total text width per line
   const wordStyles = getWordStyles(words, activeWordIndex, config, highlightColor, fontSize);
   const lineWidths: number[] = [];
   let globalIdx = 0;
@@ -226,7 +218,6 @@ function drawSubtitle(
   const bgWidth = maxLineWidth * renderScale + padding * 4;
   const x = canvasWidth / 2;
 
-  // Y position
   let blockY: number;
   const offsetPx = Math.max(config.verticalOffset, 4) / 100 * canvasHeight;
   switch (config.position) {
@@ -239,9 +230,6 @@ function drawSubtitle(
   const maxY = canvasHeight * (1 - SAFE_MARGIN) - totalH / 2;
   blockY = Math.max(minY, Math.min(maxY, blockY));
 
-  // (full-width bar is now drawn independently in drawFullWidthBar)
-
-  // Background (inline, not full-width)
   if (config.showBackground && !config.fullWidthBackground) {
     const bgRgba = BACKGROUND_COLORS_MAP[config.backgroundColorId ?? "dark"] ?? "0, 0, 0";
     const opacity = config.backgroundOpacity / 100;
@@ -259,7 +247,6 @@ function drawSubtitle(
     }
   }
 
-  // Draw words line by line
   globalIdx = 0;
   for (let li = 0; li < lines.length; li++) {
     const lineWords = lines[li];
@@ -311,7 +298,7 @@ export async function exportVideoWithSubtitles(
   return new Promise((resolve, reject) => {
     const video = document.createElement("video");
     video.src = videoUrl;
-    video.muted = true;
+    video.muted = false;
     video.preload = "auto";
 
     video.onloadedmetadata = () => {
@@ -324,16 +311,32 @@ export async function exportVideoWithSubtitles(
 
       const mimeType = MediaRecorder.isTypeSupported("video/mp4; codecs=avc1")
         ? "video/mp4"
-        : MediaRecorder.isTypeSupported("video/webm; codecs=vp9")
-        ? "video/webm; codecs=vp9"
+        : MediaRecorder.isTypeSupported("video/webm; codecs=vp9,opus")
+        ? "video/webm; codecs=vp9,opus"
         : "video/webm";
 
-      const stream = canvas.captureStream(30);
-      const recorder = new MediaRecorder(stream, { mimeType, videoBitsPerSecond: 5_000_000 });
+      // Combine canvas video stream with audio from the video element
+      const canvasStream = canvas.captureStream(30);
+
+      // Create an AudioContext to capture audio from the video
+      const audioCtx = new AudioContext();
+      const source = audioCtx.createMediaElementSource(video);
+      const dest = audioCtx.createMediaStreamDestination();
+      source.connect(dest);
+      source.connect(audioCtx.destination); // also play through speakers (optional)
+
+      // Merge video + audio tracks
+      const combinedStream = new MediaStream([
+        ...canvasStream.getVideoTracks(),
+        ...dest.stream.getAudioTracks(),
+      ]);
+
+      const recorder = new MediaRecorder(combinedStream, { mimeType, videoBitsPerSecond: 5_000_000 });
       const chunks: Blob[] = [];
       recorder.ondataavailable = (e) => { if (e.data.size > 0) chunks.push(e.data); };
 
       recorder.onstop = () => {
+        audioCtx.close();
         onProgress?.({ percent: 100, phase: "encoding" });
         const ext = mimeType.includes("mp4") ? "mp4" : "webm";
         const blob = new Blob(chunks, { type: mimeType });
@@ -347,7 +350,7 @@ export async function exportVideoWithSubtitles(
         resolve();
       };
 
-      recorder.onerror = (e) => reject(e);
+      recorder.onerror = (e) => { audioCtx.close(); reject(e); };
       recorder.start();
       const duration = video.duration;
 
@@ -356,7 +359,6 @@ export async function exportVideoWithSubtitles(
         const t = video.currentTime;
         onProgress?.({ percent: Math.round((t / duration) * 100), phase: "rendering" });
         ctx.drawImage(video, 0, 0, w, h);
-        // Always draw the anti-watermark bar (independent of subtitles)
         if (config.fullWidthBackground) {
           drawFullWidthBar(ctx, config, w, h);
         }

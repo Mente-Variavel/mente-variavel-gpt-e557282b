@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Music, Copy, ExternalLink, Sparkles, Loader2, Lightbulb, RotateCcw } from "lucide-react";
+import { Music, Copy, ExternalLink, Sparkles, Loader2, Lightbulb, RotateCcw, Globe } from "lucide-react";
 import { motion } from "framer-motion";
 import MicInput from "@/components/MicInput";
 import { toast } from "sonner";
@@ -141,12 +141,10 @@ function sanitizeArtistReferences(text: string): string {
     const regex = new RegExp(`\\b${artist}\\b`, "gi");
     result = result.replace(regex, description);
   }
-  // Catch "estilo [Name]" / "inspirado em [Name]" / "como [Name]" / "tipo [Name]"
   result = result.replace(/(?:estilo|inspirado em|como|tipo)\s+[A-Z][a-záéíóúãõê]+(?:\s+(?:e|&)\s+[A-Z][a-záéíóúãõê]+)?/gi, () => {
     return "estilo característico com elementos vocais e instrumentais marcantes";
   });
 
-  // Remove any remaining proper names: capitalized words not in safe list
   const safeWords = new Set([
     "portuguese", "full", "style", "title", "verso", "refrão", "ponte",
     "intro", "outro", "chorus", "bridge", "verse", "pop", "rock", "funk",
@@ -158,17 +156,13 @@ function sanitizeArtistReferences(text: string): string {
     "dramática", "moderno", "moderna", "clássico", "clássica",
   ]);
 
-  // Strip any word that starts uppercase and isn't a safe/musical term
   result = result.replace(/\b([A-Z][a-záéíóúãõêâîôûàèìòùäëïöü]+)\b/g, (match) => {
     if (safeWords.has(match.toLowerCase())) return match;
     return "";
   });
 
-  // Strip patterns like "DJ X", "MC Y", "@name"
   result = result.replace(/\b(?:DJ|MC|Mc|Dj)\s+\S+/gi, "");
   result = result.replace(/@\S+/g, "");
-
-  // Clean up extra spaces
   result = result.replace(/\s{2,}/g, " ").trim();
 
   return result;
@@ -187,18 +181,19 @@ const genreDetails: Record<string, string> = {
   "Soul": "organ, brass section, warm bass, gospel-influenced vocals, hand claps, tambourine, powerful emotional delivery, vintage soul warmth, Motown-inspired groove",
 };
 
-function buildSunoPrompt(genero: string, tema: string, titulo: string, estilo: string): string {
+function buildSunoPrompt(genero: string, tema: string, titulo: string, estilo: string, language: string): string {
   const sanitizedEstilo = estilo ? sanitizeArtistReferences(estilo) : "";
   const instruments = genreDetails[genero] || "full band arrangement";
+  const langLabel = language === "en" ? "English" : "Portuguese";
   
-  let prompt = `${genero}, ${tema}, emotional depth, Portuguese lyrics. Title: "${titulo}". `;
+  let prompt = `${genero}, ${tema}, emotional depth, ${langLabel} lyrics. Title: "${titulo}". `;
   prompt += `Instruments and production: ${instruments}. `;
   prompt += `Song structure: intro, verse 1, pre-chorus build, powerful chorus, verse 2 with variation, chorus with harmonies, emotional bridge, final chorus with full arrangement, outro. `;
   if (sanitizedEstilo) prompt += `Vocal style and mood: ${sanitizedEstilo}. `;
   prompt += `Dynamic progression from intimate verses to anthemic chorus. Rich layering, professional mixing, radio-ready quality.`;
 
   if (prompt.length > 1000) {
-    prompt = `${genero}, ${tema}, Portuguese. "${titulo}". ${instruments}. `;
+    prompt = `${genero}, ${tema}, ${langLabel}. "${titulo}". ${instruments}. `;
     if (sanitizedEstilo && prompt.length + sanitizedEstilo.length + 10 < 1000) {
       prompt += `${sanitizedEstilo}. `;
     }
@@ -217,6 +212,7 @@ export default function CriadorMusica() {
   const [sunoPrompt, setSunoPrompt] = useState("");
   const [showSunoPrompt, setShowSunoPrompt] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [language, setLanguage] = useState<"pt" | "en">("pt");
 
   const generateLyrics = async () => {
     if (!titulo || !genero || !tema) {
@@ -228,7 +224,28 @@ export default function CriadorMusica() {
     setShowSunoPrompt(false);
     setSunoPrompt("");
 
-    const prompt = `Crie uma letra de música completa em português com as seguintes informações:
+    const langInstruction = language === "en"
+      ? "Write the lyrics entirely in English."
+      : "Escreva a letra inteiramente em português.";
+
+    const prompt = language === "en"
+      ? `Create a complete song lyrics in English with the following information:
+Title: ${titulo}
+Musical genre: ${genero}
+Theme: ${tema}
+${estilo ? `Style or inspiration: ${sanitizeArtistReferences(estilo)}` : ""}
+
+The lyrics should follow this structure:
+[Title]
+[Verse 1]
+[Chorus]
+[Verse 2]
+[Chorus]
+[Bridge]
+[Final Chorus]
+
+The lyrics must perfectly match the ${genero} genre and the theme "${tema}". Use natural language, rhymes and emotion. Write only the lyrics, no explanations.`
+      : `Crie uma letra de música completa em português com as seguintes informações:
 Título: ${titulo}
 Gênero musical: ${genero}
 Tema: ${tema}
@@ -303,7 +320,7 @@ A letra deve combinar perfeitamente com o gênero ${genero} e o tema "${tema}". 
   };
 
   const generateSunoPrompt = () => {
-    const prompt = buildSunoPrompt(genero, tema, titulo, estilo);
+    const prompt = buildSunoPrompt(genero, tema, titulo, estilo, language);
     setSunoPrompt(prompt);
     setShowSunoPrompt(true);
   };
@@ -318,7 +335,6 @@ A letra deve combinar perfeitamente com o gênero ${genero} e o tema "${tema}". 
       <Navbar />
       <main className="flex-1 pt-24 pb-16">
         <div className="container mx-auto px-4 max-w-3xl">
-          {/* SEO intro */}
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="text-center mb-10">
             <div className="w-16 h-16 mx-auto mb-4 rounded-2xl bg-primary/10 flex items-center justify-center">
               <Music className="w-8 h-8 text-primary" />
@@ -340,6 +356,20 @@ A letra deve combinar perfeitamente com o gênero ${genero} e o tema "${tema}". 
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
+                {/* Language selector */}
+                <div>
+                  <label className="text-sm text-muted-foreground mb-1.5 block flex items-center gap-1">
+                    <Globe className="w-3.5 h-3.5" /> Idioma da letra
+                  </label>
+                  <Select value={language} onValueChange={(v) => setLanguage(v as "pt" | "en")}>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="pt">Português</SelectItem>
+                      <SelectItem value="en">English</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
                 <div>
                   <label className="text-sm text-muted-foreground mb-1.5 block">Título da música</label>
                   <div className="relative">
@@ -433,14 +463,18 @@ A letra deve combinar perfeitamente com o gênero ${genero} e o tema "${tema}". 
                   </ul>
 
                   <div className="flex flex-wrap gap-3 mb-4">
-                    <Button onClick={() => window.open(SUNO_REFERRAL, "_blank")} className="gap-2">
-                      🎵 Transformar essa letra em música no Suno
+                    <Button onClick={copyLyrics} variant="outline" className="gap-2">
+                      <Copy className="w-4 h-4" /> Copiar letra
+                    </Button>
+                    <Button
+                      onClick={() => window.open(SUNO_REFERRAL, "_blank")}
+                      className="gap-2"
+                      style={{ backgroundColor: "hsl(30, 100%, 50%)", color: "white" }}
+                    >
+                      <ExternalLink className="w-4 h-4" /> Abrir no Suno
                     </Button>
                     <Button onClick={generateSunoPrompt} variant="outline" className="gap-2">
                       ✨ Gerar Prompt para Suno
-                    </Button>
-                    <Button onClick={copyLyrics} variant="outline" className="gap-2">
-                      <Copy className="w-4 h-4" /> Copiar letra
                     </Button>
                   </div>
                   <p className="text-xs text-muted-foreground flex items-start gap-1.5">

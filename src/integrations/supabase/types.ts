@@ -134,6 +134,30 @@ export type Database = {
         }
         Relationships: []
       }
+      chat_conversations: {
+        Row: {
+          created_at: string
+          id: string
+          messages: Json
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          messages?: Json
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          messages?: Json
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       contact_messages: {
         Row: {
           created_at: string
@@ -403,16 +427,19 @@ export type Database = {
           created_at: string
           id: string
           ip_address: string
+          minutes_used: number
         }
         Insert: {
           created_at?: string
           id?: string
           ip_address: string
+          minutes_used?: number
         }
         Update: {
           created_at?: string
           id?: string
           ip_address?: string
+          minutes_used?: number
         }
         Relationships: []
       }
