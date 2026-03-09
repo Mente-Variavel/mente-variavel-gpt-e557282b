@@ -10,7 +10,7 @@ import { motion } from "framer-motion";
 import MicInput from "@/components/MicInput";
 import { toast } from "sonner";
 
-const genres = ["Sertanejo", "Gospel", "Pop", "Rock", "Trap", "Funk", "MPB", "Rap", "R&B", "Soul"];
+const genres = ["Sertanejo", "Gospel", "Pop", "Rock", "Trap", "Funk", "MPB", "Rap", "R&B", "Soul", "Samba", "Samba Rock", "Pagode", "Samba", "Samba Rock", "Pagode"];
 const themeSuggestions = ["amor", "superação", "história", "vida", "traição", "motivação"];
 
 const SUNO_REFERRAL = "https://suno.com/invite/@vibrantsaturation527";
@@ -65,6 +65,22 @@ function sanitizeArtistReferences(text: string): string {
     "legião urbana": "rock brasileiro com vocais masculinos reflexivos e melancólicos, textura vocal limpa e poética, guitarra e baixo marcantes, letras profundas e sociais, atmosfera nostálgica e revolucionária, ritmo moderado",
     "sandy": "pop brasileiro com voz feminina aguda e técnica, textura vocal cristalina e precisa, produção polida com teclado e violão, atmosfera romântica e sofisticada, ritmo moderado",
     "thiaguinho": "pagode pop com voz masculina suave e afinada, textura vocal doce e romântica, cavaquinho e percussão de pagode, atmosfera alegre e apaixonada, ritmo moderado e groovy",
+    "zeca pagodinho": "samba tradicional carioca com voz masculina descontraída e calorosa, textura vocal macia e emotiva, cavaquinho, pandeiro e tantã, atmosfera boêmia e festiva, ritmo sincopado e swingado",
+    "beth carvalho": "samba de raiz com voz feminina potente e emotiva, textura vocal encorpada e tradicional, cavaquinho e violão de 7 cordas, percussão completa de samba, atmosfera autêntica e apaixonada, ritmo cadenciado",
+    "martinho da vila": "samba com influências africanas, voz masculina grave e narrativa, textura vocal profunda e storytelling, cavaquinho e atabaques, atmosfera cultural e reflexiva, ritmo moderado e balançado",
+    "alcione": "samba romântico com voz feminina rouca e potente, textura vocal grave e marcante, pandeiro e tantã, atmosfera nostálgica e intensa, ritmo médio e emotivo",
+    "diogo nogueira": "samba moderno carioca com voz masculina suave e apaixonada, textura vocal aveludada e romântica, cavaquinho e percussão swingada, atmosfera boêmia e envolvente, ritmo groovy",
+    "arlindo cruz": "samba partido-alto com voz masculina vibrante e alegre, textura vocal rítmica e festiva, cavaquinho rápido e pandeiro marcante, atmosfera celebrativa e contagiante, ritmo acelerado",
+    "jorge aragão": "samba romântico com voz masculina aveludada e emotiva, textura vocal suave e sofisticada, violão de 7 cordas e cavaquinho delicado, atmosfera intimista e apaixonada, ritmo moderado",
+    "seu jorge": "samba soul com voz masculina rouca e expressiva, textura vocal crua alternando samba e soul, violão acústico e percussão leve, atmosfera descontraída e orgânica, ritmo moderado",
+    "paulinho da viola": "samba tradicional refinado com voz masculina suave e melancólica, textura vocal delicada e poética, cavaquinho intimista e violão de 7 cordas, atmosfera nostálgica e contemplativa, ritmo lento",
+    "cartola": "samba canção com voz masculina suave e lírica, textura vocal etérea e romântica, violão e cavaquinho minimalistas, atmosfera poética e melancólica, ritmo lento e cadenciado",
+    "bezerra da silva": "samba malandro com voz masculina rouca e irreverente, textura vocal crua e autêntica, cavaquinho e surdo marcante, atmosfera de subúrbio carioca e malícia, ritmo swingado",
+    "fundo de quintal": "samba de raiz com harmonias vocais masculinas, textura vocal rica e tradicional, banjo cavaquinho e tantã, repique de mão, atmosfera autêntica de roda de samba, ritmo cadenciado e balançado",
+    "grupo revelação": "pagode romântico com harmonia vocal masculina suave, textura vocal melódica e apaixonada, banjo e tantã, percussão de pagode 90, atmosfera romântica e festiva, ritmo groovy",
+    "exaltasamba": "pagode baiano com vocais masculinos potentes e harmonia rica, textura vocal encorpada e emotiva, percussão marcante e cavaquinho, atmosfera festiva e apaixonada, ritmo animado",
+    "raça negra": "pagode romântico com voz masculina suave e melódica, textura vocal doce e nostálgica, teclado e percussão leve, atmosfera romântica anos 90, ritmo moderado e cadenciado",
+    "art popular": "pagode paulista com voz masculina potente e alegre, textura vocal vibrante e festiva, banjo e tantã marcantes, atmosfera celebrativa e contagiante, ritmo acelerado e dançante",
     "ludmilla": "funk pop brasileiro com voz feminina potente e versátil, textura vocal forte e rítmica, batida funk e eletrônica, atmosfera empoderada e dançante, ritmo rápido",
     "projota": "rap pop brasileiro com vocais masculinos melódicos e emotivos, textura vocal suave alternando com flow rápido, violão e batida hip hop, atmosfera reflexiva e esperançosa, ritmo moderado",
     "péricles": "pagode romântico com voz masculina grave e aveludada, textura vocal encorpada e suave, cavaquinho e tantã, atmosfera romântica e noturna, ritmo cadenciado e groovy",
@@ -213,6 +229,10 @@ export default function CriadorMusica() {
   const [showSunoPrompt, setShowSunoPrompt] = useState(false);
   const [loading, setLoading] = useState(false);
   const [language, setLanguage] = useState<"pt" | "en">("pt");
+  const [improveLyricsMode, setImproveLyricsMode] = useState(false);
+  const [userLyrics, setUserLyrics] = useState("");
+  const [improvedLyrics, setImprovedLyrics] = useState("");
+  const [improvingLoading, setImprovingLoading] = useState(false);
 
   const generateLyrics = async () => {
     if (!titulo || !genero || !tema) {
@@ -330,6 +350,91 @@ A letra deve combinar perfeitamente com o gênero ${genero} e o tema "${tema}". 
     toast.success("Prompt para Suno copiado!");
   };
 
+  const improveLyrics = async () => {
+    if (!userLyrics.trim()) {
+      toast.error("Digite a letra que você deseja melhorar.");
+      return;
+    }
+    setImprovingLoading(true);
+    setImprovedLyrics("");
+
+    const prompt = language === "en"
+      ? `Improve and refine the following song lyrics. Keep the original theme and message but enhance:
+- Rhyme quality and consistency
+- Poetic language and metaphors
+- Emotional impact
+- Flow and rhythm
+- Song structure (verses, chorus, bridge)
+
+Original lyrics:
+${userLyrics}
+
+Return only the improved lyrics with proper structure markers like [Verse 1], [Chorus], etc. No explanations.`
+      : `Melhore e refine a seguinte letra de música. Mantenha o tema e mensagem original mas aprimore:
+- Qualidade e consistência das rimas
+- Linguagem poética e metáforas
+- Impacto emocional
+- Fluidez e ritmo
+- Estrutura da música (versos, refrão, ponte)
+
+Letra original:
+${userLyrics}
+
+Retorne apenas a letra melhorada com marcadores de estrutura como [Verso 1], [Refrão], etc. Sem explicações.`;
+
+    try {
+      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+      const supabaseKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
+
+      const res = await fetch(`${supabaseUrl}/functions/v1/chat`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${supabaseKey}`,
+        },
+        body: JSON.stringify({ messages: [{ role: "user", content: prompt }] }),
+      });
+
+      if (!res.ok || !res.body) throw new Error(`HTTP ${res.status}`);
+
+      const reader = res.body.getReader();
+      const decoder = new TextDecoder();
+      let full = "";
+      let textBuffer = "";
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        textBuffer += decoder.decode(value, { stream: true });
+
+        let newlineIndex: number;
+        while ((newlineIndex = textBuffer.indexOf("\n")) !== -1) {
+          let line = textBuffer.slice(0, newlineIndex);
+          textBuffer = textBuffer.slice(newlineIndex + 1);
+          if (line.endsWith("\r")) line = line.slice(0, -1);
+          if (line.startsWith(":") || line.trim() === "") continue;
+          if (!line.startsWith("data: ")) continue;
+          const jsonStr = line.slice(6).trim();
+          if (jsonStr === "[DONE]") break;
+          try {
+            const parsed = JSON.parse(jsonStr);
+            const content = parsed.choices?.[0]?.delta?.content;
+            if (content) {
+              full += content;
+              setImprovedLyrics(full);
+            }
+          } catch {}
+        }
+      }
+      toast.success("Letra melhorada com sucesso!");
+    } catch (err) {
+      console.error(err);
+      toast.error("Erro ao melhorar a letra. Tente novamente.");
+    } finally {
+      setImprovingLoading(false);
+    }
+  };
+
   return (
     <div className="min-h-screen flex flex-col">
       <Navbar />
@@ -423,6 +528,65 @@ A letra deve combinar perfeitamente com o gênero ${genero} e o tema "${tema}". 
                 </div>
               </CardContent>
             </Card>
+
+            {/* Improve Lyrics Section */}
+            <Card className="mb-8 border-accent/30">
+              <CardHeader>
+                <CardTitle className="text-lg flex items-center gap-2">
+                  <Sparkles className="w-5 h-5 text-accent" />
+                  Melhoramos a sua letra
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <p className="text-sm text-muted-foreground">
+                  Já tem uma letra pronta? Cole aqui e nossa IA vai aprimorar as rimas, a estrutura, a linguagem poética e o impacto emocional.
+                </p>
+                <div>
+                  <label className="text-sm text-muted-foreground mb-1.5 block">Cole sua letra aqui</label>
+                  <textarea
+                    value={userLyrics}
+                    onChange={e => setUserLyrics(e.target.value)}
+                    placeholder="Cole aqui a letra que você quer melhorar..."
+                    className="w-full min-h-[200px] p-3 rounded-lg border border-input bg-background text-foreground text-sm resize-y focus:outline-none focus:ring-2 focus:ring-primary"
+                  />
+                </div>
+                <div className="flex gap-3">
+                  <Button onClick={improveLyrics} disabled={improvingLoading} className="flex-1 gap-2 bg-accent hover:bg-accent/90">
+                    {improvingLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4" />}
+                    {improvingLoading ? "Melhorando letra..." : "Melhorar minha letra"}
+                  </Button>
+                  <Button
+                    onClick={() => { setUserLyrics(""); setImprovedLyrics(""); }}
+                    variant="outline"
+                    className="gap-2"
+                    disabled={improvingLoading}
+                  >
+                    <RotateCcw className="w-4 h-4" /> Limpar
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+
+            {improvedLyrics && (
+              <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
+                <Card className="mb-6 border-accent/30">
+                  <CardHeader>
+                    <CardTitle className="text-lg">Letra Melhorada</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <pre className="whitespace-pre-wrap text-sm text-foreground leading-relaxed font-body">{improvedLyrics}</pre>
+                    <div className="mt-4">
+                      <Button onClick={() => {
+                        navigator.clipboard.writeText(improvedLyrics);
+                        toast.success("Letra melhorada copiada!");
+                      }} variant="outline" className="gap-2">
+                        <Copy className="w-4 h-4" /> Copiar letra melhorada
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+              </motion.div>
+            )}
           </motion.div>
 
           {lyrics && (
