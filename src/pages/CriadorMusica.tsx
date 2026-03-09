@@ -361,6 +361,11 @@ A letra deve combinar perfeitamente com o gênero ${genero} e o tema "${tema}". 
       return;
     }
 
+    if (!improveRimas && !improveEstrutura && !improveLinguagem) {
+      toast.error("Selecione pelo menos uma opção de melhoria.");
+      return;
+    }
+
     const normalizeText = (text: string) =>
       text.toLowerCase().replace(/[^\p{L}\p{N}\s]/gu, " ").replace(/\s+/g, " ").trim();
 
@@ -373,36 +378,32 @@ A letra deve combinar perfeitamente com o gênero ${genero} e o tema "${tema}". 
       return intersection / Math.max(aWords.size, bWords.size);
     };
 
-    const callImprove = async (extraInstruction: string): Promise<string> => {
-      const systemMsg = language === "en"
-        ? "You are an expert songwriter and lyrics editor. Your ONLY job is to improve song lyrics. Return ONLY the improved lyrics with section markers like [Verse 1], [Chorus], [Bridge], etc. No explanations, no commentary, nothing else."
-        : "Você é um especialista em composição musical e edição de letras de música. Seu ÚNICO trabalho é melhorar letras de música. Retorne APENAS a letra melhorada com marcadores de seção como [Verso 1], [Refrão], [Ponte], etc. Sem explicações, sem comentários, nada mais.";
+    // Build instruction list based on selected options
+    const buildInstructions = (extra: string) => {
+      const ptItems: string[] = [];
+      const enItems: string[] = [];
 
-      const userMsg = language === "en"
-        ? `Improve and rewrite this song lyrics. MANDATORY requirements:
-- Improve rhyme quality and consistency
-- Enhance poetic language and metaphors
-- Increase emotional impact
-- Improve flow and rhythm
-- Keep the original theme and message
-- Rewrite at least 70% of the lines with fresh, creative wording
-- Do NOT copy long phrases from the original
-${extraInstruction}
+      if (improveRimas) {
+        ptItems.push("- Melhorar APENAS as rimas: torná-las mais consistentes, sonoras e naturais");
+        enItems.push("- Improve ONLY the rhymes: make them more consistent, sonorous and natural");
+      }
+      if (improveEstrutura) {
+        ptItems.push("- Melhorar APENAS a estrutura: organizar melhor versos, refrão e ponte com marcadores [Verso], [Refrão], etc.");
+        enItems.push("- Improve ONLY the structure: better organize verses, chorus and bridge with markers [Verse], [Chorus], etc.");
+      }
+      if (improveLinguagem) {
+        ptItems.push("- Melhorar APENAS a linguagem poética: usar metáforas mais criativas, imagens poéticas e palavras mais expressivas");
+        enItems.push("- Improve ONLY the poetic language: use more creative metaphors, poetic imagery and expressive words");
+      }
 
-Original lyrics:
-${originalLyrics}`
-        : `Melhore e reescreva esta letra de música. Requisitos OBRIGATÓRIOS:
-- Melhorar qualidade e consistência das rimas
-- Aprimorar linguagem poética e metáforas
-- Aumentar impacto emocional
-- Melhorar a fluidez e o ritmo
-- Manter o tema e a mensagem original
-- Reescrever pelo menos 70% dos versos com palavras criativas e novas
-- NÃO copiar frases longas da original
-${extraInstruction}
+      const lockedPt = !improveRimas ? "- NÃO altere as rimas existentes\n" : "";
+      const lockedEn = !improveRimas ? "- Do NOT change existing rhymes\n" : "";
 
-Letra original:
-${originalLyrics}`;
+      const ptMsg = `Melhore esta letra de música aplicando SOMENTE as seguintes mudanças:\n${ptItems.join("\n")}\n\nRegras OBRIGATÓRIAS:\n- Mantenha o tema, a história e a mensagem original\n- Preserve tudo que NÃO está na lista acima\n${lockedPt}${extra}\n\nLetra original:\n${originalLyrics}`;
+      const enMsg = `Improve this song lyrics applying ONLY the following changes:\n${enItems.join("\n")}\n\nMANDATORY rules:\n- Keep the original theme, story and message\n- Preserve everything NOT in the list above\n${lockedEn}${extra}\n\nOriginal lyrics:\n${originalLyrics}`;
+
+      return { ptMsg, enMsg };
+    };
 
       const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
       const supabaseKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
