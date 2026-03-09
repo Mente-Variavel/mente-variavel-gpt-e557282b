@@ -8,6 +8,8 @@ import { useUserRole } from "@/hooks/useUserRole";
 import logo from "@/assets/logo.png";
 
 type NavItem = { to: string; label: string; external: boolean; badge?: string };
+
+const financasItems: NavItem[] = [
   { to: "/financas/educacao", label: "Educação Financeira", external: false },
   { to: "/financas/controle", label: "Controle de Gastos", external: false },
   { to: "/financas/conversor", label: "Conversor de Moedas", external: false },
