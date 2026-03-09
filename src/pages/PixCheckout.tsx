@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect, useRef } from "react";
+import { useState, useMemo, useEffect, useRef, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { QRCodeSVG } from "qrcode.react";
 import { generatePixPayload, formatCurrency, generateTxId } from "@/lib/pixEmv";
@@ -28,6 +28,7 @@ export default function PixCheckout() {
   const [merchantName, setMerchantName] = useState("");
   const [merchantCity] = useState("SAO PAULO");
   const [payload, setPayload] = useState("");
+  const [qrKey, setQrKey] = useState(0); // Incremented each generation to force fresh QR
   const [copiedPayload, setCopiedPayload] = useState(false);
   const [copiedKey, setCopiedKey] = useState(false);
   const [brCodeRaw, setBrCodeRaw] = useState("");
@@ -69,7 +70,6 @@ export default function PixCheckout() {
     const sharedMode = params.get("pix_mode");
     const isBrMode = sharedMode === "br";
 
-    // Detect if coming from a subscription plan
     const desc = params.get("pix_desc") ?? "";
     if (desc.includes("Plano")) {
       isFromPlan.current = true;
@@ -77,6 +77,7 @@ export default function PixCheckout() {
 
     setUseBrCode(isBrMode);
     setPayload(sharedPayload);
+    setQrKey(1);
     setStep("qr");
 
     if (isBrMode) {
@@ -114,7 +115,12 @@ export default function PixCheckout() {
     } catch { /* user cancelled */ }
   };
 
-  const handleGenerate = () => {
+  const handleGenerate = useCallback(() => {
+    // Clear all previous generation state first
+    setPayload("");
+    setCopiedPayload(false);
+    setCopiedKey(false);
+
     if (useBrCode) {
       if (!brCodeRaw.trim()) {
         toast.error("Cole o código Pix Copia e Cola");
@@ -124,6 +130,8 @@ export default function PixCheckout() {
         toast.error("Código Pix inválido. Cole o Pix Copia e Cola completo (BR Code).");
         return;
       }
+      // Force fresh QR by incrementing key, then set new payload
+      setQrKey(prev => prev + 1);
       setPayload(sanitizedBrCode);
     } else {
       if (!pixKey) {
@@ -137,6 +145,7 @@ export default function PixCheckout() {
         return;
       }
 
+      // Always generate a fresh TXID and rebuild the full EMV payload from scratch
       const txid = generateTxId();
       const pixPayload = generatePixPayload({
         chave: pixKey,
@@ -147,11 +156,13 @@ export default function PixCheckout() {
         descricao: description || undefined,
       });
 
+      // Force fresh QR by incrementing key
+      setQrKey(prev => prev + 1);
       setPayload(pixPayload);
     }
 
     setStep("qr");
-  };
+  }, [useBrCode, brCodeRaw, brCodeValid, sanitizedBrCode, pixKey, amount, merchantName, merchantCity, description]);
 
   const handleCopyPayload = async () => {
     try {
@@ -178,6 +189,7 @@ export default function PixCheckout() {
   const handleReset = () => {
     setStep("form");
     setPayload("");
+    setQrKey(0);
     if (!useBrCode) {
       setAmount("");
       setDescription("");
@@ -343,10 +355,10 @@ export default function PixCheckout() {
                     <p className="text-center text-sm text-muted-foreground">{description}</p>
                   )}
 
-                  {/* QR Code */}
+                  {/* QR Code — key forces complete remount on every generation */}
                   <div className="flex justify-center">
                     <div className="bg-white p-4 rounded-xl">
-                      <QRCodeSVG value={payload} size={220} level="M" includeMargin={false} />
+                      <QRCodeSVG key={qrKey} value={payload} size={220} level="M" includeMargin={false} />
                     </div>
                   </div>
 

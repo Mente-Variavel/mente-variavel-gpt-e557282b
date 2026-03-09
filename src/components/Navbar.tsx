@@ -1,5 +1,5 @@
 import { Link, useLocation } from "react-router-dom";
-import { Menu, X, Sun, Moon, ChevronDown, Settings, MessageSquare, Handshake, Music } from "lucide-react";
+import { Menu, X, Sun, Moon, ChevronDown, Settings, MessageSquare, Handshake, Music, ExternalLink } from "lucide-react";
 import { useState, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useTheme } from "@/hooks/useTheme";
@@ -7,23 +7,27 @@ import { useAuth } from "@/hooks/useAuth";
 import { useUserRole } from "@/hooks/useUserRole";
 import logo from "@/assets/logo.png";
 
-const financasItems = [
-  { to: "/financas/educacao", label: "Educação Financeira" },
-  { to: "/financas/controle", label: "Controle de Gastos" },
-  { to: "/financas/conversor", label: "Conversor de Moedas" },
+type NavItem = { to: string; label: string; external: boolean; badge?: string };
+
+const financasItems: NavItem[] = [
+  { to: "/financas/educacao", label: "Educação Financeira", external: false },
+  { to: "/financas/controle", label: "Controle de Gastos", external: false },
+  { to: "/financas/conversor", label: "Conversor de Moedas", external: false },
 ];
 
-const servicosItems = [
-  { to: "/servicos/criador-prompt", label: "Criador de Prompt" },
-  { to: "/servicos/removedor-fundo", label: "Removedor de Fundo" },
-  { to: "/servicos/gerador-slides", label: "Gerador de Slides & E-book" },
-  { to: "/ferramentas/calculadora-preco", label: "Calculadora de Lucro" },
+const servicosItems: NavItem[] = [
+  { to: "/servicos/criador-prompt", label: "Criador de Prompt", external: false },
+  { to: "/servicos/removedor-fundo", label: "Removedor de Fundo", external: false },
+  { to: "/servicos/gerador-slides", label: "Gerador de Slides & E-book", external: false },
+  { to: "/ferramentas/calculadora-preco", label: "Calculadora de Lucro", external: false },
 ];
 
-const produtosItems = [
-  { to: "/produtos/pix-checkout", label: "Pix Checkout" },
-  { to: "/produtos/gerador-legendas", label: "Gerador de Legendas" },
+const produtosItems: NavItem[] = [
+  { to: "/produtos/pix-checkout", label: "Pix Checkout", external: false },
+  { to: "/produtos/gerador-legendas", label: "Gerador de Legendas", external: false },
+  { to: "https://mentesimulator.online", label: "Analisador e Simulador de YouTube", badge: "3 testes grátis", external: true },
 ];
+
 
 
 const Navbar = () => {
@@ -81,22 +85,43 @@ const Navbar = () => {
             initial={{ opacity: 0, y: -4 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -4 }}
-            className="absolute top-full left-0 mt-1 w-56 glass rounded-xl shadow-lg border border-border/50 overflow-hidden z-50"
+            className="absolute top-full left-0 mt-1 w-64 glass rounded-xl shadow-lg border border-border/50 overflow-hidden z-50"
           >
-            {items.map((item) => (
-              <Link
-                key={item.to}
-                to={item.to}
-                onClick={() => { toggle(); }}
-                className={`block px-4 py-2.5 text-sm transition-all ${
-                  isActive(item.to)
-                    ? "text-primary bg-primary/10"
-                    : "text-muted-foreground hover:text-foreground hover:bg-secondary/60"
-                }`}
-              >
-                {item.label}
-              </Link>
-            ))}
+            {items.map((item) =>
+              item.external ? (
+                <a
+                  key={item.to}
+                  href={item.to}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  onClick={() => { toggle(); }}
+                  className="flex items-center justify-between px-4 py-2.5 text-sm transition-all text-muted-foreground hover:text-foreground hover:bg-secondary/60 group"
+                >
+                  <span className="flex items-center gap-1.5">
+                    {item.label}
+                    <ExternalLink className="w-3 h-3 opacity-50 group-hover:opacity-100" />
+                  </span>
+                  {"badge" in item && item.badge && (
+                    <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-primary/20 text-primary shrink-0 ml-2">
+                      {item.badge}
+                    </span>
+                  )}
+                </a>
+              ) : (
+                <Link
+                  key={item.to}
+                  to={item.to}
+                  onClick={() => { toggle(); }}
+                  className={`block px-4 py-2.5 text-sm transition-all ${
+                    isActive(item.to)
+                      ? "text-primary bg-primary/10"
+                      : "text-muted-foreground hover:text-foreground hover:bg-secondary/60"
+                  }`}
+                >
+                  {item.label}
+                </Link>
+              )
+            )}
           </motion.div>
         )}
       </AnimatePresence>
@@ -222,11 +247,32 @@ const Navbar = () => {
               ))}
 
               <p className="px-4 pt-3 pb-1 text-xs font-bold text-muted-foreground uppercase tracking-wider">Produtos</p>
-              {produtosItems.map((item) => (
-                <Link key={item.to} to={item.to} onClick={() => setOpen(false)} className={`px-6 py-2.5 rounded-lg text-sm transition-all ${isActive(item.to) ? "text-primary bg-primary/10" : "text-muted-foreground hover:text-foreground hover:bg-secondary"}`}>
-                  {item.label}
-                </Link>
-              ))}
+              {produtosItems.map((item) =>
+                item.external ? (
+                  <a
+                    key={item.to}
+                    href={item.to}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    onClick={() => setOpen(false)}
+                    className="flex items-center justify-between px-6 py-2.5 rounded-lg text-sm transition-all text-muted-foreground hover:text-foreground hover:bg-secondary"
+                  >
+                    <span className="flex items-center gap-1.5">
+                      {item.label}
+                      <ExternalLink className="w-3 h-3 opacity-50" />
+                    </span>
+                    {item.badge && (
+                      <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-primary/20 text-primary ml-2">
+                        {item.badge}
+                      </span>
+                    )}
+                  </a>
+                ) : (
+                  <Link key={item.to} to={item.to} onClick={() => setOpen(false)} className={`px-6 py-2.5 rounded-lg text-sm transition-all ${isActive(item.to) ? "text-primary bg-primary/10" : "text-muted-foreground hover:text-foreground hover:bg-secondary"}`}>
+                    {item.label}
+                  </Link>
+                )
+              )}
 
 
               <Link to="/parceiro" onClick={() => setOpen(false)} className={`px-4 py-3 rounded-lg text-sm font-medium transition-all flex items-center gap-1.5 ${isActive("/parceiro") ? "text-primary bg-primary/10" : "text-muted-foreground hover:text-foreground hover:bg-secondary"}`}>
