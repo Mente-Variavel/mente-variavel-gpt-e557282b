@@ -204,6 +204,7 @@ export default function PixCheckout() {
   const handleReset = () => {
     setStep("form");
     setPayload("");
+    setQrKey(0);
     if (!useBrCode) {
       setAmount("");
       setDescription("");
