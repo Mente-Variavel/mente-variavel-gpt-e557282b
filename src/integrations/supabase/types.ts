@@ -140,6 +140,7 @@ export type Database = {
           id: string
           ip_address: string | null
           messages: Json
+          title: string | null
           updated_at: string
           user_id: string | null
         }
@@ -148,6 +149,7 @@ export type Database = {
           id?: string
           ip_address?: string | null
           messages?: Json
+          title?: string | null
           updated_at?: string
           user_id?: string | null
         }
@@ -156,6 +158,7 @@ export type Database = {
           id?: string
           ip_address?: string | null
           messages?: Json
+          title?: string | null
           updated_at?: string
           user_id?: string | null
         }
