@@ -350,6 +350,91 @@ A letra deve combinar perfeitamente com o gênero ${genero} e o tema "${tema}". 
     toast.success("Prompt para Suno copiado!");
   };
 
+  const improveLyrics = async () => {
+    if (!userLyrics.trim()) {
+      toast.error("Digite a letra que você deseja melhorar.");
+      return;
+    }
+    setImprovingLoading(true);
+    setImprovedLyrics("");
+
+    const prompt = language === "en"
+      ? `Improve and refine the following song lyrics. Keep the original theme and message but enhance:
+- Rhyme quality and consistency
+- Poetic language and metaphors
+- Emotional impact
+- Flow and rhythm
+- Song structure (verses, chorus, bridge)
+
+Original lyrics:
+${userLyrics}
+
+Return only the improved lyrics with proper structure markers like [Verse 1], [Chorus], etc. No explanations.`
+      : `Melhore e refine a seguinte letra de música. Mantenha o tema e mensagem original mas aprimore:
+- Qualidade e consistência das rimas
+- Linguagem poética e metáforas
+- Impacto emocional
+- Fluidez e ritmo
+- Estrutura da música (versos, refrão, ponte)
+
+Letra original:
+${userLyrics}
+
+Retorne apenas a letra melhorada com marcadores de estrutura como [Verso 1], [Refrão], etc. Sem explicações.`;
+
+    try {
+      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+      const supabaseKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
+
+      const res = await fetch(`${supabaseUrl}/functions/v1/chat`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${supabaseKey}`,
+        },
+        body: JSON.stringify({ messages: [{ role: "user", content: prompt }] }),
+      });
+
+      if (!res.ok || !res.body) throw new Error(`HTTP ${res.status}`);
+
+      const reader = res.body.getReader();
+      const decoder = new TextDecoder();
+      let full = "";
+      let textBuffer = "";
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        textBuffer += decoder.decode(value, { stream: true });
+
+        let newlineIndex: number;
+        while ((newlineIndex = textBuffer.indexOf("\n")) !== -1) {
+          let line = textBuffer.slice(0, newlineIndex);
+          textBuffer = textBuffer.slice(newlineIndex + 1);
+          if (line.endsWith("\r")) line = line.slice(0, -1);
+          if (line.startsWith(":") || line.trim() === "") continue;
+          if (!line.startsWith("data: ")) continue;
+          const jsonStr = line.slice(6).trim();
+          if (jsonStr === "[DONE]") break;
+          try {
+            const parsed = JSON.parse(jsonStr);
+            const content = parsed.choices?.[0]?.delta?.content;
+            if (content) {
+              full += content;
+              setImprovedLyrics(full);
+            }
+          } catch {}
+        }
+      }
+      toast.success("Letra melhorada com sucesso!");
+    } catch (err) {
+      console.error(err);
+      toast.error("Erro ao melhorar a letra. Tente novamente.");
+    } finally {
+      setImprovingLoading(false);
+    }
+  };
+
   return (
     <div className="min-h-screen flex flex-col">
       <Navbar />
