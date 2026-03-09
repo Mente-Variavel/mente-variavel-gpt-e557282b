@@ -482,6 +482,15 @@ const Chat = () => {
         .delete()
         .eq("id", conversationId.current)
         .then(() => { conversationId.current = null; });
+    } else if (!user) {
+      fetch(HISTORY_URL, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+        },
+        body: JSON.stringify({ action: "clear" }),
+      }).then(() => { conversationId.current = null; });
     }
   };
 
