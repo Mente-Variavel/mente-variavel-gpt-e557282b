@@ -14,6 +14,7 @@ const financasItems: NavItem[] = [
   { to: "/financas/controle", label: "Controle de Gastos", external: false },
   { to: "/financas/conversor", label: "Conversor de Moedas", external: false },
   { to: "/ferramentas/calculadora-preco", label: "Calculadora de Lucro", external: false },
+  { to: "https://mente-variavel-criptomonitor.lovable.app/", label: "Cripto Monitor", external: true },
 ];
 
 const servicosItems: NavItem[] = [
