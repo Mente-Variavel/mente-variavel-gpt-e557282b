@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import AdPlaceholder from "@/components/AdPlaceholder";
-import { ExternalLink, ImageMinus, Mail, Wallet, Sparkles, ArrowLeftRight, GraduationCap, Calculator } from "lucide-react";
+import { ExternalLink, ImageMinus, Mail, Wallet, Sparkles, ArrowLeftRight, GraduationCap, Calculator, Film } from "lucide-react";
 import { motion } from "framer-motion";
 import { Badge } from "@/components/ui/badge";
 import { Link } from "react-router-dom";
@@ -48,6 +48,24 @@ const internalTools = [
     description: "Descubra quanto cobrar pelo seu serviço em segundos. Calculadora inteligente para freelancers.",
     to: "/ferramentas/calculadora-preco",
     icon: Calculator,
+  },
+  {
+    name: "Criador de Música",
+    description: "Gere letras de músicas completas com IA e exporte prompts prontos para o Suno.",
+    to: "/servicos/criador-musica",
+    icon: Sparkles,
+  },
+  {
+    name: "Gerador de Legendas",
+    description: "Crie legendas automáticas para seus vídeos em segundos usando inteligência artificial.",
+    to: "/servicos/gerador-legendas",
+    icon: Film,
+  },
+  {
+    name: "Criador de Prompts",
+    description: "Gere prompts otimizados para IAs como ChatGPT, Gemini, Claude e mais.",
+    to: "/servicos/criador-prompt",
+    icon: Sparkles,
   },
 ];
 

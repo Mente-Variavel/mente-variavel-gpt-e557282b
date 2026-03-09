@@ -12,7 +12,7 @@ import MicInput from "@/components/MicInput";
 import { toast } from "sonner";
 
 const genres = ["Sertanejo", "Gospel", "Pop", "Rock", "Trap", "Funk", "MPB", "Rap", "R&B", "Soul", "Samba", "Samba Rock", "Pagode"];
-const themeSuggestions = ["amor", "superação", "história", "vida", "traição", "motivação"];
+const themeSuggestions = ["amor", "superação", "história", "vida", "traição", "motivação", "natureza", "fé", "religião", "gratidão", "esperança", "liberdade"];
 
 const SUNO_REFERRAL = "https://suno.com/invite/@vibrantsaturation527";
 
