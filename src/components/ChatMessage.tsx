@@ -57,6 +57,7 @@ const CodeBlock = ({ language, children }: { language: string; children: string 
 const ChatMessage = ({ role, content, imageUrl, attachments }: ChatMessageProps) => {
   const [copied, setCopied] = useState(false);
   const isAssistant = role === "assistant";
+  const isGeneratingImage = content.includes("Gerando imagem");
   const { isSpeaking, isPaused, isSupported: ttsSupported, speak, pause, resume, stop } = useSpeechSynthesis();
 
   const handleCopy = useCallback(() => {
@@ -81,9 +82,9 @@ const ChatMessage = ({ role, content, imageUrl, attachments }: ChatMessageProps)
       <div
         className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 mt-1 ${
           isAssistant ? "bg-primary/20 glow-cyan" : "bg-accent/20 glow-green"
-        }`}
+        } ${isGeneratingImage ? "animate-pulse" : ""}`}
       >
-        {isAssistant ? <Bot className="w-4 h-4 text-primary" /> : <User className="w-4 h-4 text-accent" />}
+        {isAssistant ? <Bot className={`w-4 h-4 text-primary ${isGeneratingImage ? "animate-bounce" : ""}`} /> : <User className="w-4 h-4 text-accent" />}
       </div>
 
       <div

@@ -15,18 +15,18 @@ import AudioVisualizer from "@/components/AudioVisualizer";
 const GENERATE_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/ai-generate`;
 
 const frameworks = [
-  { name: "Standard", desc: "Prompt direto e claro" },
-  { name: "RACE", desc: "Role, Action, Context, Expect" },
-  { name: "CARE", desc: "Context, Action, Result, Example" },
-  { name: "APE", desc: "Action, Purpose, Expectation" },
-  { name: "CREATE", desc: "Character, Request, Examples, Adjustments, Type, Extras" },
-  { name: "TAG", desc: "Task, Action, Goal" },
-  { name: "CREO", desc: "Context, Request, Expectation, Output" },
-  { name: "RISE", desc: "Role, Input, Steps, Expectation" },
-  { name: "PAIN", desc: "Problem, Action, Information, Next steps" },
-  { name: "COAST", desc: "Context, Objective, Actions, Scenario, Task" },
-  { name: "ROSES", desc: "Role, Objective, Scenario, Expected Solution, Steps" },
-  { name: "Criativo para Redes Sociais", desc: "Marketing, Ads, Social Media Content" },
+  { name: "Padrão", desc: "Prompt direto e claro" },
+  { name: "RACE", desc: "Papel, Ação, Contexto, Expectativa" },
+  { name: "CARE", desc: "Contexto, Ação, Resultado, Exemplo" },
+  { name: "APE", desc: "Ação, Propósito, Expectativa" },
+  { name: "CREATE", desc: "Personagem, Requisição, Exemplos, Ajustes, Tipo, Extras" },
+  { name: "TAG", desc: "Tarefa, Ação, Objetivo" },
+  { name: "CREO", desc: "Contexto, Requisição, Expectativa, Saída" },
+  { name: "RISE", desc: "Papel, Entrada, Passos, Expectativa" },
+  { name: "PAIN", desc: "Problema, Ação, Informação, Próximos passos" },
+  { name: "COAST", desc: "Contexto, Objetivo, Ações, Cenário, Tarefa" },
+  { name: "ROSES", desc: "Papel, Objetivo, Cenário, Solução Esperada, Passos" },
+  { name: "Criativo para Redes Sociais", desc: "Marketing, Anúncios, Conteúdo para Redes" },
 ];
 
 const languages = [
