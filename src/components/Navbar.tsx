@@ -7,7 +7,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useUserRole } from "@/hooks/useUserRole";
 import logo from "@/assets/logo.png";
 
-const financasItems = [
+type NavItem = { to: string; label: string; external: boolean; badge?: string };
   { to: "/financas/educacao", label: "Educação Financeira", external: false },
   { to: "/financas/controle", label: "Controle de Gastos", external: false },
   { to: "/financas/conversor", label: "Conversor de Moedas", external: false },
