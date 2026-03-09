@@ -21,6 +21,7 @@ const servicosItems: NavItem[] = [
   { to: "/servicos/criador-prompt", label: "Criador de Prompt", external: false },
   { to: "/servicos/removedor-fundo", label: "Removedor de Fundo", external: false },
   { to: "/servicos/gerador-slides", label: "Gerador de Slides & E-book", external: false },
+  { to: "https://mente-variavel-translate.lovable.app/", label: "Mente Translate", external: true },
 ];
 
 const produtosItems: NavItem[] = [
