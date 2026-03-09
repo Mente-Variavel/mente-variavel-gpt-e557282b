@@ -15,18 +15,19 @@ const financasItems: NavItem[] = [
   { to: "/financas/conversor", label: "Conversor de Moedas", external: false },
 ];
 
-const servicosItems = [
+const servicosItems: NavItem[] = [
   { to: "/servicos/criador-prompt", label: "Criador de Prompt", external: false },
   { to: "/servicos/removedor-fundo", label: "Removedor de Fundo", external: false },
   { to: "/servicos/gerador-slides", label: "Gerador de Slides & E-book", external: false },
   { to: "/ferramentas/calculadora-preco", label: "Calculadora de Lucro", external: false },
 ];
 
-const produtosItems = [
+const produtosItems: NavItem[] = [
   { to: "/produtos/pix-checkout", label: "Pix Checkout", external: false },
   { to: "/produtos/gerador-legendas", label: "Gerador de Legendas", external: false },
   { to: "https://mentesimulator.online", label: "Analisador e Simulador de YouTube", badge: "3 testes grátis", external: true },
 ];
+
 
 
 const Navbar = () => {
