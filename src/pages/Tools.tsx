@@ -49,6 +49,24 @@ const internalTools = [
     to: "/ferramentas/calculadora-preco",
     icon: Calculator,
   },
+  {
+    name: "Criador de Música",
+    description: "Gere letras de músicas completas com IA e exporte prompts prontos para o Suno.",
+    to: "/servicos/criador-musica",
+    icon: Sparkles,
+  },
+  {
+    name: "Gerador de Legendas",
+    description: "Crie legendas automáticas para seus vídeos em segundos usando inteligência artificial.",
+    to: "/servicos/gerador-legendas",
+    icon: Film,
+  },
+  {
+    name: "Criador de Prompts",
+    description: "Gere prompts otimizados para IAs como ChatGPT, Gemini, Claude e mais.",
+    to: "/servicos/criador-prompt",
+    icon: Sparkles,
+  },
 ];
 
 const Tools = () => {

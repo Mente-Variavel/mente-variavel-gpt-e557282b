@@ -10,11 +10,16 @@ interface VideoUploaderProps {
 const VideoUploader = ({ onVideoSelect, videoFile, onClear }: VideoUploaderProps) => {
   const [isDragging, setIsDragging] = useState(false);
 
+  const MAX_SIZE_MB = 100;
+
   const handleFile = useCallback((file: File) => {
-    if (file.type.startsWith("video/")) {
-      const url = URL.createObjectURL(file);
-      onVideoSelect(file, url);
+    if (!file.type.startsWith("video/")) return;
+    if (file.size > MAX_SIZE_MB * 1024 * 1024) {
+      alert(`Arquivo muito grande. Máximo permitido: ${MAX_SIZE_MB}MB`);
+      return;
     }
+    const url = URL.createObjectURL(file);
+    onVideoSelect(file, url);
   }, [onVideoSelect]);
 
   const handleDrop = useCallback((e: React.DragEvent) => {
