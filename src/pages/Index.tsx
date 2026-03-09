@@ -18,6 +18,7 @@ const tools = [
   { icon: Layers, title: "Gerador de Slides & E-book", desc: "Crie apresentações e e-books estruturados com IA.", to: "/servicos/gerador-slides", color: "text-accent" },
   { icon: Music, title: "Gerador de Letras de Música com IA", desc: "Crie letras completas com IA e gere prompts para o Suno.", to: "/servicos/criador-musica", color: "text-primary" },
   { icon: Wand2, title: "Criador de Prompt", desc: "Gere prompts profissionais com frameworks avançados.", to: "/criador-prompt", color: "text-accent" },
+  { icon: DollarSign, title: "Calculadora de Lucros", desc: "Calcule o preço ideal dos seus serviços com margens e impostos.", to: "/ferramentas/calculadora-preco", color: "text-primary" },
 ];
 
 const fadeUp = {
