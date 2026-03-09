@@ -351,38 +351,63 @@ A letra deve combinar perfeitamente com o gênero ${genero} e o tema "${tema}". 
   };
 
   const improveLyrics = async () => {
-    if (!userLyrics.trim()) {
+    const originalLyrics = userLyrics.trim();
+
+    if (!originalLyrics) {
       toast.error("Digite a letra que você deseja melhorar.");
       return;
     }
-    setImprovingLoading(true);
-    setImprovedLyrics("");
 
-    const prompt = language === "en"
-      ? `Improve and refine the following song lyrics. Keep the original theme and message but enhance:
-- Rhyme quality and consistency
-- Poetic language and metaphors
-- Emotional impact
-- Flow and rhythm
-- Song structure (verses, chorus, bridge)
+    const normalizeText = (text: string) =>
+      text
+        .toLowerCase()
+        .replace(/[^\p{L}\p{N}\s]/gu, " ")
+        .replace(/\s+/g, " ")
+        .trim();
+
+    const calculateSimilarity = (a: string, b: string) => {
+      const aWords = new Set(normalizeText(a).split(" ").filter(Boolean));
+      const bWords = new Set(normalizeText(b).split(" ").filter(Boolean));
+
+      if (aWords.size === 0 || bWords.size === 0) return 0;
+
+      let intersection = 0;
+      aWords.forEach((word) => {
+        if (bWords.has(word)) intersection += 1;
+      });
+
+      return intersection / Math.max(aWords.size, bWords.size);
+    };
+
+    const streamImprovedLyrics = async (extraInstruction: string) => {
+      const prompt = language === "en"
+        ? `Improve and refine the following song lyrics. Keep the original theme and message, but rewrite with clear creative changes.
+
+Requirements:
+- Improve rhymes and emotional impact
+- Improve flow, rhythm, and structure
+- Rewrite at least 60% of the lines with fresh wording
+- Do not keep long identical phrases from the original
+${extraInstruction}
 
 Original lyrics:
-${userLyrics}
+${originalLyrics}
 
-Return only the improved lyrics with proper structure markers like [Verse 1], [Chorus], etc. No explanations.`
-      : `Melhore e refine a seguinte letra de música. Mantenha o tema e mensagem original mas aprimore:
-- Qualidade e consistência das rimas
-- Linguagem poética e metáforas
-- Impacto emocional
-- Fluidez e ritmo
-- Estrutura da música (versos, refrão, ponte)
+Return only the improved lyrics with markers like [Verse 1], [Chorus], etc. No explanations.`
+        : `Melhore e refine a seguinte letra de música. Mantenha o tema e a mensagem original, mas reescreva com mudanças criativas claras.
+
+Regras obrigatórias:
+- Melhorar rimas e impacto emocional
+- Melhorar fluidez, ritmo e estrutura
+- Reescrever pelo menos 60% dos versos com nova construção
+- Não manter frases longas idênticas da versão original
+${extraInstruction}
 
 Letra original:
-${userLyrics}
+${originalLyrics}
 
-Retorne apenas a letra melhorada com marcadores de estrutura como [Verso 1], [Refrão], etc. Sem explicações.`;
+Retorne apenas a letra melhorada com marcadores como [Verso 1], [Refrão], etc. Sem explicações.`;
 
-    try {
       const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
       const supabaseKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
 
@@ -416,6 +441,7 @@ Retorne apenas a letra melhorada com marcadores de estrutura como [Verso 1], [Re
           if (!line.startsWith("data: ")) continue;
           const jsonStr = line.slice(6).trim();
           if (jsonStr === "[DONE]") break;
+
           try {
             const parsed = JSON.parse(jsonStr);
             const content = parsed.choices?.[0]?.delta?.content;
@@ -423,10 +449,38 @@ Retorne apenas a letra melhorada com marcadores de estrutura como [Verso 1], [Re
               full += content;
               setImprovedLyrics(full);
             }
-          } catch {}
+          } catch {
+            // ignore malformed stream chunk
+          }
         }
       }
-      toast.success("Letra melhorada com sucesso!");
+
+      return full.trim();
+    };
+
+    setImprovingLoading(true);
+    setImprovedLyrics("");
+
+    try {
+      const firstResult = await streamImprovedLyrics("");
+      const similarity = calculateSimilarity(originalLyrics, firstResult);
+
+      if (similarity >= 0.9) {
+        setImprovedLyrics("");
+        const secondResult = await streamImprovedLyrics(
+          language === "en"
+            ? "IMPORTANT: The previous version was too similar. Rewrite with clearly different phrasing while preserving meaning."
+            : "IMPORTANTE: a versão anterior ficou muito parecida. Reescreva com frases claramente diferentes, mantendo o mesmo sentido."
+        );
+
+        if (calculateSimilarity(originalLyrics, secondResult) >= 0.9) {
+          toast.warning("A IA manteve muita semelhança. Tente adicionar mais contexto para uma reescrita mais profunda.");
+        } else {
+          toast.success("Letra melhorada com sucesso!");
+        }
+      } else {
+        toast.success("Letra melhorada com sucesso!");
+      }
     } catch (err) {
       console.error(err);
       toast.error("Erro ao melhorar a letra. Tente novamente.");
