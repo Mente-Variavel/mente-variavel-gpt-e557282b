@@ -28,6 +28,22 @@ export default function PixCheckout() {
   const [merchantName, setMerchantName] = useState("");
   const [merchantCity] = useState("SAO PAULO");
   const [payload, setPayload] = useState("");
+  const [qrKey, setQrKey] = useState(0); // Force QR re-render
+  const [copiedPayload, setCopiedPayload] = useState(false);
+  const [copiedKey, setCopiedKey] = useState(false);
+  const [brCodeRaw, setBrCodeRaw] = useState("");
+  const [useBrCode, setUseBrCode] = useState(false);
+
+export default function PixCheckout() {
+  const navigate = useNavigate();
+  const isFromPlan = useRef(false);
+  const [step, setStep] = useState<"form" | "qr">("form");
+  const [amount, setAmount] = useState("");
+  const [description, setDescription] = useState("");
+  const [pixKey, setPixKey] = useState("");
+  const [merchantName, setMerchantName] = useState("");
+  const [merchantCity] = useState("SAO PAULO");
+  const [payload, setPayload] = useState("");
   const [copiedPayload, setCopiedPayload] = useState(false);
   const [copiedKey, setCopiedKey] = useState(false);
   const [brCodeRaw, setBrCodeRaw] = useState("");
