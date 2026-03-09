@@ -528,6 +528,65 @@ Retorne apenas a letra melhorada com marcadores de estrutura como [Verso 1], [Re
                 </div>
               </CardContent>
             </Card>
+
+            {/* Improve Lyrics Section */}
+            <Card className="mb-8 border-accent/30">
+              <CardHeader>
+                <CardTitle className="text-lg flex items-center gap-2">
+                  <Sparkles className="w-5 h-5 text-accent" />
+                  Melhoramos a sua letra
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <p className="text-sm text-muted-foreground">
+                  Já tem uma letra pronta? Cole aqui e nossa IA vai aprimorar as rimas, a estrutura, a linguagem poética e o impacto emocional.
+                </p>
+                <div>
+                  <label className="text-sm text-muted-foreground mb-1.5 block">Cole sua letra aqui</label>
+                  <textarea
+                    value={userLyrics}
+                    onChange={e => setUserLyrics(e.target.value)}
+                    placeholder="Cole aqui a letra que você quer melhorar..."
+                    className="w-full min-h-[200px] p-3 rounded-lg border border-input bg-background text-foreground text-sm resize-y focus:outline-none focus:ring-2 focus:ring-primary"
+                  />
+                </div>
+                <div className="flex gap-3">
+                  <Button onClick={improveLyrics} disabled={improvingLoading} className="flex-1 gap-2 bg-accent hover:bg-accent/90">
+                    {improvingLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4" />}
+                    {improvingLoading ? "Melhorando letra..." : "Melhorar minha letra"}
+                  </Button>
+                  <Button
+                    onClick={() => { setUserLyrics(""); setImprovedLyrics(""); }}
+                    variant="outline"
+                    className="gap-2"
+                    disabled={improvingLoading}
+                  >
+                    <RotateCcw className="w-4 h-4" /> Limpar
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+
+            {improvedLyrics && (
+              <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
+                <Card className="mb-6 border-accent/30">
+                  <CardHeader>
+                    <CardTitle className="text-lg">Letra Melhorada</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <pre className="whitespace-pre-wrap text-sm text-foreground leading-relaxed font-body">{improvedLyrics}</pre>
+                    <div className="mt-4">
+                      <Button onClick={() => {
+                        navigator.clipboard.writeText(improvedLyrics);
+                        toast.success("Letra melhorada copiada!");
+                      }} variant="outline" className="gap-2">
+                        <Copy className="w-4 h-4" /> Copiar letra melhorada
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+              </motion.div>
+            )}
           </motion.div>
 
           {lyrics && (
