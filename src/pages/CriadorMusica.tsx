@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Music, Copy, ExternalLink, Sparkles, Loader2, Lightbulb, RotateCcw, Globe } from "lucide-react";
 import { motion } from "framer-motion";
 import MicInput from "@/components/MicInput";
@@ -233,6 +234,9 @@ export default function CriadorMusica() {
   const [userLyrics, setUserLyrics] = useState("");
   const [improvedLyrics, setImprovedLyrics] = useState("");
   const [improvingLoading, setImprovingLoading] = useState(false);
+  const [improveRimas, setImproveRimas] = useState(true);
+  const [improveEstrutura, setImproveEstrutura] = useState(true);
+  const [improveLinguagem, setImproveLinguagem] = useState(true);
 
   const generateLyrics = async () => {
     if (!titulo || !genero || !tema) {
@@ -358,6 +362,11 @@ A letra deve combinar perfeitamente com o gênero ${genero} e o tema "${tema}". 
       return;
     }
 
+    if (!improveRimas && !improveEstrutura && !improveLinguagem) {
+      toast.error("Selecione pelo menos uma opção de melhoria.");
+      return;
+    }
+
     const normalizeText = (text: string) =>
       text.toLowerCase().replace(/[^\p{L}\p{N}\s]/gu, " ").replace(/\s+/g, " ").trim();
 
@@ -370,36 +379,38 @@ A letra deve combinar perfeitamente com o gênero ${genero} e o tema "${tema}". 
       return intersection / Math.max(aWords.size, bWords.size);
     };
 
-    const callImprove = async (extraInstruction: string): Promise<string> => {
+    // Build instruction list based on selected options
+    const buildInstructions = (extra: string) => {
+      const ptItems: string[] = [];
+      const enItems: string[] = [];
+
+      if (improveRimas) {
+        ptItems.push("- Melhorar APENAS as rimas: torná-las mais consistentes, sonoras e naturais");
+        enItems.push("- Improve ONLY the rhymes: make them more consistent, sonorous and natural");
+      }
+      if (improveEstrutura) {
+        ptItems.push("- Melhorar APENAS a estrutura: organizar melhor versos, refrão e ponte com marcadores [Verso], [Refrão], etc.");
+        enItems.push("- Improve ONLY the structure: better organize verses, chorus and bridge with markers [Verse], [Chorus], etc.");
+      }
+      if (improveLinguagem) {
+        ptItems.push("- Melhorar APENAS a linguagem poética: usar metáforas mais criativas, imagens poéticas e palavras mais expressivas");
+        enItems.push("- Improve ONLY the poetic language: use more creative metaphors, poetic imagery and expressive words");
+      }
+
+      const lockedPt = !improveRimas ? "- NÃO altere as rimas existentes\n" : "";
+      const lockedEn = !improveRimas ? "- Do NOT change existing rhymes\n" : "";
+
+      const ptMsg = `Melhore esta letra de música aplicando SOMENTE as seguintes mudanças:\n${ptItems.join("\n")}\n\nRegras OBRIGATÓRIAS:\n- Mantenha o tema, a história e a mensagem original\n- Preserve tudo que NÃO está na lista acima\n${lockedPt}${extra}\n\nLetra original:\n${originalLyrics}`;
+      const enMsg = `Improve this song lyrics applying ONLY the following changes:\n${enItems.join("\n")}\n\nMANDATORY rules:\n- Keep the original theme, story and message\n- Preserve everything NOT in the list above\n${lockedEn}${extra}\n\nOriginal lyrics:\n${originalLyrics}`;
+
+      return { ptMsg, enMsg };
+    };
+
+    const callImprove = async (extra: string): Promise<string> => {
+      const { ptMsg, enMsg } = buildInstructions(extra);
       const systemMsg = language === "en"
-        ? "You are an expert songwriter and lyrics editor. Your ONLY job is to improve song lyrics. Return ONLY the improved lyrics with section markers like [Verse 1], [Chorus], [Bridge], etc. No explanations, no commentary, nothing else."
-        : "Você é um especialista em composição musical e edição de letras de música. Seu ÚNICO trabalho é melhorar letras de música. Retorne APENAS a letra melhorada com marcadores de seção como [Verso 1], [Refrão], [Ponte], etc. Sem explicações, sem comentários, nada mais.";
-
-      const userMsg = language === "en"
-        ? `Improve and rewrite this song lyrics. MANDATORY requirements:
-- Improve rhyme quality and consistency
-- Enhance poetic language and metaphors
-- Increase emotional impact
-- Improve flow and rhythm
-- Keep the original theme and message
-- Rewrite at least 70% of the lines with fresh, creative wording
-- Do NOT copy long phrases from the original
-${extraInstruction}
-
-Original lyrics:
-${originalLyrics}`
-        : `Melhore e reescreva esta letra de música. Requisitos OBRIGATÓRIOS:
-- Melhorar qualidade e consistência das rimas
-- Aprimorar linguagem poética e metáforas
-- Aumentar impacto emocional
-- Melhorar a fluidez e o ritmo
-- Manter o tema e a mensagem original
-- Reescrever pelo menos 70% dos versos com palavras criativas e novas
-- NÃO copiar frases longas da original
-${extraInstruction}
-
-Letra original:
-${originalLyrics}`;
+        ? "You are an expert songwriter and lyrics editor. Return ONLY the improved lyrics with section markers like [Verse 1], [Chorus], [Bridge], etc. No explanations, no commentary."
+        : "Você é um especialista em composição musical e edição de letras de música. Retorne APENAS a letra melhorada com marcadores como [Verso 1], [Refrão], [Ponte], etc. Sem explicações, sem comentários.";
 
       const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
       const supabaseKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
@@ -414,7 +425,7 @@ ${originalLyrics}`;
           tool: "improve_lyrics",
           messages: [
             { role: "system", content: systemMsg },
-            { role: "user", content: userMsg },
+            { role: "user", content: language === "en" ? enMsg : ptMsg },
           ],
           max_tokens: 2048,
         }),
@@ -436,8 +447,8 @@ ${originalLyrics}`;
 
       if (similarity >= 0.85) {
         const retryMsg = language === "en"
-          ? "CRITICAL: The previous version was too similar to the original. Use completely different words, metaphors and sentence structures while keeping only the core theme."
-          : "CRÍTICO: a versão gerada ficou muito parecida com a original. Use palavras, metáforas e estruturas de frases completamente diferentes, mantendo apenas o tema central.";
+          ? "CRITICAL: The previous version was too similar. Apply the requested changes more aggressively."
+          : "CRÍTICO: a versão gerada ficou muito parecida. Aplique as mudanças solicitadas de forma mais agressiva.";
 
         setImprovedLyrics("");
         const secondResult = await callImprove(retryMsg);
@@ -573,6 +584,32 @@ ${originalLyrics}`;
                     placeholder="Cole aqui a letra que você quer melhorar..."
                     className="w-full min-h-[200px] p-3 rounded-lg border border-input bg-background text-foreground text-sm resize-y focus:outline-none focus:ring-2 focus:ring-primary"
                   />
+                </div>
+                <div>
+                  <label className="text-sm text-muted-foreground mb-2 block">O que você quer melhorar?</label>
+                  <div className="flex flex-wrap gap-4">
+                    <label className="flex items-center gap-2 cursor-pointer">
+                      <Checkbox
+                        checked={improveRimas}
+                        onCheckedChange={(checked) => setImproveRimas(checked === true)}
+                      />
+                      <span className="text-sm font-medium">Rimas</span>
+                    </label>
+                    <label className="flex items-center gap-2 cursor-pointer">
+                      <Checkbox
+                        checked={improveEstrutura}
+                        onCheckedChange={(checked) => setImproveEstrutura(checked === true)}
+                      />
+                      <span className="text-sm font-medium">Estrutura</span>
+                    </label>
+                    <label className="flex items-center gap-2 cursor-pointer">
+                      <Checkbox
+                        checked={improveLinguagem}
+                        onCheckedChange={(checked) => setImproveLinguagem(checked === true)}
+                      />
+                      <span className="text-sm font-medium">Linguagem Poética</span>
+                    </label>
+                  </div>
                 </div>
                 <div className="flex gap-3">
                   <Button onClick={improveLyrics} disabled={improvingLoading} className="flex-1 gap-2 bg-accent hover:bg-accent/90">
