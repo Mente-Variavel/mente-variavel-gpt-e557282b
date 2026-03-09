@@ -117,7 +117,7 @@ const ChatSidebar = ({
                     className="flex-1 bg-background border border-border rounded px-2 py-1 text-xs focus:outline-none focus:ring-1 focus:ring-primary"
                     autoFocus
                   />
-                  <button onClick={saveEdit} className="p-1 text-green-500 hover:bg-green-500/10 rounded">
+                  <button onClick={saveEdit} className="p-1 text-primary hover:bg-primary/10 rounded">
                     <Check className="h-3.5 w-3.5" />
                   </button>
                   <button onClick={cancelEdit} className="p-1 text-muted-foreground hover:bg-secondary rounded">
