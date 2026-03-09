@@ -23,29 +23,62 @@ serve(async (req) => {
     const sb = createClient(supabaseUrl, serviceKey);
 
     const ip = getClientIp(req);
-    const { action, messages } = await req.json();
+    const { action, messages, conversationId, title } = await req.json();
 
-    if (action === "load") {
-      // Load latest conversation for this IP
+    // List all conversations for this IP
+    if (action === "list") {
       const { data } = await sb
         .from("chat_conversations")
-        .select("id, messages")
+        .select("id, title, updated_at, messages")
         .eq("ip_address", ip)
         .is("user_id", null)
         .order("updated_at", { ascending: false })
-        .limit(1);
+        .limit(50);
 
-      if (data && data.length > 0) {
-        return new Response(JSON.stringify({ id: data[0].id, messages: data[0].messages }), {
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
-      }
+      const conversations = (data || []).map((c: any) => ({
+        id: c.id,
+        title: c.title || "Nova conversa",
+        updatedAt: c.updated_at,
+        messageCount: Array.isArray(c.messages) ? c.messages.length : 0,
+      }));
 
-      return new Response(JSON.stringify({ id: null, messages: [] }), {
+      return new Response(JSON.stringify({ conversations }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
+    // Load specific conversation or latest
+    if (action === "load") {
+      let query = sb
+        .from("chat_conversations")
+        .select("id, title, messages")
+        .eq("ip_address", ip)
+        .is("user_id", null);
+
+      if (conversationId) {
+        query = query.eq("id", conversationId);
+      } else {
+        query = query.order("updated_at", { ascending: false }).limit(1);
+      }
+
+      const { data } = await query;
+
+      if (data && data.length > 0) {
+        return new Response(JSON.stringify({ 
+          id: data[0].id, 
+          title: data[0].title || "Nova conversa",
+          messages: data[0].messages 
+        }), {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      return new Response(JSON.stringify({ id: null, title: null, messages: [] }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    // Save messages to a conversation
     if (action === "save") {
       if (!messages || !Array.isArray(messages) || messages.length === 0) {
         return new Response(JSON.stringify({ ok: true }), {
@@ -53,37 +86,89 @@ serve(async (req) => {
         });
       }
 
-      // Check if conversation exists for this IP
-      const { data: existing } = await sb
-        .from("chat_conversations")
-        .select("id")
-        .eq("ip_address", ip)
-        .is("user_id", null)
-        .order("updated_at", { ascending: false })
-        .limit(1);
+      // If conversationId provided, update that specific one
+      if (conversationId) {
+        // Auto-generate title from first user message if not set
+        const firstUserMsg = messages.find((m: any) => m.role === "user");
+        const autoTitle = firstUserMsg ? firstUserMsg.content.slice(0, 50) : "Nova conversa";
 
-      if (existing && existing.length > 0) {
-        await sb
+        const { data: existing } = await sb
           .from("chat_conversations")
-          .update({ messages, updated_at: new Date().toISOString() })
-          .eq("id", existing[0].id);
-
-        return new Response(JSON.stringify({ ok: true, id: existing[0].id }), {
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
-      } else {
-        const { data: newRow } = await sb
-          .from("chat_conversations")
-          .insert({ ip_address: ip, messages, user_id: null })
-          .select("id")
+          .select("id, title")
+          .eq("id", conversationId)
           .single();
 
-        return new Response(JSON.stringify({ ok: true, id: newRow?.id }), {
+        if (existing) {
+          const newTitle = existing.title === "Nova conversa" ? autoTitle : existing.title;
+          await sb
+            .from("chat_conversations")
+            .update({ messages, title: newTitle, updated_at: new Date().toISOString() })
+            .eq("id", conversationId);
+
+          return new Response(JSON.stringify({ ok: true, id: conversationId, title: newTitle }), {
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
+        }
+      }
+
+      // Create new conversation
+      const firstUserMsg = messages.find((m: any) => m.role === "user");
+      const autoTitle = firstUserMsg ? firstUserMsg.content.slice(0, 50) : "Nova conversa";
+
+      const { data: newRow } = await sb
+        .from("chat_conversations")
+        .insert({ ip_address: ip, messages, user_id: null, title: autoTitle })
+        .select("id, title")
+        .single();
+
+      return new Response(JSON.stringify({ ok: true, id: newRow?.id, title: newRow?.title }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    // Rename a conversation
+    if (action === "rename") {
+      if (!conversationId || !title) {
+        return new Response(JSON.stringify({ error: "Missing conversationId or title" }), {
+          status: 400,
           headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
+
+      await sb
+        .from("chat_conversations")
+        .update({ title })
+        .eq("id", conversationId)
+        .eq("ip_address", ip)
+        .is("user_id", null);
+
+      return new Response(JSON.stringify({ ok: true }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
     }
 
+    // Delete specific conversation
+    if (action === "delete") {
+      if (!conversationId) {
+        return new Response(JSON.stringify({ error: "Missing conversationId" }), {
+          status: 400,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      await sb
+        .from("chat_conversations")
+        .delete()
+        .eq("id", conversationId)
+        .eq("ip_address", ip)
+        .is("user_id", null);
+
+      return new Response(JSON.stringify({ ok: true }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    // Clear all conversations for this IP
     if (action === "clear") {
       await sb
         .from("chat_conversations")
