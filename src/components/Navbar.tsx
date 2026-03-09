@@ -1,5 +1,5 @@
 import { Link, useLocation } from "react-router-dom";
-import { Menu, X, Sun, Moon, ChevronDown, Settings, MessageSquare, Handshake, Music } from "lucide-react";
+import { Menu, X, Sun, Moon, ChevronDown, Settings, MessageSquare, Handshake, Music, ExternalLink } from "lucide-react";
 import { useState, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useTheme } from "@/hooks/useTheme";
@@ -8,21 +8,22 @@ import { useUserRole } from "@/hooks/useUserRole";
 import logo from "@/assets/logo.png";
 
 const financasItems = [
-  { to: "/financas/educacao", label: "Educação Financeira" },
-  { to: "/financas/controle", label: "Controle de Gastos" },
-  { to: "/financas/conversor", label: "Conversor de Moedas" },
+  { to: "/financas/educacao", label: "Educação Financeira", external: false },
+  { to: "/financas/controle", label: "Controle de Gastos", external: false },
+  { to: "/financas/conversor", label: "Conversor de Moedas", external: false },
 ];
 
 const servicosItems = [
-  { to: "/servicos/criador-prompt", label: "Criador de Prompt" },
-  { to: "/servicos/removedor-fundo", label: "Removedor de Fundo" },
-  { to: "/servicos/gerador-slides", label: "Gerador de Slides & E-book" },
-  { to: "/ferramentas/calculadora-preco", label: "Calculadora de Lucro" },
+  { to: "/servicos/criador-prompt", label: "Criador de Prompt", external: false },
+  { to: "/servicos/removedor-fundo", label: "Removedor de Fundo", external: false },
+  { to: "/servicos/gerador-slides", label: "Gerador de Slides & E-book", external: false },
+  { to: "/ferramentas/calculadora-preco", label: "Calculadora de Lucro", external: false },
 ];
 
 const produtosItems = [
-  { to: "/produtos/pix-checkout", label: "Pix Checkout" },
-  { to: "/produtos/gerador-legendas", label: "Gerador de Legendas" },
+  { to: "/produtos/pix-checkout", label: "Pix Checkout", external: false },
+  { to: "/produtos/gerador-legendas", label: "Gerador de Legendas", external: false },
+  { to: "https://mentesimulator.online", label: "Analisador e Simulador de YouTube", badge: "3 testes grátis", external: true },
 ];
 
 
