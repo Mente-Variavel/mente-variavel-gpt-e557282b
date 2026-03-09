@@ -144,6 +144,8 @@ async function fileToBase64(file: File): Promise<string> {
   });
 }
 
+const HISTORY_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/chat-history`;
+
 const Chat = () => {
   const location = useLocation();
   const { user } = useAuth();
@@ -155,21 +157,43 @@ const Chat = () => {
   const conversationId = useRef<string | null>(null);
   const saveTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  // Load conversation for logged-in users
+  // Load conversation — logged-in users use Supabase directly, anonymous use IP-based edge function
   useEffect(() => {
-    if (!user) return;
     const loadConversation = async () => {
-      const { data } = await supabase
-        .from("chat_conversations")
-        .select("id, messages")
-        .eq("user_id", user.id)
-        .order("updated_at", { ascending: false })
-        .limit(1);
-      if (data && data.length > 0) {
-        conversationId.current = data[0].id;
-        const savedMsgs = data[0].messages as any[];
-        if (savedMsgs && savedMsgs.length > 0) {
-          setMessages(savedMsgs);
+      if (user) {
+        const { data } = await supabase
+          .from("chat_conversations")
+          .select("id, messages")
+          .eq("user_id", user.id)
+          .order("updated_at", { ascending: false })
+          .limit(1);
+        if (data && data.length > 0) {
+          conversationId.current = data[0].id;
+          const savedMsgs = data[0].messages as any[];
+          if (savedMsgs && savedMsgs.length > 0) {
+            setMessages(savedMsgs);
+          }
+        }
+      } else {
+        // Load IP-based conversation
+        try {
+          const resp = await fetch(HISTORY_URL, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+            },
+            body: JSON.stringify({ action: "load" }),
+          });
+          if (resp.ok) {
+            const data = await resp.json();
+            if (data.id) conversationId.current = data.id;
+            if (data.messages && data.messages.length > 0) {
+              setMessages(data.messages);
+            }
+          }
+        } catch (e) {
+          console.error("Failed to load IP conversation:", e);
         }
       }
     };
@@ -178,23 +202,43 @@ const Chat = () => {
 
   // Save conversation with debounce
   const saveConversation = useCallback((msgs: Msg[]) => {
-    if (!user || msgs.length === 0) return;
+    if (msgs.length === 0) return;
     if (saveTimeout.current) clearTimeout(saveTimeout.current);
     saveTimeout.current = setTimeout(async () => {
-      // Strip non-serializable fields
       const toSave = msgs.map(({ role, content, imageUrl }) => ({ role, content, imageUrl }));
-      if (conversationId.current) {
-        await supabase
-          .from("chat_conversations")
-          .update({ messages: toSave as any, updated_at: new Date().toISOString() })
-          .eq("id", conversationId.current);
+
+      if (user) {
+        if (conversationId.current) {
+          await supabase
+            .from("chat_conversations")
+            .update({ messages: toSave as any, updated_at: new Date().toISOString() })
+            .eq("id", conversationId.current);
+        } else {
+          const { data } = await supabase
+            .from("chat_conversations")
+            .insert({ user_id: user.id, messages: toSave as any })
+            .select("id")
+            .single();
+          if (data) conversationId.current = data.id;
+        }
       } else {
-        const { data } = await supabase
-          .from("chat_conversations")
-          .insert({ user_id: user.id, messages: toSave as any })
-          .select("id")
-          .single();
-        if (data) conversationId.current = data.id;
+        // Save via IP-based edge function
+        try {
+          const resp = await fetch(HISTORY_URL, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+            },
+            body: JSON.stringify({ action: "save", messages: toSave }),
+          });
+          if (resp.ok) {
+            const data = await resp.json();
+            if (data.id) conversationId.current = data.id;
+          }
+        } catch (e) {
+          console.error("Failed to save IP conversation:", e);
+        }
       }
     }, 1500);
   }, [user]);
