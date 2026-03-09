@@ -599,14 +599,54 @@ ${originalLyrics}`;
                   </CardHeader>
                   <CardContent>
                     <pre className="whitespace-pre-wrap text-sm text-foreground leading-relaxed font-body">{improvedLyrics}</pre>
-                    <div className="mt-4">
+                  </CardContent>
+                </Card>
+
+                {/* Suno CTA Card for Improved Lyrics */}
+                <Card className="mb-6 border-primary/30 bg-gradient-to-br from-primary/5 to-accent/5">
+                  <CardContent className="pt-6">
+                    <h3 className="font-display text-xl font-bold text-foreground mb-2">
+                      Transforme sua letra em uma música real
+                    </h3>
+                    <p className="text-sm text-muted-foreground mb-4">
+                      Agora você pode transformar a letra melhorada em uma música completa utilizando Inteligência Artificial.
+                      Com o Suno é possível gerar vocais realistas, escolher diferentes estilos musicais e criar músicas completas em poucos segundos.
+                    </p>
+
+                    <h4 className="font-display text-base font-bold text-primary mb-2">Vantagens do Suno Pro</h4>
+                    <ul className="text-sm text-foreground space-y-1.5 mb-6 list-none font-medium">
+                      <li>• <strong>Acesso ao modelo mais avançado</strong> de geração de músicas (v5)</li>
+                      <li>• <strong>2.500 créditos por mês</strong> (até aproximadamente 500 músicas)</li>
+                      <li>• <strong>Direitos de uso comercial</strong> para novas músicas criadas</li>
+                      <li>• <strong>Recursos avançados</strong> como personas musicais e edição avançada</li>
+                      <li>• <strong>Separação da música</strong> em até 12 faixas (vocais e instrumentos)</li>
+                      <li>• <strong>Upload de até 8 minutos</strong> de áudio para remix ou continuação</li>
+                      <li>• <strong>Adicionar novos vocais ou instrumentos</strong> em músicas já existentes</li>
+                      <li>• <strong>Acesso antecipado</strong> a novos recursos da plataforma</li>
+                      <li>• <strong>Créditos adicionais</strong> disponíveis para compra quando necessário</li>
+                      <li>• <strong>Fila prioritária</strong> para geração de músicas</li>
+                      <li>• <strong>Criação de até 10 músicas</strong> simultaneamente</li>
+                    </ul>
+
+                    <div className="flex flex-wrap gap-3 mb-4">
                       <Button onClick={() => {
                         navigator.clipboard.writeText(improvedLyrics);
                         toast.success("Letra melhorada copiada!");
                       }} variant="outline" className="gap-2">
-                        <Copy className="w-4 h-4" /> Copiar letra melhorada
+                        <Copy className="w-4 h-4" /> Copiar letra
+                      </Button>
+                      <Button
+                        onClick={() => window.open(SUNO_REFERRAL, "_blank")}
+                        className="gap-2"
+                        style={{ backgroundColor: "hsl(30, 100%, 50%)", color: "white" }}
+                      >
+                        <ExternalLink className="w-4 h-4" /> Abrir no Suno
                       </Button>
                     </div>
+                    <p className="text-xs text-muted-foreground flex items-start gap-1.5">
+                      <Lightbulb className="w-3.5 h-3.5 mt-0.5 shrink-0 text-primary" />
+                      Dica: Usuários do plano Suno Pro podem criar mais músicas por mês, utilizar recursos avançados e gerar faixas com qualidade profissional.
+                    </p>
                   </CardContent>
                 </Card>
               </motion.div>
