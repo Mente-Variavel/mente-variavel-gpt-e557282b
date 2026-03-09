@@ -82,22 +82,43 @@ const Navbar = () => {
             initial={{ opacity: 0, y: -4 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -4 }}
-            className="absolute top-full left-0 mt-1 w-56 glass rounded-xl shadow-lg border border-border/50 overflow-hidden z-50"
+            className="absolute top-full left-0 mt-1 w-64 glass rounded-xl shadow-lg border border-border/50 overflow-hidden z-50"
           >
-            {items.map((item) => (
-              <Link
-                key={item.to}
-                to={item.to}
-                onClick={() => { toggle(); }}
-                className={`block px-4 py-2.5 text-sm transition-all ${
-                  isActive(item.to)
-                    ? "text-primary bg-primary/10"
-                    : "text-muted-foreground hover:text-foreground hover:bg-secondary/60"
-                }`}
-              >
-                {item.label}
-              </Link>
-            ))}
+            {items.map((item) =>
+              item.external ? (
+                <a
+                  key={item.to}
+                  href={item.to}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  onClick={() => { toggle(); }}
+                  className="flex items-center justify-between px-4 py-2.5 text-sm transition-all text-muted-foreground hover:text-foreground hover:bg-secondary/60 group"
+                >
+                  <span className="flex items-center gap-1.5">
+                    {item.label}
+                    <ExternalLink className="w-3 h-3 opacity-50 group-hover:opacity-100" />
+                  </span>
+                  {"badge" in item && item.badge && (
+                    <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-primary/20 text-primary shrink-0 ml-2">
+                      {item.badge}
+                    </span>
+                  )}
+                </a>
+              ) : (
+                <Link
+                  key={item.to}
+                  to={item.to}
+                  onClick={() => { toggle(); }}
+                  className={`block px-4 py-2.5 text-sm transition-all ${
+                    isActive(item.to)
+                      ? "text-primary bg-primary/10"
+                      : "text-muted-foreground hover:text-foreground hover:bg-secondary/60"
+                  }`}
+                >
+                  {item.label}
+                </Link>
+              )
+            )}
           </motion.div>
         )}
       </AnimatePresence>
