@@ -585,6 +585,32 @@ A letra deve combinar perfeitamente com o gênero ${genero} e o tema "${tema}". 
                     className="w-full min-h-[200px] p-3 rounded-lg border border-input bg-background text-foreground text-sm resize-y focus:outline-none focus:ring-2 focus:ring-primary"
                   />
                 </div>
+                <div>
+                  <label className="text-sm text-muted-foreground mb-2 block">O que você quer melhorar?</label>
+                  <div className="flex flex-wrap gap-4">
+                    <label className="flex items-center gap-2 cursor-pointer">
+                      <Checkbox
+                        checked={improveRimas}
+                        onCheckedChange={(checked) => setImproveRimas(checked === true)}
+                      />
+                      <span className="text-sm font-medium">Rimas</span>
+                    </label>
+                    <label className="flex items-center gap-2 cursor-pointer">
+                      <Checkbox
+                        checked={improveEstrutura}
+                        onCheckedChange={(checked) => setImproveEstrutura(checked === true)}
+                      />
+                      <span className="text-sm font-medium">Estrutura</span>
+                    </label>
+                    <label className="flex items-center gap-2 cursor-pointer">
+                      <Checkbox
+                        checked={improveLinguagem}
+                        onCheckedChange={(checked) => setImproveLinguagem(checked === true)}
+                      />
+                      <span className="text-sm font-medium">Linguagem Poética</span>
+                    </label>
+                  </div>
+                </div>
                 <div className="flex gap-3">
                   <Button onClick={improveLyrics} disabled={improvingLoading} className="flex-1 gap-2 bg-accent hover:bg-accent/90">
                     {improvingLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4" />}
