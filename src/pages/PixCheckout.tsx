@@ -130,7 +130,12 @@ export default function PixCheckout() {
     } catch { /* user cancelled */ }
   };
 
-  const handleGenerate = () => {
+  const handleGenerate = useCallback(() => {
+    // CRITICAL: Clear all previous state before regeneration
+    setPayload("");
+    setCopiedPayload(false);
+    setCopiedKey(false);
+    
     if (useBrCode) {
       if (!brCodeRaw.trim()) {
         toast.error("Cole o código Pix Copia e Cola");
@@ -140,6 +145,8 @@ export default function PixCheckout() {
         toast.error("Código Pix inválido. Cole o Pix Copia e Cola completo (BR Code).");
         return;
       }
+      // Force fresh QR Code generation
+      setQrKey(prev => prev + 1);
       setPayload(sanitizedBrCode);
     } else {
       if (!pixKey) {
@@ -153,6 +160,7 @@ export default function PixCheckout() {
         return;
       }
 
+      // CRITICAL: Generate fresh TXID every time
       const txid = generateTxId();
       const pixPayload = generatePixPayload({
         chave: pixKey,
@@ -163,11 +171,13 @@ export default function PixCheckout() {
         descricao: description || undefined,
       });
 
+      // Force fresh QR Code generation
+      setQrKey(prev => prev + 1);
       setPayload(pixPayload);
     }
 
     setStep("qr");
-  };
+  }, [useBrCode, brCodeRaw, brCodeValid, sanitizedBrCode, pixKey, amount, merchantName, merchantCity, description]);
 
   const handleCopyPayload = async () => {
     try {
