@@ -405,6 +405,12 @@ A letra deve combinar perfeitamente com o gênero ${genero} e o tema "${tema}". 
       return { ptMsg, enMsg };
     };
 
+    const callImprove = async (extra: string): Promise<string> => {
+      const { ptMsg, enMsg } = buildInstructions(extra);
+      const systemMsg = language === "en"
+        ? "You are an expert songwriter and lyrics editor. Return ONLY the improved lyrics with section markers like [Verse 1], [Chorus], [Bridge], etc. No explanations, no commentary."
+        : "Você é um especialista em composição musical e edição de letras de música. Retorne APENAS a letra melhorada com marcadores como [Verso 1], [Refrão], [Ponte], etc. Sem explicações, sem comentários.";
+
       const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
       const supabaseKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
 
@@ -418,7 +424,7 @@ A letra deve combinar perfeitamente com o gênero ${genero} e o tema "${tema}". 
           tool: "improve_lyrics",
           messages: [
             { role: "system", content: systemMsg },
-            { role: "user", content: userMsg },
+            { role: "user", content: language === "en" ? enMsg : ptMsg },
           ],
           max_tokens: 2048,
         }),
@@ -440,8 +446,8 @@ A letra deve combinar perfeitamente com o gênero ${genero} e o tema "${tema}". 
 
       if (similarity >= 0.85) {
         const retryMsg = language === "en"
-          ? "CRITICAL: The previous version was too similar to the original. Use completely different words, metaphors and sentence structures while keeping only the core theme."
-          : "CRÍTICO: a versão gerada ficou muito parecida com a original. Use palavras, metáforas e estruturas de frases completamente diferentes, mantendo apenas o tema central.";
+          ? "CRITICAL: The previous version was too similar. Apply the requested changes more aggressively."
+          : "CRÍTICO: a versão gerada ficou muito parecida. Aplique as mudanças solicitadas de forma mais agressiva.";
 
         setImprovedLyrics("");
         const secondResult = await callImprove(retryMsg);
