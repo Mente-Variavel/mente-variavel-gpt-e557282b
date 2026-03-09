@@ -233,6 +233,9 @@ export default function CriadorMusica() {
   const [userLyrics, setUserLyrics] = useState("");
   const [improvedLyrics, setImprovedLyrics] = useState("");
   const [improvingLoading, setImprovingLoading] = useState(false);
+  const [improveRimas, setImproveRimas] = useState(true);
+  const [improveEstrutura, setImproveEstrutura] = useState(true);
+  const [improveLinguagem, setImproveLinguagem] = useState(true);
 
   const generateLyrics = async () => {
     if (!titulo || !genero || !tema) {
