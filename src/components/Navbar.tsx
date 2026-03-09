@@ -13,13 +13,13 @@ const financasItems: NavItem[] = [
   { to: "/financas/educacao", label: "Educação Financeira", external: false },
   { to: "/financas/controle", label: "Controle de Gastos", external: false },
   { to: "/financas/conversor", label: "Conversor de Moedas", external: false },
+  { to: "/ferramentas/calculadora-preco", label: "Calculadora de Lucro", external: false },
 ];
 
 const servicosItems: NavItem[] = [
   { to: "/servicos/criador-prompt", label: "Criador de Prompt", external: false },
   { to: "/servicos/removedor-fundo", label: "Removedor de Fundo", external: false },
   { to: "/servicos/gerador-slides", label: "Gerador de Slides & E-book", external: false },
-  { to: "/ferramentas/calculadora-preco", label: "Calculadora de Lucro", external: false },
 ];
 
 const produtosItems: NavItem[] = [
