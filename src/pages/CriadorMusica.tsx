@@ -351,82 +351,106 @@ A letra deve combinar perfeitamente com o gênero ${genero} e o tema "${tema}". 
   };
 
   const improveLyrics = async () => {
-    if (!userLyrics.trim()) {
+    const originalLyrics = userLyrics.trim();
+
+    if (!originalLyrics) {
       toast.error("Digite a letra que você deseja melhorar.");
       return;
     }
-    setImprovingLoading(true);
-    setImprovedLyrics("");
 
-    const prompt = language === "en"
-      ? `Improve and refine the following song lyrics. Keep the original theme and message but enhance:
-- Rhyme quality and consistency
-- Poetic language and metaphors
-- Emotional impact
-- Flow and rhythm
-- Song structure (verses, chorus, bridge)
+    const normalizeText = (text: string) =>
+      text.toLowerCase().replace(/[^\p{L}\p{N}\s]/gu, " ").replace(/\s+/g, " ").trim();
+
+    const calculateSimilarity = (a: string, b: string) => {
+      const aWords = new Set(normalizeText(a).split(" ").filter(Boolean));
+      const bWords = new Set(normalizeText(b).split(" ").filter(Boolean));
+      if (aWords.size === 0 || bWords.size === 0) return 0;
+      let intersection = 0;
+      aWords.forEach((word) => { if (bWords.has(word)) intersection += 1; });
+      return intersection / Math.max(aWords.size, bWords.size);
+    };
+
+    const callImprove = async (extraInstruction: string): Promise<string> => {
+      const systemMsg = language === "en"
+        ? "You are an expert songwriter and lyrics editor. Your ONLY job is to improve song lyrics. Return ONLY the improved lyrics with section markers like [Verse 1], [Chorus], [Bridge], etc. No explanations, no commentary, nothing else."
+        : "Você é um especialista em composição musical e edição de letras de música. Seu ÚNICO trabalho é melhorar letras de música. Retorne APENAS a letra melhorada com marcadores de seção como [Verso 1], [Refrão], [Ponte], etc. Sem explicações, sem comentários, nada mais.";
+
+      const userMsg = language === "en"
+        ? `Improve and rewrite this song lyrics. MANDATORY requirements:
+- Improve rhyme quality and consistency
+- Enhance poetic language and metaphors
+- Increase emotional impact
+- Improve flow and rhythm
+- Keep the original theme and message
+- Rewrite at least 70% of the lines with fresh, creative wording
+- Do NOT copy long phrases from the original
+${extraInstruction}
 
 Original lyrics:
-${userLyrics}
-
-Return only the improved lyrics with proper structure markers like [Verse 1], [Chorus], etc. No explanations.`
-      : `Melhore e refine a seguinte letra de música. Mantenha o tema e mensagem original mas aprimore:
-- Qualidade e consistência das rimas
-- Linguagem poética e metáforas
-- Impacto emocional
-- Fluidez e ritmo
-- Estrutura da música (versos, refrão, ponte)
+${originalLyrics}`
+        : `Melhore e reescreva esta letra de música. Requisitos OBRIGATÓRIOS:
+- Melhorar qualidade e consistência das rimas
+- Aprimorar linguagem poética e metáforas
+- Aumentar impacto emocional
+- Melhorar a fluidez e o ritmo
+- Manter o tema e a mensagem original
+- Reescrever pelo menos 70% dos versos com palavras criativas e novas
+- NÃO copiar frases longas da original
+${extraInstruction}
 
 Letra original:
-${userLyrics}
+${originalLyrics}`;
 
-Retorne apenas a letra melhorada com marcadores de estrutura como [Verso 1], [Refrão], etc. Sem explicações.`;
-
-    try {
       const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
       const supabaseKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
 
-      const res = await fetch(`${supabaseUrl}/functions/v1/chat`, {
+      const res = await fetch(`${supabaseUrl}/functions/v1/ai-generate`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
           "Authorization": `Bearer ${supabaseKey}`,
         },
-        body: JSON.stringify({ messages: [{ role: "user", content: prompt }] }),
+        body: JSON.stringify({
+          tool: "improve_lyrics",
+          messages: [
+            { role: "system", content: systemMsg },
+            { role: "user", content: userMsg },
+          ],
+          max_tokens: 2048,
+        }),
       });
 
-      if (!res.ok || !res.body) throw new Error(`HTTP ${res.status}`);
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const data = await res.json();
+      return (data.content || "").trim();
+    };
 
-      const reader = res.body.getReader();
-      const decoder = new TextDecoder();
-      let full = "";
-      let textBuffer = "";
+    setImprovingLoading(true);
+    setImprovedLyrics("");
 
-      while (true) {
-        const { done, value } = await reader.read();
-        if (done) break;
-        textBuffer += decoder.decode(value, { stream: true });
+    try {
+      const firstResult = await callImprove("");
+      setImprovedLyrics(firstResult);
 
-        let newlineIndex: number;
-        while ((newlineIndex = textBuffer.indexOf("\n")) !== -1) {
-          let line = textBuffer.slice(0, newlineIndex);
-          textBuffer = textBuffer.slice(newlineIndex + 1);
-          if (line.endsWith("\r")) line = line.slice(0, -1);
-          if (line.startsWith(":") || line.trim() === "") continue;
-          if (!line.startsWith("data: ")) continue;
-          const jsonStr = line.slice(6).trim();
-          if (jsonStr === "[DONE]") break;
-          try {
-            const parsed = JSON.parse(jsonStr);
-            const content = parsed.choices?.[0]?.delta?.content;
-            if (content) {
-              full += content;
-              setImprovedLyrics(full);
-            }
-          } catch {}
+      const similarity = calculateSimilarity(originalLyrics, firstResult);
+
+      if (similarity >= 0.85) {
+        const retryMsg = language === "en"
+          ? "CRITICAL: The previous version was too similar to the original. Use completely different words, metaphors and sentence structures while keeping only the core theme."
+          : "CRÍTICO: a versão gerada ficou muito parecida com a original. Use palavras, metáforas e estruturas de frases completamente diferentes, mantendo apenas o tema central.";
+
+        setImprovedLyrics("");
+        const secondResult = await callImprove(retryMsg);
+        setImprovedLyrics(secondResult);
+
+        if (calculateSimilarity(originalLyrics, secondResult) >= 0.85) {
+          toast.warning("Adicione mais contexto para uma reescrita mais profunda.");
+        } else {
+          toast.success("Letra melhorada com sucesso!");
         }
+      } else {
+        toast.success("Letra melhorada com sucesso!");
       }
-      toast.success("Letra melhorada com sucesso!");
     } catch (err) {
       console.error(err);
       toast.error("Erro ao melhorar a letra. Tente novamente.");
