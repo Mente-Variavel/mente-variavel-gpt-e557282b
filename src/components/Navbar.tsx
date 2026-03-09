@@ -247,11 +247,32 @@ const Navbar = () => {
               ))}
 
               <p className="px-4 pt-3 pb-1 text-xs font-bold text-muted-foreground uppercase tracking-wider">Produtos</p>
-              {produtosItems.map((item) => (
-                <Link key={item.to} to={item.to} onClick={() => setOpen(false)} className={`px-6 py-2.5 rounded-lg text-sm transition-all ${isActive(item.to) ? "text-primary bg-primary/10" : "text-muted-foreground hover:text-foreground hover:bg-secondary"}`}>
-                  {item.label}
-                </Link>
-              ))}
+              {produtosItems.map((item) =>
+                item.external ? (
+                  <a
+                    key={item.to}
+                    href={item.to}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    onClick={() => setOpen(false)}
+                    className="flex items-center justify-between px-6 py-2.5 rounded-lg text-sm transition-all text-muted-foreground hover:text-foreground hover:bg-secondary"
+                  >
+                    <span className="flex items-center gap-1.5">
+                      {item.label}
+                      <ExternalLink className="w-3 h-3 opacity-50" />
+                    </span>
+                    {item.badge && (
+                      <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-primary/20 text-primary ml-2">
+                        {item.badge}
+                      </span>
+                    )}
+                  </a>
+                ) : (
+                  <Link key={item.to} to={item.to} onClick={() => setOpen(false)} className={`px-6 py-2.5 rounded-lg text-sm transition-all ${isActive(item.to) ? "text-primary bg-primary/10" : "text-muted-foreground hover:text-foreground hover:bg-secondary"}`}>
+                    {item.label}
+                  </Link>
+                )
+              )}
 
 
               <Link to="/parceiro" onClick={() => setOpen(false)} className={`px-4 py-3 rounded-lg text-sm font-medium transition-all flex items-center gap-1.5 ${isActive("/parceiro") ? "text-primary bg-primary/10" : "text-muted-foreground hover:text-foreground hover:bg-secondary"}`}>
