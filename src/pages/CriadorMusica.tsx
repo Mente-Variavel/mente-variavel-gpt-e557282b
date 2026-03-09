@@ -229,6 +229,10 @@ export default function CriadorMusica() {
   const [showSunoPrompt, setShowSunoPrompt] = useState(false);
   const [loading, setLoading] = useState(false);
   const [language, setLanguage] = useState<"pt" | "en">("pt");
+  const [improveLyricsMode, setImproveLyricsMode] = useState(false);
+  const [userLyrics, setUserLyrics] = useState("");
+  const [improvedLyrics, setImprovedLyrics] = useState("");
+  const [improvingLoading, setImprovingLoading] = useState(false);
 
   const generateLyrics = async () => {
     if (!titulo || !genero || !tema) {
