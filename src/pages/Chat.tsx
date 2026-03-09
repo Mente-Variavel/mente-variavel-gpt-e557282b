@@ -8,6 +8,7 @@ import ChatInput from "@/components/ChatInput";
 import type { ChatAttachment } from "@/components/ChatInput";
 import TypingIndicator from "@/components/TypingIndicator";
 import Navbar from "@/components/Navbar";
+import ChatSidebar, { type ChatConversation } from "@/components/ChatSidebar";
 import chatLogo from "@/assets/logo.png";
 import { useAuth } from "@/hooks/useAuth";
 
@@ -17,6 +18,7 @@ type Msg = { role: "user" | "assistant"; content: string; imageUrl?: string; att
 
 const CHAT_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/chat`;
 const IMAGE_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/generate-image`;
+const HISTORY_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/chat-history`;
 
 const IMAGE_TRIGGERS = [
   "gere uma imagem", "gerar imagem", "crie uma imagem", "criar imagem",
@@ -37,7 +39,6 @@ const IMAGE_TRIGGERS = [
   "mockup", "estampa", "estampar", "personalizar", "personalização",
 ];
 
-// Broader triggers that ONLY apply when combined with visual context
 const IMAGE_BROAD_TRIGGERS = [
   "cria um", "cria uma", "crie um", "crie uma",
   "gera um", "gera uma", "gere um", "gere uma",
@@ -50,7 +51,6 @@ const IMAGE_BROAD_TRIGGERS = [
   "picture of", "image of", "photo of",
 ];
 
-// Text-only triggers: if these appear, do NOT generate image even if broad triggers match
 const TEXT_ONLY_INDICATORS = [
   "descrição", "descreva", "descrever", "texto", "escreva", "escrever",
   "redação", "artigo", "roteiro", "script", "copy", "legenda",
@@ -69,7 +69,6 @@ const TEXT_ONLY_INDICATORS = [
   "nome para", "nomes para", "slogan",
 ];
 
-// If user attached images, also check these lighter triggers
 const IMAGE_WITH_ATTACHMENT_TRIGGERS = [
   "camiseta", "camisa", "caneca", "boné", "adesivo", "banner", "cartão",
   "logo", "imagem", "foto", "design", "arte", "produto", "capa",
@@ -79,7 +78,6 @@ const IMAGE_WITH_ATTACHMENT_TRIGGERS = [
   "edita", "edite", "melhora", "melhore", "ajusta", "ajuste",
 ];
 
-// Detect structured image prompts (from prompt generators)
 const IMAGE_PROMPT_INDICATORS = [
   "estilo visual:", "configuração da cena:", "composição técnica",
   "proporção: 16:9", "proporção: 9:16", "proporção: 1:1",
@@ -93,24 +91,13 @@ const IMAGE_PROMPT_INDICATORS = [
 
 function isImageRequest(text: string, hasAttachments: boolean): boolean {
   const lower = text.toLowerCase();
-
-  // Check if text explicitly requests text-only content
   const isTextRequest = TEXT_ONLY_INDICATORS.some((t) => lower.includes(t));
-
-  // Explicit image triggers always win (unless it's clearly a text request)
   if (!isTextRequest && IMAGE_TRIGGERS.some((t) => lower.includes(t))) return true;
-
-  // With attachments, route to image generation
   if (hasAttachments && IMAGE_WITH_ATTACHMENT_TRIGGERS.some((t) => lower.includes(t))) return true;
   if (hasAttachments) return true;
-
-  // Broad triggers only if NOT a text request
   if (!isTextRequest && IMAGE_BROAD_TRIGGERS.some((t) => lower.includes(t))) return true;
-
-  // Detect structured image prompts with multiple indicators
   const indicatorCount = IMAGE_PROMPT_INDICATORS.filter((t) => lower.includes(t)).length;
   if (indicatorCount >= 2) return true;
-
   return false;
 }
 
@@ -144,8 +131,6 @@ async function fileToBase64(file: File): Promise<string> {
   });
 }
 
-const HISTORY_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/chat-history`;
-
 const Chat = () => {
   const location = useLocation();
   const { user } = useAuth();
@@ -157,48 +142,95 @@ const Chat = () => {
   const conversationId = useRef<string | null>(null);
   const saveTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  // Load conversation — logged-in users use Supabase directly, anonymous use IP-based edge function
-  useEffect(() => {
-    const loadConversation = async () => {
-      if (user) {
-        const { data } = await supabase
-          .from("chat_conversations")
-          .select("id, messages")
-          .eq("user_id", user.id)
-          .order("updated_at", { ascending: false })
-          .limit(1);
-        if (data && data.length > 0) {
-          conversationId.current = data[0].id;
-          const savedMsgs = data[0].messages as any[];
-          if (savedMsgs && savedMsgs.length > 0) {
-            setMessages(savedMsgs);
-          }
-        }
-      } else {
-        // Load IP-based conversation
-        try {
-          const resp = await fetch(HISTORY_URL, {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
-            },
-            body: JSON.stringify({ action: "load" }),
-          });
-          if (resp.ok) {
-            const data = await resp.json();
-            if (data.id) conversationId.current = data.id;
-            if (data.messages && data.messages.length > 0) {
-              setMessages(data.messages);
-            }
-          }
-        } catch (e) {
-          console.error("Failed to load IP conversation:", e);
-        }
+  // Sidebar state
+  const [conversations, setConversations] = useState<ChatConversation[]>([]);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(() => {
+    if (typeof window !== "undefined" && window.innerWidth < 768) return true;
+    return localStorage.getItem("mv_chat_sidebar") === "collapsed";
+  });
+
+  // Fetch conversation list
+  const fetchConversations = useCallback(async () => {
+    if (user) {
+      const { data } = await supabase
+        .from("chat_conversations")
+        .select("id, title, updated_at, messages")
+        .eq("user_id", user.id)
+        .order("updated_at", { ascending: false })
+        .limit(50);
+      if (data) {
+        setConversations(data.map((c: any) => ({
+          id: c.id,
+          title: c.title || "Nova conversa",
+          updatedAt: c.updated_at,
+          messageCount: Array.isArray(c.messages) ? c.messages.length : 0,
+        })));
       }
-    };
-    loadConversation();
+    } else {
+      try {
+        const resp = await fetch(HISTORY_URL, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+          },
+          body: JSON.stringify({ action: "list" }),
+        });
+        if (resp.ok) {
+          const data = await resp.json();
+          setConversations(data.conversations || []);
+        }
+      } catch (e) {
+        console.error("Failed to fetch conversations:", e);
+      }
+    }
   }, [user]);
+
+  // Load specific conversation
+  const loadConversation = useCallback(async (id?: string) => {
+    if (user) {
+      const query = supabase
+        .from("chat_conversations")
+        .select("id, title, messages")
+        .eq("user_id", user.id);
+      
+      const { data } = id 
+        ? await query.eq("id", id).single()
+        : await query.order("updated_at", { ascending: false }).limit(1).then(r => ({ data: r.data?.[0] }));
+
+      if (data) {
+        conversationId.current = data.id;
+        setMessages((data.messages as any[]) || []);
+      } else {
+        conversationId.current = null;
+        setMessages([]);
+      }
+    } else {
+      try {
+        const resp = await fetch(HISTORY_URL, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+          },
+          body: JSON.stringify({ action: "load", conversationId: id }),
+        });
+        if (resp.ok) {
+          const data = await resp.json();
+          conversationId.current = data.id || null;
+          setMessages(data.messages || []);
+        }
+      } catch (e) {
+        console.error("Failed to load conversation:", e);
+      }
+    }
+  }, [user]);
+
+  // Initial load
+  useEffect(() => {
+    fetchConversations();
+    loadConversation();
+  }, [fetchConversations, loadConversation]);
 
   // Save conversation with debounce
   const saveConversation = useCallback((msgs: Msg[]) => {
@@ -206,23 +238,33 @@ const Chat = () => {
     if (saveTimeout.current) clearTimeout(saveTimeout.current);
     saveTimeout.current = setTimeout(async () => {
       const toSave = msgs.map(({ role, content, imageUrl }) => ({ role, content, imageUrl }));
+      const firstUserMsg = msgs.find(m => m.role === "user");
+      const autoTitle = firstUserMsg ? firstUserMsg.content.slice(0, 50) : "Nova conversa";
 
       if (user) {
         if (conversationId.current) {
+          const { data: existing } = await supabase
+            .from("chat_conversations")
+            .select("title")
+            .eq("id", conversationId.current)
+            .single();
+
+          const newTitle = existing?.title === "Nova conversa" ? autoTitle : existing?.title;
+
           await supabase
             .from("chat_conversations")
-            .update({ messages: toSave as any, updated_at: new Date().toISOString() })
+            .update({ messages: toSave as any, title: newTitle, updated_at: new Date().toISOString() })
             .eq("id", conversationId.current);
         } else {
           const { data } = await supabase
             .from("chat_conversations")
-            .insert({ user_id: user.id, messages: toSave as any })
+            .insert({ user_id: user.id, messages: toSave as any, title: autoTitle })
             .select("id")
             .single();
           if (data) conversationId.current = data.id;
         }
+        fetchConversations();
       } else {
-        // Save via IP-based edge function
         try {
           const resp = await fetch(HISTORY_URL, {
             method: "POST",
@@ -230,18 +272,83 @@ const Chat = () => {
               "Content-Type": "application/json",
               Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
             },
-            body: JSON.stringify({ action: "save", messages: toSave }),
+            body: JSON.stringify({ action: "save", messages: toSave, conversationId: conversationId.current }),
           });
           if (resp.ok) {
             const data = await resp.json();
             if (data.id) conversationId.current = data.id;
+            fetchConversations();
           }
         } catch (e) {
-          console.error("Failed to save IP conversation:", e);
+          console.error("Failed to save conversation:", e);
         }
       }
     }, 1500);
-  }, [user]);
+  }, [user, fetchConversations]);
+
+  // Sidebar toggle persistence
+  const toggleSidebar = useCallback(() => {
+    setSidebarCollapsed(prev => {
+      const next = !prev;
+      localStorage.setItem("mv_chat_sidebar", next ? "collapsed" : "expanded");
+      return next;
+    });
+  }, []);
+
+  // Handle new chat
+  const handleNewChat = useCallback(() => {
+    conversationId.current = null;
+    setMessages([]);
+  }, []);
+
+  // Handle select conversation
+  const handleSelectConversation = useCallback((id: string) => {
+    loadConversation(id);
+  }, [loadConversation]);
+
+  // Handle rename
+  const handleRename = useCallback(async (id: string, title: string) => {
+    if (user) {
+      await supabase
+        .from("chat_conversations")
+        .update({ title })
+        .eq("id", id);
+    } else {
+      await fetch(HISTORY_URL, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+        },
+        body: JSON.stringify({ action: "rename", conversationId: id, title }),
+      });
+    }
+    fetchConversations();
+  }, [user, fetchConversations]);
+
+  // Handle delete
+  const handleDelete = useCallback(async (id: string) => {
+    if (user) {
+      await supabase
+        .from("chat_conversations")
+        .delete()
+        .eq("id", id);
+    } else {
+      await fetch(HISTORY_URL, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+        },
+        body: JSON.stringify({ action: "delete", conversationId: id }),
+      });
+    }
+    if (conversationId.current === id) {
+      conversationId.current = null;
+      setMessages([]);
+    }
+    fetchConversations();
+  }, [user, fetchConversations]);
 
   // Show welcome popup once
   useEffect(() => {
@@ -458,7 +565,6 @@ const Chat = () => {
         }
       }
 
-      // Save after streaming completes
       setMessages((prev) => {
         saveConversation(prev);
         return prev;
@@ -475,23 +581,7 @@ const Chat = () => {
   };
 
   const clearChat = () => {
-    setMessages([]);
-    if (user && conversationId.current) {
-      supabase
-        .from("chat_conversations")
-        .delete()
-        .eq("id", conversationId.current)
-        .then(() => { conversationId.current = null; });
-    } else if (!user) {
-      fetch(HISTORY_URL, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
-        },
-        body: JSON.stringify({ action: "clear" }),
-      }).then(() => { conversationId.current = null; });
-    }
+    handleNewChat();
   };
 
   return (
@@ -545,83 +635,98 @@ const Chat = () => {
         )}
       </AnimatePresence>
 
-      <div className="flex-1 flex flex-col pt-16 max-w-3xl mx-auto w-full">
-        <div className="flex items-center justify-between px-4 py-3 border-b border-border/30">
-          <h1 className="font-display text-sm font-semibold text-primary text-glow-cyan">
-            Assistente Inteligente
-          </h1>
-          <div className="flex gap-2">
-            <button
-              onClick={clearChat}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs text-muted-foreground hover:text-foreground hover:bg-secondary transition-all border border-border/50"
-            >
-              <Plus className="w-3.5 h-3.5" /> Novo Chat
-            </button>
-            <button
-              onClick={clearChat}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-all border border-border/50"
-            >
-              <Trash2 className="w-3.5 h-3.5" /> Limpar
-            </button>
-          </div>
-        </div>
+      <div className="flex-1 flex pt-16">
+        {/* Sidebar */}
+        <ChatSidebar
+          conversations={conversations}
+          activeId={conversationId.current}
+          onSelect={handleSelectConversation}
+          onNew={handleNewChat}
+          onRename={handleRename}
+          onDelete={handleDelete}
+          isCollapsed={sidebarCollapsed}
+          onToggle={toggleSidebar}
+        />
 
-        <div ref={scrollRef} className="flex-1 overflow-y-auto px-4 py-6 space-y-6">
-          {messages.length === 0 && (
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              className="flex flex-col items-center justify-center h-full text-center"
-            >
-              <img src={chatLogo} alt="Mente Variável" className="w-20 h-20 rounded-full mb-4 glow-cyan" />
-              <h2 className="font-display text-lg font-bold text-foreground mb-2">
-                Assistente Inteligente
-              </h2>
-              <p className="text-sm text-muted-foreground max-w-md mb-6">
-                Seu assistente de IA em tempo real. Pergunte sobre notícias, esportes, câmbio, eventos recentes ou diga <span className="text-primary font-medium">"gere uma imagem de..."</span> para criar imagens! 🎨
-              </p>
-
-              <div className="w-full max-w-md space-y-2 mb-6">
-                <div className="flex items-center gap-2 text-xs text-muted-foreground mb-2">
-                  <Info className="w-3.5 h-3.5 text-primary" />
-                  <span className="font-medium">Dicas de uso</span>
-                </div>
-                {tips.map((tip) => (
-                  <div key={tip} className="glass rounded-lg px-4 py-2.5 text-xs text-muted-foreground text-left">
-                    {tip}
-                  </div>
-                ))}
-              </div>
-
-            </motion.div>
-          )}
-          {messages.map((msg, i) => (
-            <div key={i}>
-              <ChatMessage role={msg.role} content={msg.content} imageUrl={msg.imageUrl} attachments={msg.attachments} />
-              {msg.analysis && <ReferenceAnalysis analysis={msg.analysis} />}
-              {msg.retryPrompt && (
-                <div className="mt-2 ml-11">
-                  <button
-                    onClick={() => retryImageGeneration(msg.retryPrompt!, msg.retryRefs)}
-                    disabled={isLoading}
-                    className="flex items-center gap-2 px-4 py-2 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 transition-colors disabled:opacity-50"
-                  >
-                    🔄 Tentar novamente
-                  </button>
-                </div>
-              )}
+        {/* Main chat area */}
+        <div className="flex-1 flex flex-col max-w-3xl mx-auto w-full">
+          <div className="flex items-center justify-between px-4 py-3 border-b border-border/30">
+            <h1 className="font-display text-sm font-semibold text-primary text-glow-cyan">
+              Assistente Inteligente
+            </h1>
+            <div className="flex gap-2">
+              <button
+                onClick={clearChat}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs text-muted-foreground hover:text-foreground hover:bg-secondary transition-all border border-border/50"
+              >
+                <Plus className="w-3.5 h-3.5" /> Novo Chat
+              </button>
+              <button
+                onClick={clearChat}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-all border border-border/50"
+              >
+                <Trash2 className="w-3.5 h-3.5" /> Limpar
+              </button>
             </div>
-          ))}
-          {isLoading && !messages.some((m) => m.role === "assistant" && m === messages[messages.length - 1]) && (
-            <TypingIndicator />
-          )}
-        </div>
+          </div>
 
-        <div className="px-4 pb-4 pt-2">
-          <ChatInput onSend={sendMessage} disabled={isLoading} />
-          <p className="text-center text-xs text-muted-foreground mt-2">
-            Assistente Inteligente pode cometer erros. Verifique informações importantes.
-          </p>
+          <div ref={scrollRef} className="flex-1 overflow-y-auto px-4 py-6 space-y-6">
+            {messages.length === 0 && (
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                className="flex flex-col items-center justify-center h-full text-center"
+              >
+                <img src={chatLogo} alt="Mente Variável" className="w-20 h-20 rounded-full mb-4 glow-cyan" />
+                <h2 className="font-display text-lg font-bold text-foreground mb-2">
+                  Assistente Inteligente
+                </h2>
+                <p className="text-sm text-muted-foreground max-w-md mb-6">
+                  Seu assistente de IA em tempo real. Pergunte sobre notícias, esportes, câmbio, eventos recentes ou diga <span className="text-primary font-medium">"gere uma imagem de..."</span> para criar imagens! 🎨
+                </p>
+
+                <div className="w-full max-w-md space-y-2 mb-6">
+                  <div className="flex items-center gap-2 text-xs text-muted-foreground mb-2">
+                    <Info className="w-3.5 h-3.5 text-primary" />
+                    <span className="font-medium">Dicas de uso</span>
+                  </div>
+                  {tips.map((tip) => (
+                    <div key={tip} className="glass rounded-lg px-4 py-2.5 text-xs text-muted-foreground text-left">
+                      {tip}
+                    </div>
+                  ))}
+                </div>
+
+              </motion.div>
+            )}
+            {messages.map((msg, i) => (
+              <div key={i}>
+                <ChatMessage role={msg.role} content={msg.content} imageUrl={msg.imageUrl} attachments={msg.attachments} />
+                {msg.analysis && <ReferenceAnalysis analysis={msg.analysis} />}
+                {msg.retryPrompt && (
+                  <div className="mt-2 ml-11">
+                    <button
+                      onClick={() => retryImageGeneration(msg.retryPrompt!, msg.retryRefs)}
+                      disabled={isLoading}
+                      className="flex items-center gap-2 px-4 py-2 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 transition-colors disabled:opacity-50"
+                    >
+                      🔄 Tentar novamente
+                    </button>
+                  </div>
+                )}
+              </div>
+            ))}
+            {isLoading && !messages.some((m) => m.role === "assistant" && m === messages[messages.length - 1]) && (
+              <TypingIndicator />
+            )}
+          </div>
+
+          <div className="px-4 pb-4 pt-2">
+            <ChatInput onSend={sendMessage} disabled={isLoading} />
+            <p className="text-center text-xs text-muted-foreground mt-2">
+              Assistente Inteligente pode cometer erros. Verifique informações importantes.
+            </p>
+          </div>
         </div>
       </div>
     </div>
