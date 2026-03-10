@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect, useRef, useCallback } from "react";
+import { useState, useMemo, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { QRCodeSVG } from "qrcode.react";
 import { generatePixPayload, formatCurrency, generateTxId } from "@/lib/pixEmv";
@@ -115,11 +115,18 @@ export default function PixCheckout() {
     } catch { /* user cancelled */ }
   };
 
-  const handleGenerate = useCallback(() => {
-    // Clear all previous generation state first
+  // Generation ID for debugging
+  const [generationId, setGenerationId] = useState(0);
+
+  const handleGenerate = () => {
+    // Full reset of previous generation state
     setPayload("");
     setCopiedPayload(false);
     setCopiedKey(false);
+
+    const newGenId = Date.now();
+    setGenerationId(newGenId);
+    console.log("[PixCheckout] New generation started, ID:", newGenId);
 
     if (useBrCode) {
       if (!brCodeRaw.trim()) {
@@ -130,9 +137,12 @@ export default function PixCheckout() {
         toast.error("Código Pix inválido. Cole o Pix Copia e Cola completo (BR Code).");
         return;
       }
-      // Force fresh QR by incrementing key, then set new payload
-      setQrKey(prev => prev + 1);
-      setPayload(sanitizedBrCode);
+      const freshPayload = sanitizedBrCode;
+      console.log("[PixCheckout] BR Code payload:", freshPayload);
+      console.log("[PixCheckout] QR generation input (BR):", freshPayload);
+
+      setQrKey(newGenId);
+      setPayload(freshPayload);
     } else {
       if (!pixKey) {
         toast.error("Informe a chave Pix");
@@ -145,9 +155,11 @@ export default function PixCheckout() {
         return;
       }
 
-      // Always generate a fresh TXID and rebuild the full EMV payload from scratch
+      // Build brand new payload from scratch
       const txid = generateTxId();
-      const pixPayload = generatePixPayload({
+      console.log("[PixCheckout] Fresh TXID:", txid);
+
+      const freshPayload = generatePixPayload({
         chave: pixKey,
         nomeRecebedor: merchantName || "RECEBEDOR",
         cidade: merchantCity,
@@ -156,13 +168,17 @@ export default function PixCheckout() {
         descricao: description || undefined,
       });
 
-      // Force fresh QR by incrementing key
-      setQrKey(prev => prev + 1);
-      setPayload(pixPayload);
+      console.log("[PixCheckout] Payload before CRC (approx):", freshPayload.slice(0, -8));
+      console.log("[PixCheckout] Final payload with CRC:", freshPayload);
+      console.log("[PixCheckout] QR generation input:", freshPayload);
+
+      setQrKey(newGenId);
+      setPayload(freshPayload);
     }
 
+    console.log("[PixCheckout] Generation complete, ID:", newGenId);
     setStep("qr");
-  }, [useBrCode, brCodeRaw, brCodeValid, sanitizedBrCode, pixKey, amount, merchantName, merchantCity, description]);
+  };
 
   const handleCopyPayload = async () => {
     try {
@@ -187,15 +203,27 @@ export default function PixCheckout() {
   };
 
   const handleReset = () => {
+    console.log("[PixCheckout] RESET executed — clearing all generation state");
+
+    // Full internal reset
     setStep("form");
     setPayload("");
     setQrKey(0);
+    setGenerationId(0);
+    setCopiedPayload(false);
+    setCopiedKey(false);
+
+    // Clear form values (except locked fields)
     if (!useBrCode) {
       setAmount("");
       setDescription("");
+      if (!lockPixKey) setPixKey("");
+      if (!lockName) setMerchantName("");
+    } else {
+      setBrCodeRaw("");
     }
-    setCopiedPayload(false);
-    setCopiedKey(false);
+
+    console.log("[PixCheckout] RESET complete — ready for fresh generation");
   };
 
   return (
