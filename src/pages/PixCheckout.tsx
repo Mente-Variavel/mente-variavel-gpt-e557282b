@@ -203,15 +203,27 @@ export default function PixCheckout() {
   };
 
   const handleReset = () => {
+    console.log("[PixCheckout] RESET executed — clearing all generation state");
+
+    // Full internal reset
     setStep("form");
     setPayload("");
     setQrKey(0);
+    setGenerationId(0);
+    setCopiedPayload(false);
+    setCopiedKey(false);
+
+    // Clear form values (except locked fields)
     if (!useBrCode) {
       setAmount("");
       setDescription("");
+      if (!lockPixKey) setPixKey("");
+      if (!lockName) setMerchantName("");
+    } else {
+      setBrCodeRaw("");
     }
-    setCopiedPayload(false);
-    setCopiedKey(false);
+
+    console.log("[PixCheckout] RESET complete — ready for fresh generation");
   };
 
   return (
