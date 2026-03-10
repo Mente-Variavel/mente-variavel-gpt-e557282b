@@ -1,20 +1,30 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "./useAuth";
+import { useUserRole } from "./useUserRole";
 
-export type PixAccessStatus = "loading" | "no_auth" | "trial" | "active" | "expired";
+export type PixAccessStatus = "loading" | "free" | "trial" | "active" | "expired";
 
 export const usePixAccess = () => {
   const { user, loading: authLoading } = useAuth();
+  const { isAdmin, isRoleLoading } = useUserRole();
   const [status, setStatus] = useState<PixAccessStatus>("loading");
   const [trialEnd, setTrialEnd] = useState<Date | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (authLoading) return;
+    if (authLoading || isRoleLoading) return;
 
+    // Admin always has full access
+    if (isAdmin) {
+      setStatus("active");
+      setLoading(false);
+      return;
+    }
+
+    // Not logged in = free access (no gate)
     if (!user) {
-      setStatus("no_auth");
+      setStatus("free");
       setLoading(false);
       return;
     }
@@ -42,7 +52,7 @@ export const usePixAccess = () => {
           setTrialEnd(new Date(newSub.trial_end));
           setStatus("trial");
         } else {
-          setStatus("expired");
+          setStatus("free");
         }
         setLoading(false);
         return;
@@ -63,7 +73,6 @@ export const usePixAccess = () => {
           setStatus("trial");
         }
       } else if (data.status === "pending") {
-        // Check if there's also a valid trial
         const end = new Date(data.trial_end);
         setTrialEnd(end);
         if (end < new Date()) {
@@ -79,7 +88,7 @@ export const usePixAccess = () => {
     };
 
     check();
-  }, [user, authLoading]);
+  }, [user, authLoading, isAdmin, isRoleLoading]);
 
   return { status, trialEnd, loading };
 };

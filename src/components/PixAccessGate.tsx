@@ -1,5 +1,5 @@
 import { usePixAccess } from "@/hooks/usePixAccess";
-import { Loader2, Lock, CreditCard, LogIn } from "lucide-react";
+import { Loader2, Lock, CreditCard } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Link } from "react-router-dom";
@@ -20,26 +20,9 @@ export default function PixAccessGate({ children }: PixAccessGateProps) {
     );
   }
 
-  if (status === "no_auth") {
-    return (
-      <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
-        <Card className="max-w-md mx-auto border-primary/30 mt-8">
-          <CardContent className="pt-6 text-center space-y-4">
-            <LogIn className="w-10 h-10 text-primary mx-auto" />
-            <h2 className="text-xl font-bold">Faça login para continuar</h2>
-            <p className="text-sm text-muted-foreground">
-              Você precisa estar logado para usar o Pix Checkout. Crie sua conta e ganhe 3 dias grátis!
-            </p>
-            <Link to="/produtos/pix-checkout">
-              <Button className="gap-2 w-full">
-                <CreditCard className="w-4 h-4" />
-                Ver planos e criar conta
-              </Button>
-            </Link>
-          </CardContent>
-        </Card>
-      </motion.div>
-    );
+  // Free users (not logged in) and active/admin users pass through
+  if (status === "free" || status === "active") {
+    return <>{children}</>;
   }
 
   if (status === "expired") {
@@ -72,6 +55,7 @@ export default function PixAccessGate({ children }: PixAccessGateProps) {
     );
   }
 
+  // Trial status - show content with trial banner
   return (
     <div>
       {children}
