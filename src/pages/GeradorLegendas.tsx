@@ -20,7 +20,7 @@ import { loadSubtitleFonts } from "@/lib/subtitle-fonts-loader";
 
 const SETTINGS_STORAGE_KEY = "mv-subtitle-full-settings";
 
-const MAX_DURATION_SECONDS = 300; // 5 minutes
+const MAX_DURATION_SECONDS = 1500; // 25 minutes
 
 const GeradorLegendas = () => {
   const [videoFile, setVideoFile] = useState<File | null>(null);
