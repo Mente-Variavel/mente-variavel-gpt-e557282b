@@ -10,7 +10,7 @@ interface VideoUploaderProps {
 const VideoUploader = ({ onVideoSelect, videoFile, onClear }: VideoUploaderProps) => {
   const [isDragging, setIsDragging] = useState(false);
 
-  const MAX_SIZE_MB = 100;
+  const MAX_SIZE_MB = 120;
 
   const handleFile = useCallback((file: File) => {
     if (!file.type.startsWith("video/")) return;
