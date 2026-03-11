@@ -8,18 +8,14 @@ import VideoUploader from "@/components/subtitles/VideoUploader";
 import SubtitleEditor, { type SubtitleLine } from "@/components/subtitles/SubtitleEditor";
 import SubtitlePreview from "@/components/subtitles/SubtitlePreview";
 import SubtitleCustomizer from "@/components/subtitles/SubtitleCustomizer";
-import SubtitlePlanModal from "@/components/subtitles/SubtitlePlanModal";
 import WatermarkToggle from "@/components/subtitles/WatermarkToggle";
-import UsageBadge from "@/components/subtitles/UsageBadge";
 import { downloadSRT, downloadTXT } from "@/lib/srt-export";
 import { exportVideoWithSubtitles } from "@/lib/mp4-export";
 import { DEFAULT_STYLE_CONFIG, type SubtitleStyleConfig } from "@/lib/subtitle-styles";
 import { segmentSubtitles } from "@/lib/subtitle-segmenter";
-import { useSubtitleUsage } from "@/hooks/useSubtitleUsage";
 import { loadSubtitleFonts } from "@/lib/subtitle-fonts-loader";
 
 const SETTINGS_STORAGE_KEY = "mv-subtitle-full-settings";
-
 const MAX_DURATION_SECONDS = 1500; // 25 minutes
 
 const GeradorLegendas = () => {
@@ -41,7 +37,6 @@ const GeradorLegendas = () => {
   });
   const [isExporting, setIsExporting] = useState(false);
   const [exportProgress, setExportProgress] = useState(0);
-  const [showPlanModal, setShowPlanModal] = useState(false);
   const [watermarkEnabled, setWatermarkEnabled] = useState(() => {
     try {
       const saved = localStorage.getItem(SETTINGS_STORAGE_KEY);
@@ -53,8 +48,6 @@ const GeradorLegendas = () => {
     return true;
   });
   const rawSubtitlesRef = useRef<SubtitleLine[]>([]);
-
-  const { usage, refetchUsage } = useSubtitleUsage();
 
   useEffect(() => { loadSubtitleFonts(); }, []);
 
@@ -105,11 +98,6 @@ const GeradorLegendas = () => {
 
   const handleGenerate = useCallback(async () => {
     if (!videoFile) return;
-    if (usage && usage.remaining <= 0) {
-      toast.error("Você atingiu o limite de minutos gratuitos. Assine o plano para continuar gerando legendas.");
-      setShowPlanModal(true);
-      return;
-    }
     setIsProcessing(true);
     try {
       const { data: { session } } = await supabase.auth.getSession();
@@ -130,11 +118,6 @@ const GeradorLegendas = () => {
 
       if (!response.ok) {
         const err = await response.json().catch(() => ({ error: "Erro desconhecido" }));
-        if (err.limit_reached) {
-          toast.error(err.error);
-          setShowPlanModal(true);
-          return;
-        }
         throw new Error(err.error || `Erro ${response.status}`);
       }
 
@@ -144,17 +127,16 @@ const GeradorLegendas = () => {
       setSubtitles(segmented);
       setStep("editor");
       toast.success(`Transcrição concluída! ${segmented.length} legendas geradas.`);
-      refetchUsage();
     } catch (error) {
       console.error("Transcription error:", error);
       toast.error(error instanceof Error ? error.message : "Erro ao transcrever vídeo");
     } finally {
       setIsProcessing(false);
     }
-  }, [videoFile, usage, refetchUsage]);
+  }, [videoFile, styleConfig.layoutMode]);
 
   const handleWatermarkToggle = useCallback(() => {
-    setShowPlanModal(true);
+    setWatermarkEnabled(prev => !prev);
   }, []);
 
   return (
@@ -190,18 +172,19 @@ const GeradorLegendas = () => {
               </p>
             </div>
 
-            {usage && (
-              <div className="mb-4">
-                <UsageBadge used={usage.used} limit={usage.limit} onPlanClick={() => setShowPlanModal(true)} />
-              </div>
-            )}
+            {/* Free testing phase banner */}
+            <div className="mb-6 rounded-xl border border-primary/30 bg-primary/5 p-4 text-center">
+              <p className="text-sm font-medium text-primary">
+                🎉 Ferramenta gratuita em fase de testes. Aproveite para gerar legendas para seus vídeos.
+              </p>
+            </div>
 
             <VideoUploader onVideoSelect={handleVideoSelect} videoFile={videoFile} onClear={handleClearVideo} />
 
             {videoFile && (
               <button
                 onClick={handleGenerate}
-                disabled={isProcessing || (usage !== null && usage.remaining <= 0)}
+                disabled={isProcessing}
                 className="mt-6 flex w-full items-center justify-center gap-2 rounded-xl bg-primary py-3.5 font-display text-sm font-bold uppercase tracking-wider text-primary-foreground transition-all hover:shadow-lg glow-cyan disabled:opacity-50"
               >
                 {isProcessing ? (
@@ -211,23 +194,6 @@ const GeradorLegendas = () => {
                 )}
               </button>
             )}
-
-            {/* Plan explanation */}
-            <div className="mt-10 rounded-xl border border-border bg-card/50 p-6">
-              <h2 className="mb-4 font-display text-lg font-bold text-primary text-glow-cyan">
-                Plano Criador — $5/mês
-              </h2>
-              <div className="space-y-2 text-sm leading-relaxed text-muted-foreground">
-                <p>Por apenas <span className="font-semibold text-foreground">$5 por mês</span> você recebe <span className="font-semibold text-primary">~80 minutos</span> de processamento de legendas com IA.</p>
-                <p>Vídeos de até <span className="font-semibold text-foreground">25 minutos</span> (120MB) são suportados.</p>
-                <p>O uso é descontado de acordo com a duração de cada vídeo processado. Um vídeo de 2 minutos consome 2 minutos do plano.</p>
-                <p>Ideal para quem cria conteúdo frequentemente e precisa de uma solução rápida e profissional.</p>
-              </div>
-              <button onClick={() => setShowPlanModal(true)}
-                className="mt-4 flex items-center gap-2 rounded-lg bg-gradient-to-r from-primary to-accent px-5 py-2.5 text-sm font-bold text-primary-foreground transition-all hover:shadow-lg hover:shadow-primary/20">
-                <Sparkles className="h-4 w-4" /> Ver Plano Premium
-              </button>
-            </div>
           </div>
         ) : (
           <>
@@ -242,13 +208,11 @@ const GeradorLegendas = () => {
               </div>
 
               <div className="order-2 flex flex-col gap-4">
-                {usage && <UsageBadge used={usage.used} limit={usage.limit} onPlanClick={() => setShowPlanModal(true)} />}
-
                 <SubtitleEditor subtitles={subtitles} onUpdate={setSubtitles} currentTime={currentTime} />
 
                 {subtitles.length > 0 && (
                   <div className="flex flex-col gap-3">
-                    <WatermarkToggle watermarkEnabled={watermarkEnabled} onToggle={handleWatermarkToggle} onPlanClick={() => setShowPlanModal(true)} />
+                    <WatermarkToggle watermarkEnabled={watermarkEnabled} onToggle={handleWatermarkToggle} onPlanClick={() => {}} />
 
                     <div className="flex gap-3">
                       <button onClick={() => downloadSRT(subtitles)} className="flex flex-1 items-center justify-center gap-2 rounded-xl border border-primary/30 bg-primary/5 py-3 text-sm font-semibold text-primary transition-all hover:bg-primary/10 glow-cyan">
@@ -275,7 +239,6 @@ const GeradorLegendas = () => {
       </main>
 
       <Footer />
-      <SubtitlePlanModal open={showPlanModal} onClose={() => setShowPlanModal(false)} />
     </div>
   );
 };
