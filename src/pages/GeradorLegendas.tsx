@@ -186,7 +186,7 @@ const GeradorLegendas = () => {
                 <span className="rounded-full border border-border px-3 py-1">YouTube Shorts</span>
               </div>
               <p className="mt-4 text-sm text-muted-foreground">
-                Envie seu vídeo (até 5 minutos), gere a legenda automaticamente e exporte o vídeo pronto para postar.
+                Envie seu vídeo de até 120MB (aprox. 25 minutos), gere a legenda automaticamente e exporte o vídeo pronto para postar.
               </p>
             </div>
 
