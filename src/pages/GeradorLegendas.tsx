@@ -20,7 +20,7 @@ import { loadSubtitleFonts } from "@/lib/subtitle-fonts-loader";
 
 const SETTINGS_STORAGE_KEY = "mv-subtitle-full-settings";
 
-const MAX_DURATION_SECONDS = 300; // 5 minutes
+const MAX_DURATION_SECONDS = 1500; // 25 minutes
 
 const GeradorLegendas = () => {
   const [videoFile, setVideoFile] = useState<File | null>(null);
@@ -186,7 +186,7 @@ const GeradorLegendas = () => {
                 <span className="rounded-full border border-border px-3 py-1">YouTube Shorts</span>
               </div>
               <p className="mt-4 text-sm text-muted-foreground">
-                Envie seu vídeo (até 5 minutos), gere a legenda automaticamente e exporte o vídeo pronto para postar.
+                Envie seu vídeo de até 120MB (aprox. 25 minutos), gere a legenda automaticamente e exporte o vídeo pronto para postar.
               </p>
             </div>
 
@@ -219,7 +219,7 @@ const GeradorLegendas = () => {
               </h2>
               <div className="space-y-2 text-sm leading-relaxed text-muted-foreground">
                 <p>Por apenas <span className="font-semibold text-foreground">$5 por mês</span> você recebe <span className="font-semibold text-primary">~80 minutos</span> de processamento de legendas com IA.</p>
-                <p>Vídeos de até <span className="font-semibold text-foreground">5 minutos</span> são suportados.</p>
+                <p>Vídeos de até <span className="font-semibold text-foreground">25 minutos</span> (120MB) são suportados.</p>
                 <p>O uso é descontado de acordo com a duração de cada vídeo processado. Um vídeo de 2 minutos consome 2 minutos do plano.</p>
                 <p>Ideal para quem cria conteúdo frequentemente e precisa de uma solução rápida e profissional.</p>
               </div>
