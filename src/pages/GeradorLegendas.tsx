@@ -219,7 +219,7 @@ const GeradorLegendas = () => {
               </h2>
               <div className="space-y-2 text-sm leading-relaxed text-muted-foreground">
                 <p>Por apenas <span className="font-semibold text-foreground">$5 por mês</span> você recebe <span className="font-semibold text-primary">~80 minutos</span> de processamento de legendas com IA.</p>
-                <p>Vídeos de até <span className="font-semibold text-foreground">5 minutos</span> são suportados.</p>
+                <p>Vídeos de até <span className="font-semibold text-foreground">25 minutos</span> (120MB) são suportados.</p>
                 <p>O uso é descontado de acordo com a duração de cada vídeo processado. Um vídeo de 2 minutos consome 2 minutos do plano.</p>
                 <p>Ideal para quem cria conteúdo frequentemente e precisa de uma solução rápida e profissional.</p>
               </div>
