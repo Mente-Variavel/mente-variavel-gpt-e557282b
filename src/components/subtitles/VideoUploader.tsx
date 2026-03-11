@@ -63,7 +63,7 @@ const VideoUploader = ({ onVideoSelect, videoFile, onClear }: VideoUploaderProps
       </div>
       <p className="text-base font-medium text-foreground mb-1">Arraste seu vídeo aqui</p>
       <p className="text-sm text-muted-foreground">ou clique para selecionar • MP4, MOV, WEBM</p>
-      <p className="mt-2 text-xs text-muted-foreground">Máximo 100MB • Até 5 minutos</p>
+      <p className="mt-2 text-xs text-muted-foreground">Envie vídeos de até 120MB (aprox. 25 minutos).</p>
     </label>
   );
 };
