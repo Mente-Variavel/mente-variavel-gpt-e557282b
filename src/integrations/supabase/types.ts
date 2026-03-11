@@ -191,6 +191,71 @@ export type Database = {
         }
         Relationships: []
       }
+      expense_entries: {
+        Row: {
+          category: string
+          created_at: string
+          description: string | null
+          id: string
+          month: string
+          profile_id: string
+          type: string
+          value: number
+          year: string
+        }
+        Insert: {
+          category?: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          month?: string
+          profile_id: string
+          type?: string
+          value?: number
+          year?: string
+        }
+        Update: {
+          category?: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          month?: string
+          profile_id?: string
+          type?: string
+          value?: number
+          year?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "expense_entries_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "expense_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      expense_profiles: {
+        Row: {
+          created_at: string
+          id: string
+          nick: string
+          pin_hash: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          nick: string
+          pin_hash: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          nick?: string
+          pin_hash?: string
+        }
+        Relationships: []
+      }
       image_rate_limits: {
         Row: {
           generated_at: string
