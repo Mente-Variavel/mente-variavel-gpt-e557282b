@@ -41,9 +41,16 @@ const BlogPostPage = () => {
                 <ArrowLeft className="w-4 h-4" /> Voltar ao blog
               </Link>
 
-              <div className="flex items-center gap-2 text-xs text-muted-foreground mb-4">
-                <Calendar className="w-3.5 h-3.5" />
-                {new Date(post.date).toLocaleDateString("pt-BR", { day: "numeric", month: "long", year: "numeric" })}
+              <div className="flex items-center gap-3 text-xs text-muted-foreground mb-4 flex-wrap">
+                <span className="inline-flex items-center gap-1">
+                  <Calendar className="w-3.5 h-3.5" />
+                  {new Date(post.date).toLocaleDateString("pt-BR", { day: "numeric", month: "long", year: "numeric" })}
+                </span>
+                {post.category && (
+                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-primary/10 text-primary text-[10px] font-semibold">
+                    {post.category}
+                  </span>
+                )}
               </div>
 
               <h1 className="font-display text-3xl md:text-4xl font-bold text-primary text-glow-cyan mb-4">
