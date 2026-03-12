@@ -22,6 +22,7 @@ const servicosItems: NavItem[] = [
   { to: "/servicos/removedor-fundo", label: "Removedor de Fundo", external: false },
   { to: "/servicos/gerador-slides", label: "Gerador de Slides & E-book", external: false },
   { to: "https://mente-variavel-translate.lovable.app/", label: "Mente Translate", external: true },
+  { to: "https://mente-variavel-landing.lovable.app/", label: "Landing Page Builder", external: true },
 ];
 
 const produtosItems: NavItem[] = [
