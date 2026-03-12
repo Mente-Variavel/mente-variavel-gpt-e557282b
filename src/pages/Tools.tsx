@@ -69,6 +69,15 @@ const internalTools = [
   },
 ];
 
+const externalToolsExtra = [
+  {
+    name: "Landing Page Builder",
+    description: "Criador gratuito de landing pages simples e rápidas para divulgar produtos, serviços ou projetos na internet.",
+    url: "https://mente-variavel-landing.lovable.app/",
+    icon: ExternalLink,
+  },
+];
+
 const Tools = () => {
   const { data: sponsoredTools } = useQuery({
     queryKey: ["sponsored-tools"],
