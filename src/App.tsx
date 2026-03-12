@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -68,7 +69,7 @@ function AppContent() {
         <Route path="/sobre" element={<About />} />
         <Route path="/contato" element={<Contact />} />
         <Route path="/ferramentas/calculadora-preco" element={<CalculadoraPreco />} />
-        
+
         <Route path="/auth" element={<Auth />} />
         <Route path="/admin/anuncios" element={<AdminAds />} />
         <Route path="/privacidade" element={<Privacy />} />
