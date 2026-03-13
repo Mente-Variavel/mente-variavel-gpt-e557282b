@@ -89,6 +89,7 @@ export default function Index() {
   return (
     <div className="min-h-screen flex flex-col bg-background">
       <Navbar />
+      <WorldClockTicker />
       <main className="flex-1 pt-20">
 
         {/* Hero */}
