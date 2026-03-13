@@ -91,7 +91,7 @@ export default function Index() {
     <div className="min-h-screen flex flex-col bg-background">
       <Navbar />
       <WorldClockTicker />
-      <main className="flex-1 pt-20">
+      <main className="flex-1 pt-[calc(5rem+28px)]">
 
         {/* Hero */}
         <section className="relative pt-12 pb-20 overflow-hidden">
