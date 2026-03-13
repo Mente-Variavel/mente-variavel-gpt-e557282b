@@ -23,6 +23,8 @@ const servicosItems: NavItem[] = [
   { to: "/servicos/gerador-slides", label: "Gerador de Slides & E-book", external: false },
   { to: "https://mente-variavel-translate.lovable.app/", label: "Mente Translate", external: true },
   { to: "https://mente-variavel-landing.lovable.app/", label: "Landing Page Builder", external: true },
+  { to: "https://video-compressor--playviagenserot.replit.app/", label: "Compressor de Vídeo", external: true },
+  { to: "https://mente-variavel-gerador-de-anuncios.base44.app/AdGenerator", label: "Gerador de Anúncios para Google Ads e Meta Ads", external: true },
 ];
 
 const produtosItems: NavItem[] = [
