@@ -41,7 +41,7 @@ const WorldClockTicker = () => {
     ));
 
   return (
-    <div className="fixed top-16 left-0 right-0 z-40 bg-[hsl(222,47%,4%)] border-b border-primary/10 overflow-hidden group">
+    <div className="fixed top-16 left-0 right-0 z-40 bg-[hsl(222,47%,4%)] border-b border-primary/10 overflow-hidden group h-8">
       <div
         className="flex w-max py-1.5 text-[11px] text-muted-foreground tracking-wide"
         style={{ animation: "ticker 30s linear infinite" }}
