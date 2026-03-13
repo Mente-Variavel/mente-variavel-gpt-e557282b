@@ -9,6 +9,7 @@ import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import { useSpeechRecognition } from "@/hooks/useSpeechRecognition";
 import AudioVisualizer from "@/components/AudioVisualizer";
+import WorldClockTicker from "@/components/WorldClockTicker";
 
 const tools = [
   { icon: TrendingUp, title: "Educação Financeira", desc: "Simuladores, quizzes e artigos para dominar suas finanças.", to: "/financas/educacao", color: "text-accent" },
@@ -89,6 +90,7 @@ export default function Index() {
   return (
     <div className="min-h-screen flex flex-col bg-background">
       <Navbar />
+      <WorldClockTicker />
       <main className="flex-1 pt-20">
 
         {/* Hero */}
