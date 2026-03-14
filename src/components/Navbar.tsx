@@ -242,6 +242,10 @@ const Navbar = () => {
                 <Music className="w-4 h-4" />
                 Criador de Música
               </Link>
+              <Link to="/servicos/explorar-videos" onClick={() => setOpen(false)} className={`px-4 py-3 rounded-lg text-sm font-medium transition-all flex items-center gap-1.5 ${isActive("/servicos/explorar-videos") ? "text-primary bg-primary/10" : "text-muted-foreground hover:text-foreground hover:bg-secondary"}`}>
+                <Youtube className="w-4 h-4" />
+                Explorar Vídeos
+              </Link>
 
               <p className="px-4 pt-3 pb-1 text-xs font-bold text-muted-foreground uppercase tracking-wider">Finanças</p>
               {financasItems.map((item) => (
