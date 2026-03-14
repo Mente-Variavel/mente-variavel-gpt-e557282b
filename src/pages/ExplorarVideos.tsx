@@ -1,10 +1,11 @@
 import { useState, useCallback } from "react";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
-import { Search, Play, Settings, X, Youtube } from "lucide-react";
+import { Search, Play, X, Youtube } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { motion, AnimatePresence } from "framer-motion";
+import { supabase } from "@/integrations/supabase/client";
 
 const CATEGORIES = [
   "Música", "Culinária", "Educação", "Tecnologia",
@@ -25,16 +26,8 @@ const ExplorarVideos = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [selectedVideo, setSelectedVideo] = useState<string | null>(null);
-  const [apiKey, setApiKey] = useState(() => localStorage.getItem("yt_api_key") || "");
-  const [showConfig, setShowConfig] = useState(false);
-  const [tempKey, setTempKey] = useState(apiKey);
 
   const searchYouTube = useCallback(async (searchQuery: string) => {
-    if (!apiKey) {
-      setError("Configure sua YouTube API Key antes de pesquisar.");
-      setShowConfig(true);
-      return;
-    }
     if (!searchQuery.trim()) return;
 
     setLoading(true);
@@ -42,38 +35,26 @@ const ExplorarVideos = () => {
     setSelectedVideo(null);
 
     try {
-      const url = `https://www.googleapis.com/youtube/v3/search?part=snippet&type=video&maxResults=12&q=${encodeURIComponent(searchQuery)}&key=${apiKey}`;
-      const res = await fetch(url);
-      if (!res.ok) {
-        const data = await res.json().catch(() => null);
-        throw new Error(data?.error?.message || "Erro ao buscar vídeos");
-      }
-      const data = await res.json();
-      const videos: VideoResult[] = (data.items || []).map((item: any) => ({
-        id: item.id.videoId,
-        title: item.snippet.title,
-        thumbnail: item.snippet.thumbnails.medium?.url || item.snippet.thumbnails.default?.url,
-        channel: item.snippet.channelTitle,
-      }));
-      setResults(videos);
-      if (videos.length === 0) setError("Nenhum vídeo encontrado.");
+      const { data, error: fnError } = await supabase.functions.invoke("youtube-search", {
+        body: { query: searchQuery.trim() },
+      });
+
+      if (fnError) throw new Error(fnError.message);
+      if (data?.error) throw new Error(data.error);
+
+      setResults(data?.videos || []);
+      if ((data?.videos || []).length === 0) setError("Nenhum vídeo encontrado.");
     } catch (err: any) {
       setError(err.message || "Erro ao buscar vídeos");
       setResults([]);
     } finally {
       setLoading(false);
     }
-  }, [apiKey]);
+  }, []);
 
   const handleSearch = (e?: React.FormEvent) => {
     e?.preventDefault();
     searchYouTube(query);
-  };
-
-  const saveApiKey = () => {
-    localStorage.setItem("yt_api_key", tempKey);
-    setApiKey(tempKey);
-    setShowConfig(false);
   };
 
   return (
@@ -93,53 +74,6 @@ const ExplorarVideos = () => {
               Pesquise qualquer vídeo e assista sem sair da Mente Variável
             </p>
           </div>
-
-          {/* Config button */}
-          <div className="flex justify-end mb-4">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => { setTempKey(apiKey); setShowConfig(!showConfig); }}
-              className="gap-1.5 text-xs"
-            >
-              <Settings className="w-3.5 h-3.5" />
-              {apiKey ? "API Key configurada" : "Configurar API Key"}
-            </Button>
-          </div>
-
-          {/* Config panel */}
-          <AnimatePresence>
-            {showConfig && (
-              <motion.div
-                initial={{ opacity: 0, height: 0 }}
-                animate={{ opacity: 1, height: "auto" }}
-                exit={{ opacity: 0, height: 0 }}
-                className="mb-6 overflow-hidden"
-              >
-                <div className="glass rounded-xl p-5 border border-border/50">
-                  <div className="flex items-center justify-between mb-3">
-                    <h3 className="text-sm font-semibold text-foreground">Configuração da API</h3>
-                    <button onClick={() => setShowConfig(false)} className="text-muted-foreground hover:text-foreground">
-                      <X className="w-4 h-4" />
-                    </button>
-                  </div>
-                  <p className="text-xs text-muted-foreground mb-3">
-                    Insira sua chave da YouTube Data API v3 para habilitar as buscas.
-                  </p>
-                  <div className="flex gap-2">
-                    <Input
-                      type="password"
-                      value={tempKey}
-                      onChange={(e) => setTempKey(e.target.value)}
-                      placeholder="Cole sua YouTube API Key aqui"
-                      className="flex-1 text-sm"
-                    />
-                    <Button onClick={saveApiKey} size="sm">Salvar</Button>
-                  </div>
-                </div>
-              </motion.div>
-            )}
-          </AnimatePresence>
 
           {/* Search */}
           <form onSubmit={handleSearch} className="flex gap-2 mb-6">
@@ -231,7 +165,7 @@ const ExplorarVideos = () => {
                     </div>
                   </div>
                   <div className="p-3">
-                    <h3 className="text-sm font-medium text-foreground line-clamp-2 leading-snug mb-1" dangerouslySetInnerHTML={{ __html: video.title }} />
+                    <h3 className="text-sm font-medium text-foreground line-clamp-2 leading-snug mb-1">{video.title}</h3>
                     <p className="text-xs text-muted-foreground truncate">{video.channel}</p>
                   </div>
                 </motion.button>
