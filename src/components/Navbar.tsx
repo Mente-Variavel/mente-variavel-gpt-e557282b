@@ -1,5 +1,5 @@
 import { Link, useLocation } from "react-router-dom";
-import { Menu, X, Sun, Moon, ChevronDown, Settings, MessageSquare, Handshake, Music, ExternalLink } from "lucide-react";
+import { Menu, X, Sun, Moon, ChevronDown, Settings, MessageSquare, Handshake, Music, ExternalLink, Youtube } from "lucide-react";
 import { useState, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useTheme } from "@/hooks/useTheme";
@@ -21,7 +21,7 @@ const servicosItems: NavItem[] = [
   { to: "/servicos/criador-prompt", label: "Criador de Prompt", external: false },
   { to: "/servicos/removedor-fundo", label: "Removedor de Fundo", external: false },
   { to: "/servicos/gerador-slides", label: "Gerador de Slides & E-book", external: false },
-  { to: "/servicos/explorar-videos", label: "Explorar Vídeos", external: false },
+  
   { to: "https://mente-transcricao-audio.lovable.app/", label: "Transcrição de Áudio", external: true },
   { to: "https://mente-variavel-translate.lovable.app/", label: "Mente Translate", external: true },
   { to: "https://mente-variavel-landing.lovable.app/", label: "Landing Page Builder", external: true },
@@ -158,6 +158,12 @@ const Navbar = () => {
             Criador de Música
           </Link>
 
+          <Link to="/servicos/explorar-videos" className={`${navLinkClass("/servicos/explorar-videos")} flex items-center gap-1`}>
+            <Youtube className="w-3.5 h-3.5" />
+            Explorar Vídeos
+          </Link>
+
+
           <DropdownMenu
             items={financasItems}
             isOpen={financasOpen}
@@ -236,6 +242,10 @@ const Navbar = () => {
               <Link to="/servicos/criador-musica" onClick={() => setOpen(false)} className={`px-4 py-3 rounded-lg text-sm font-medium transition-all flex items-center gap-1.5 ${isActive("/servicos/criador-musica") ? "text-primary bg-primary/10" : "text-muted-foreground hover:text-foreground hover:bg-secondary"}`}>
                 <Music className="w-4 h-4" />
                 Criador de Música
+              </Link>
+              <Link to="/servicos/explorar-videos" onClick={() => setOpen(false)} className={`px-4 py-3 rounded-lg text-sm font-medium transition-all flex items-center gap-1.5 ${isActive("/servicos/explorar-videos") ? "text-primary bg-primary/10" : "text-muted-foreground hover:text-foreground hover:bg-secondary"}`}>
+                <Youtube className="w-4 h-4" />
+                Explorar Vídeos
               </Link>
 
               <p className="px-4 pt-3 pb-1 text-xs font-bold text-muted-foreground uppercase tracking-wider">Finanças</p>
