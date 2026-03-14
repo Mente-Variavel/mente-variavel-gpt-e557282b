@@ -70,6 +70,7 @@ function AppContent() {
         <Route path="/sobre" element={<About />} />
         <Route path="/contato" element={<Contact />} />
         <Route path="/ferramentas/calculadora-preco" element={<CalculadoraPreco />} />
+        <Route path="/servicos/explorar-videos" element={<ExplorarVideos />} />
 
         <Route path="/auth" element={<Auth />} />
         <Route path="/admin/anuncios" element={<AdminAds />} />
