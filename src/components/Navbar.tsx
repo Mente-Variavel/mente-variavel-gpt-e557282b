@@ -158,7 +158,12 @@ const Navbar = () => {
             Criador de Música
           </Link>
 
-          <DropdownMenu
+          <Link to="/servicos/explorar-videos" className={`${navLinkClass("/servicos/explorar-videos")} flex items-center gap-1`}>
+            <Youtube className="w-3.5 h-3.5" />
+            Explorar Vídeos
+          </Link>
+
+
             items={financasItems}
             isOpen={financasOpen}
             label="Finanças"
