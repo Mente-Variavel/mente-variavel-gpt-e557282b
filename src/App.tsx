@@ -27,6 +27,7 @@ import Parceiro from "./pages/Parceiro";
 import About from "./pages/About";
 import Contact from "./pages/Contact";
 import CalculadoraPreco from "./pages/CalculadoraPreco";
+import ExplorarVideos from "./pages/ExplorarVideos";
 
 import Auth from "./pages/Auth";
 import AdminAds from "./pages/AdminAds";
