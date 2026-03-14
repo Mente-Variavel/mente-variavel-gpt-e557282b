@@ -28,6 +28,18 @@ const About = () => (
           <p>
             O projeto está em constante evolução e novas ferramentas são adicionadas regularmente para ampliar as possibilidades de uso.
           </p>
+
+          <p>
+            O Mente Variável GPT é um projeto independente desenvolvido por Carlos Mangas, criado com o objetivo de disponibilizar ferramentas digitais acessíveis que ajudam pessoas a produzir mais, aprender mais rápido e aproveitar melhor os recursos da tecnologia e da inteligência artificial no dia a dia.
+          </p>
+
+          <p>
+            A plataforma foi criada para estudantes, profissionais, empreendedores e criadores de conteúdo que buscam soluções simples e práticas para aumentar a produtividade e transformar ideias em resultados.
+          </p>
+
+          <p>
+            Novas ferramentas e melhorias são adicionadas constantemente para tornar a experiência cada vez mais completa e útil para os usuários.
+          </p>
         </div>
       </div>
     </main>
