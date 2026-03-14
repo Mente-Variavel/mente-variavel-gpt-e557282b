@@ -164,6 +164,7 @@ const Navbar = () => {
           </Link>
 
 
+          <DropdownMenu
             items={financasItems}
             isOpen={financasOpen}
             label="Finanças"
