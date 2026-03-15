@@ -157,7 +157,10 @@ export default function CriadorPrompt() {
       const langLabel = getLangName(language);
       const content = await callAI([{
         role: "user",
-        content: `Você é um especialista em engenharia de prompts. Gere um prompt profissional e altamente estruturado usando o framework "${framework}" (${frameworkInfo?.desc || ""}).
+        content: `Você é um especialista em engenharia de prompts. Gere um prompt profissional e altamente estruturado.
+
+Tipo de prompt selecionado: "${framework}"
+${typeInfo?.systemHint || ""}
 
 Necessidade do usuário: ${description}
 ${audience ? `Público-alvo: ${audience}` : ""}
@@ -169,9 +172,8 @@ ${imageRatio ? `Proporção de imagem desejada: ${imageRatio} — inclua esta in
 INSTRUÇÕES:
 - Retorne APENAS o prompt final, pronto para copiar e colar.
 - O prompt DEVE ser gerado no idioma: ${langLabel} (código: ${language}).
-- Estruture claramente seguindo o framework ${framework}.
 - Seja detalhado e específico.${imageRatio ? `\n- INCLUA no prompt gerado a instrução explícita de que a imagem deve ser gerada na proporção ${imageRatio}.` : ""}
-- NÃO inclua explicações sobre o framework, apenas o prompt gerado.`
+- NÃO inclua explicações, apenas o prompt gerado.`
       }]);
 
       setGeneratedPrompt(content);
