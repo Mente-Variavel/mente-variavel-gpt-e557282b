@@ -265,14 +265,14 @@ Retorne APENAS o prompt melhorado no idioma ${langLabel}, pronto para uso. Não 
             <CardContent className="space-y-4">
               <div className="grid sm:grid-cols-3 gap-4">
                 <div>
-                  <label className="text-xs text-muted-foreground mb-1 block">Framework</label>
+                  <label className="text-xs text-muted-foreground mb-1 block">Tipos de Prompt</label>
                   <Select value={framework} onValueChange={setFramework}>
                     <SelectTrigger><SelectValue /></SelectTrigger>
                     <SelectContent>
-                      {frameworks.map(f => (
+                      {promptTypes.map(f => (
                         <SelectItem key={f.name} value={f.name}>
                           <span className="font-medium">{f.name}</span>
-                          <span className="text-muted-foreground ml-2 text-xs">({f.desc})</span>
+                          <span className="text-muted-foreground ml-2 text-xs hidden sm:inline">({f.desc})</span>
                         </SelectItem>
                       ))}
                     </SelectContent>
