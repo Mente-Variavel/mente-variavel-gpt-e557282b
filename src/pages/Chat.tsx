@@ -226,11 +226,12 @@ const Chat = () => {
     }
   }, [user]);
 
-  // Initial load
+  // Initial load — no longer load previous conversations
   useEffect(() => {
-    fetchConversations();
-    loadConversation();
-  }, [fetchConversations, loadConversation]);
+    // Stateless: start fresh every time
+    conversationId.current = null;
+    setMessages([]);
+  }, []);
 
   // Save conversation with debounce
   const saveConversation = useCallback((msgs: Msg[]) => {
