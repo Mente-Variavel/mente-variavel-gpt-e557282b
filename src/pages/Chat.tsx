@@ -226,11 +226,12 @@ const Chat = () => {
     }
   }, [user]);
 
-  // Initial load
+  // Initial load — no longer load previous conversations
   useEffect(() => {
-    fetchConversations();
-    loadConversation();
-  }, [fetchConversations, loadConversation]);
+    // Stateless: start fresh every time
+    conversationId.current = null;
+    setMessages([]);
+  }, []);
 
   // Save conversation with debounce
   const saveConversation = useCallback((msgs: Msg[]) => {
@@ -511,7 +512,6 @@ const Chat = () => {
       const lastUserContent = input;
 
       const apiMessages = [
-        ...messages.map(({ role, content }) => ({ role, content })),
         { role: "user" as const, content: lastUserContent },
       ];
 
@@ -565,10 +565,7 @@ const Chat = () => {
         }
       }
 
-      setMessages((prev) => {
-        saveConversation(prev);
-        return prev;
-      });
+      // Stateless: no longer saving conversation history
     } catch (e) {
       console.error(e);
       setMessages((prev) => [

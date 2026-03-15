@@ -123,6 +123,13 @@ export default function Index() {
                   Explorar Ferramentas <ArrowRight className="ml-2 w-4 h-4" />
                 </a>
               </Button>
+              <div className="mt-4">
+                <Button asChild size="default" className="glow-cyan text-sm px-6" variant="outline">
+                  <a href="https://mente-variavel-clima.lovable.app/" target="_blank" rel="noopener noreferrer">
+                    ☁️ Previsão do Tempo
+                  </a>
+                </Button>
+              </div>
             </motion.div>
           </div>
         </section>
