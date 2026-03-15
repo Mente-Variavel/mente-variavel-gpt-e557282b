@@ -77,7 +77,7 @@ async function callAI(messages: { role: string; content: string }[]): Promise<st
 }
 
 export default function CriadorPrompt() {
-  const [framework, setFramework] = useState("Padrão");
+  const [framework, setFramework] = useState(promptTypes[0].name);
   const [description, setDescription] = useState("");
   const [audience, setAudience] = useState("");
   const [tone, setTone] = useState("");
