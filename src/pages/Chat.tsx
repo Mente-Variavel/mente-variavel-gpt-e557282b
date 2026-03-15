@@ -511,7 +511,6 @@ const Chat = () => {
       const lastUserContent = input;
 
       const apiMessages = [
-        ...messages.map(({ role, content }) => ({ role, content })),
         { role: "user" as const, content: lastUserContent },
       ];
 
