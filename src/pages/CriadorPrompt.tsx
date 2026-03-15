@@ -14,19 +14,11 @@ import AudioVisualizer from "@/components/AudioVisualizer";
 
 const GENERATE_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/ai-generate`;
 
-const frameworks = [
-  { name: "Padrão", desc: "Prompt direto e claro" },
-  { name: "RACE", desc: "Papel, Ação, Contexto, Expectativa" },
-  { name: "CARE", desc: "Contexto, Ação, Resultado, Exemplo" },
-  { name: "APE", desc: "Ação, Propósito, Expectativa" },
-  { name: "CREATE", desc: "Personagem, Requisição, Exemplos, Ajustes, Tipo, Extras" },
-  { name: "TAG", desc: "Tarefa, Ação, Objetivo" },
-  { name: "CREO", desc: "Contexto, Requisição, Expectativa, Saída" },
-  { name: "RISE", desc: "Papel, Entrada, Passos, Expectativa" },
-  { name: "PAIN", desc: "Problema, Ação, Informação, Próximos passos" },
-  { name: "COAST", desc: "Contexto, Objetivo, Ações, Cenário, Tarefa" },
-  { name: "ROSES", desc: "Papel, Objetivo, Cenário, Solução Esperada, Passos" },
-  { name: "Criativo para Redes Sociais", desc: "Marketing, Anúncios, Conteúdo para Redes" },
+const promptTypes = [
+  { name: "Prompt para Sites / Aplicativos / Ferramentas", desc: "Software, websites, apps, interfaces, funcionalidades e instruções técnicas", systemHint: "Gere um prompt focado em: ferramentas de software, websites, aplicativos, interfaces de sistema, funcionalidades de produto e instruções técnicas detalhadas." },
+  { name: "Prompt para Imagens", desc: "Descrição visual, estilo, iluminação, composição e direção artística", systemHint: "Gere um prompt focado em: descrição visual detalhada, estilo artístico, iluminação, composição, direção artística e detalhes visuais para geração de imagem." },
+  { name: "Prompt para Vídeos", desc: "Cenas, movimentos de câmera, storytelling e sequências visuais", systemHint: "Gere um prompt focado em: descrição de cenas, movimentos de câmera, storytelling visual, sequências cinematográficas e instruções de direção de vídeo." },
+  { name: "Prompt para Letras de Música", desc: "Estrutura lírica, tema musical, ritmo, emoção e narrativa", systemHint: "Gere um prompt focado em: estrutura de letras (versos, refrão, ponte), tema musical, ritmo, emoção, narrativa em formato de canção e estilo musical." },
 ];
 
 const languages = [
