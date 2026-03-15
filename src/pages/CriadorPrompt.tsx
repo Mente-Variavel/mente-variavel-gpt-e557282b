@@ -153,7 +153,7 @@ export default function CriadorPrompt() {
     setLoading(true);
     setGeneratedPrompt("");
     try {
-      const frameworkInfo = frameworks.find(f => f.name === framework);
+      const typeInfo = promptTypes.find(f => f.name === framework);
       const langLabel = getLangName(language);
       const content = await callAI([{
         role: "user",
