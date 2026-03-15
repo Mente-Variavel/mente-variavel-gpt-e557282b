@@ -565,10 +565,7 @@ const Chat = () => {
         }
       }
 
-      setMessages((prev) => {
-        saveConversation(prev);
-        return prev;
-      });
+      // Stateless: no longer saving conversation history
     } catch (e) {
       console.error(e);
       setMessages((prev) => [

@@ -71,6 +71,7 @@ function AppContent() {
         <Route path="/contato" element={<Contact />} />
         <Route path="/ferramentas/calculadora-preco" element={<CalculadoraPreco />} />
         <Route path="/servicos/explorar-videos" element={<ExplorarVideos />} />
+        <Route path="/guia-ferramentas" element={<GuiaFerramentas />} />
 
         <Route path="/auth" element={<Auth />} />
         <Route path="/admin/anuncios" element={<AdminAds />} />

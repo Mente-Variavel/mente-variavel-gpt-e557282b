@@ -94,6 +94,7 @@ const Footer = () => {
               <Link to="/criador-prompt" className="hover:text-primary transition-colors">Criador de Prompt</Link>
               <Link to="/guias" className="hover:text-primary transition-colors">Guias</Link>
               <Link to="/blog" className="hover:text-primary transition-colors">Blog</Link>
+              <Link to="/guia-ferramentas" className="hover:text-primary transition-colors">Guia das Ferramentas</Link>
               <Link to="/sobre" className="hover:text-primary transition-colors">Sobre o Projeto</Link>
               <Link to="/contato" className="hover:text-primary transition-colors">Contato</Link>
             </div>
