@@ -52,6 +52,26 @@ const IMAGE_FOLLOWUP_TRIGGERS = [
   "pode gerar", "pode criar", "gere agora", "crie agora",
 ];
 
+const IMAGE_IMPROVEMENT_TRIGGERS = [
+  "melhore", "melhora", "melhorar", "improve", "make it better",
+  "refine", "refinar", "refinada", "refinado",
+  "ajuste", "ajusta", "ajustar",
+  "outra versão", "nova versão", "mais uma versão", "another version",
+  "make another", "faça outra", "faz outra", "cria outra", "crie outra",
+  "gere outra", "gera outra",
+  "pode melhorar", "pode refinar", "pode ajustar",
+  "ficou bom mas", "ficou boa mas", "gostei mas",
+  "mais profissional", "mais detalhado", "mais detalhada",
+  "mais moderno", "mais moderna", "mais clean", "mais limpo", "mais limpa",
+  "mais colorido", "mais colorida", "mais vibrante",
+  "menos poluído", "menos poluída", "mais simples",
+  "tenta de novo", "tente de novo", "tenta novamente", "tente novamente",
+  "try again", "redo", "refaça", "refaz",
+  "pode melhorar isso", "pode melhorar a imagem",
+  "melhora isso", "melhore isso", "melhora a imagem", "melhore a imagem",
+  "melhora o logo", "melhore o logo", "melhora a logo", "melhore a logo",
+];
+
 const IMAGE_BROAD_TRIGGERS = [
   "cria um", "cria uma", "crie um", "crie uma",
   "gera um", "gera uma", "gere um", "gere uma",
