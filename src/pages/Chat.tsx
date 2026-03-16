@@ -574,6 +574,21 @@ const Chat = () => {
       }
     }
 
+    // Check for image improvement/refinement requests
+    if (isImageImprovement(input)) {
+      const previousPrompt = extractImagePromptFromHistory(messages);
+      const previousImageUrl = extractLastGeneratedImageUrl(messages);
+      if (previousPrompt) {
+        // Combine previous prompt with user's modification request
+        const combinedPrompt = `${previousPrompt}. Modificação solicitada: ${input}`;
+        const detectedRatio = detectAspectRatio(previousPrompt) || detectAspectRatio(input);
+        // If we have a previous image, pass it as reference for editing
+        const refs = previousImageUrl ? [previousImageUrl] : undefined;
+        await generateImage(combinedPrompt, refs, detectedRatio);
+        return;
+      }
+    }
+
     if (hasImages || triggerMatch) {
       const detectedRatio = detectAspectRatio(input);
       await generateImage(input, hasImages ? imageBase64List : undefined, detectedRatio);
