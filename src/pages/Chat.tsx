@@ -127,16 +127,9 @@ function isImageFollowup(text: string): boolean {
   return IMAGE_FOLLOWUP_TRIGGERS.some((t) => lower.includes(t));
 }
 
-function isImageRequest(text: string, hasAttachments: boolean): boolean {
+function isImageImprovement(text: string): boolean {
   const lower = text.toLowerCase();
-  const isTextRequest = TEXT_ONLY_INDICATORS.some((t) => lower.includes(t));
-  if (!isTextRequest && IMAGE_TRIGGERS.some((t) => lower.includes(t))) return true;
-  if (hasAttachments && IMAGE_WITH_ATTACHMENT_TRIGGERS.some((t) => lower.includes(t))) return true;
-  if (hasAttachments) return true;
-  if (!isTextRequest && IMAGE_BROAD_TRIGGERS.some((t) => lower.includes(t))) return true;
-  const indicatorCount = IMAGE_PROMPT_INDICATORS.filter((t) => lower.includes(t)).length;
-  if (indicatorCount >= 2) return true;
-  return false;
+  return IMAGE_IMPROVEMENT_TRIGGERS.some((t) => lower.includes(t));
 }
 
 function extractImagePromptFromHistory(messages: Msg[]): string | null {
@@ -146,6 +139,15 @@ function extractImagePromptFromHistory(messages: Msg[]): string | null {
       if (isImageRequest(msg.content, false)) {
         return msg.content;
       }
+    }
+  }
+  return null;
+}
+
+function extractLastGeneratedImageUrl(messages: Msg[]): string | null {
+  for (let i = messages.length - 1; i >= 0; i--) {
+    if (messages[i].role === "assistant" && messages[i].imageUrl) {
+      return messages[i].imageUrl!;
     }
   }
   return null;
