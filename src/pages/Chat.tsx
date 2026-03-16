@@ -102,6 +102,11 @@ const IMAGE_PROMPT_INDICATORS = [
   "visual style:", "scene setup:", "aspect ratio:",
 ];
 
+function isImageFollowup(text: string): boolean {
+  const lower = text.toLowerCase();
+  return IMAGE_FOLLOWUP_TRIGGERS.some((t) => lower.includes(t));
+}
+
 function isImageRequest(text: string, hasAttachments: boolean): boolean {
   const lower = text.toLowerCase();
   const isTextRequest = TEXT_ONLY_INDICATORS.some((t) => lower.includes(t));
@@ -112,6 +117,18 @@ function isImageRequest(text: string, hasAttachments: boolean): boolean {
   const indicatorCount = IMAGE_PROMPT_INDICATORS.filter((t) => lower.includes(t)).length;
   if (indicatorCount >= 2) return true;
   return false;
+}
+
+function extractImagePromptFromHistory(messages: Msg[]): string | null {
+  for (let i = messages.length - 1; i >= 0; i--) {
+    const msg = messages[i];
+    if (msg.role === "user") {
+      if (isImageRequest(msg.content, false)) {
+        return msg.content;
+      }
+    }
+  }
+  return null;
 }
 
 const tips = [
