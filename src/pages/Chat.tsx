@@ -37,6 +37,19 @@ const IMAGE_TRIGGERS = [
   "usar esse logo", "use esse logo", "com esse logo", "usando esse logo",
   "usar essa imagem", "use essa imagem", "com essa imagem", "usando essa imagem",
   "mockup", "estampa", "estampar", "personalizar", "personalização",
+  "quero uma arte", "quero uma imagem", "quero uma ilustração",
+  "faça uma capa", "gere um desenho", "crie um desenho",
+];
+
+const IMAGE_FOLLOWUP_TRIGGERS = [
+  "gere a imagem referente", "gera a imagem referente",
+  "gere a imagem do prompt", "gera a imagem do prompt",
+  "gere a imagem acima", "gera a imagem acima",
+  "a imagem acima", "o prompt acima", "isso que eu pedi",
+  "o que eu falei antes", "o que pedi antes", "o que eu pedi acima",
+  "gere essa imagem", "gera essa imagem", "faça essa imagem",
+  "crie essa imagem", "agora gere", "agora crie", "agora faça",
+  "pode gerar", "pode criar", "gere agora", "crie agora",
 ];
 
 const IMAGE_BROAD_TRIGGERS = [
@@ -89,6 +102,11 @@ const IMAGE_PROMPT_INDICATORS = [
   "visual style:", "scene setup:", "aspect ratio:",
 ];
 
+function isImageFollowup(text: string): boolean {
+  const lower = text.toLowerCase();
+  return IMAGE_FOLLOWUP_TRIGGERS.some((t) => lower.includes(t));
+}
+
 function isImageRequest(text: string, hasAttachments: boolean): boolean {
   const lower = text.toLowerCase();
   const isTextRequest = TEXT_ONLY_INDICATORS.some((t) => lower.includes(t));
@@ -99,6 +117,18 @@ function isImageRequest(text: string, hasAttachments: boolean): boolean {
   const indicatorCount = IMAGE_PROMPT_INDICATORS.filter((t) => lower.includes(t)).length;
   if (indicatorCount >= 2) return true;
   return false;
+}
+
+function extractImagePromptFromHistory(messages: Msg[]): string | null {
+  for (let i = messages.length - 1; i >= 0; i--) {
+    const msg = messages[i];
+    if (msg.role === "user") {
+      if (isImageRequest(msg.content, false)) {
+        return msg.content;
+      }
+    }
+  }
+  return null;
 }
 
 const tips = [
@@ -494,10 +524,21 @@ const Chat = () => {
       content: input,
       attachments: attachmentPreviews.length > 0 ? attachmentPreviews : undefined,
     };
-    setMessages((prev) => [...prev, userMsg]);
+    const updatedMessages = [...messages, userMsg];
+    setMessages(updatedMessages);
 
     const hasImages = imageBase64List.length > 0;
     const triggerMatch = isImageRequest(input, hasImages);
+
+    // Check for follow-up image requests referencing previous prompts
+    if (isImageFollowup(input)) {
+      const previousPrompt = extractImagePromptFromHistory(messages);
+      if (previousPrompt) {
+        const detectedRatio = detectAspectRatio(previousPrompt) || detectAspectRatio(input);
+        await generateImage(previousPrompt, undefined, detectedRatio);
+        return;
+      }
+    }
 
     if (hasImages || triggerMatch) {
       const detectedRatio = detectAspectRatio(input);
@@ -509,11 +550,13 @@ const Chat = () => {
     let assistantSoFar = "";
 
     try {
-      const lastUserContent = input;
-
-      const apiMessages = [
-        { role: "user" as const, content: lastUserContent },
-      ];
+      // Send full conversation history for context
+      const apiMessages = updatedMessages
+        .filter(m => !m.imageUrl || m.role === "user")
+        .map(m => ({
+          role: m.role as "user" | "assistant",
+          content: m.content,
+        }));
 
       const resp = await fetch(CHAT_URL, {
         method: "POST",
