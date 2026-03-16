@@ -524,10 +524,21 @@ const Chat = () => {
       content: input,
       attachments: attachmentPreviews.length > 0 ? attachmentPreviews : undefined,
     };
-    setMessages((prev) => [...prev, userMsg]);
+    const updatedMessages = [...messages, userMsg];
+    setMessages(updatedMessages);
 
     const hasImages = imageBase64List.length > 0;
     const triggerMatch = isImageRequest(input, hasImages);
+
+    // Check for follow-up image requests referencing previous prompts
+    if (isImageFollowup(input)) {
+      const previousPrompt = extractImagePromptFromHistory(messages);
+      if (previousPrompt) {
+        const detectedRatio = detectAspectRatio(previousPrompt) || detectAspectRatio(input);
+        await generateImage(previousPrompt, undefined, detectedRatio);
+        return;
+      }
+    }
 
     if (hasImages || triggerMatch) {
       const detectedRatio = detectAspectRatio(input);
@@ -539,11 +550,13 @@ const Chat = () => {
     let assistantSoFar = "";
 
     try {
-      const lastUserContent = input;
-
-      const apiMessages = [
-        { role: "user" as const, content: lastUserContent },
-      ];
+      // Send full conversation history for context
+      const apiMessages = updatedMessages
+        .filter(m => !m.imageUrl || m.role === "user")
+        .map(m => ({
+          role: m.role as "user" | "assistant",
+          content: m.content,
+        }));
 
       const resp = await fetch(CHAT_URL, {
         method: "POST",
