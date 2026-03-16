@@ -37,6 +37,19 @@ const IMAGE_TRIGGERS = [
   "usar esse logo", "use esse logo", "com esse logo", "usando esse logo",
   "usar essa imagem", "use essa imagem", "com essa imagem", "usando essa imagem",
   "mockup", "estampa", "estampar", "personalizar", "personalização",
+  "quero uma arte", "quero uma imagem", "quero uma ilustração",
+  "faça uma capa", "gere um desenho", "crie um desenho",
+];
+
+const IMAGE_FOLLOWUP_TRIGGERS = [
+  "gere a imagem referente", "gera a imagem referente",
+  "gere a imagem do prompt", "gera a imagem do prompt",
+  "gere a imagem acima", "gera a imagem acima",
+  "a imagem acima", "o prompt acima", "isso que eu pedi",
+  "o que eu falei antes", "o que pedi antes", "o que eu pedi acima",
+  "gere essa imagem", "gera essa imagem", "faça essa imagem",
+  "crie essa imagem", "agora gere", "agora crie", "agora faça",
+  "pode gerar", "pode criar", "gere agora", "crie agora",
 ];
 
 const IMAGE_BROAD_TRIGGERS = [
