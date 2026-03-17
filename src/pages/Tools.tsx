@@ -56,8 +56,8 @@ const internalTools = [
     icon: Sparkles,
   },
   {
-    name: "Gerador de Legendas",
-    description: "Crie legendas automáticas para seus vídeos em segundos usando inteligência artificial.",
+    name: "Gerador de Legendas (Shorts / Reels / TikTok)",
+    description: "Crie legendas automáticas para vídeos curtos verticais em segundos usando inteligência artificial.",
     to: "/servicos/gerador-legendas",
     icon: Film,
   },
