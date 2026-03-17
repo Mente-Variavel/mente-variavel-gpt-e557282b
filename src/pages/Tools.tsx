@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import AdPlaceholder from "@/components/AdPlaceholder";
-import { ExternalLink, ImageMinus, Mail, Wallet, Sparkles, ArrowLeftRight, GraduationCap, Calculator, Film } from "lucide-react";
+import { ExternalLink, ImageMinus, Mail, Wallet, Sparkles, ArrowLeftRight, GraduationCap, Calculator, Film, Youtube } from "lucide-react";
 import { motion } from "framer-motion";
 import { Badge } from "@/components/ui/badge";
 import { Link } from "react-router-dom";
@@ -56,8 +56,8 @@ const internalTools = [
     icon: Sparkles,
   },
   {
-    name: "Gerador de Legendas",
-    description: "Crie legendas automáticas para seus vídeos em segundos usando inteligência artificial.",
+    name: "Gerador de Legendas (Shorts / Reels / TikTok)",
+    description: "Crie legendas automáticas para vídeos curtos verticais em segundos usando inteligência artificial.",
     to: "/servicos/gerador-legendas",
     icon: Film,
   },
@@ -70,6 +70,12 @@ const internalTools = [
 ];
 
 const externalToolsExtra = [
+  {
+    name: "Gerador de Legendas para YouTube",
+    description: "Ferramenta para criar legendas para vídeos horizontais do YouTube.",
+    url: "https://mente-variavel-legendas.lovable.app/",
+    icon: Youtube,
+  },
   {
     name: "Landing Page Builder",
     description: "Criador gratuito de landing pages simples e rápidas para divulgar produtos, serviços ou projetos na internet.",
