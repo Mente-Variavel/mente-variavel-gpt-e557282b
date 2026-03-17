@@ -29,6 +29,7 @@ import Contact from "./pages/Contact";
 import CalculadoraPreco from "./pages/CalculadoraPreco";
 import ExplorarVideos from "./pages/ExplorarVideos";
 import GuiaFerramentas from "./pages/GuiaFerramentas";
+import PrevisaoTempo from "./pages/PrevisaoTempo";
 
 import Auth from "./pages/Auth";
 import AdminAds from "./pages/AdminAds";
