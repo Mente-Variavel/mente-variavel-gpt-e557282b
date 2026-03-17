@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import AdPlaceholder from "@/components/AdPlaceholder";
-import { ExternalLink, ImageMinus, Mail, Wallet, Sparkles, ArrowLeftRight, GraduationCap, Calculator, Film } from "lucide-react";
+import { ExternalLink, ImageMinus, Mail, Wallet, Sparkles, ArrowLeftRight, GraduationCap, Calculator, Film, Youtube } from "lucide-react";
 import { motion } from "framer-motion";
 import { Badge } from "@/components/ui/badge";
 import { Link } from "react-router-dom";

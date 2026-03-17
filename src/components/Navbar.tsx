@@ -30,7 +30,8 @@ const servicosItems: NavItem[] = [
 
 const produtosItems: NavItem[] = [
   { to: "/produtos/pix-checkout", label: "Pix Checkout", external: false },
-  { to: "/produtos/gerador-legendas", label: "Gerador de Legendas", external: false },
+  { to: "/produtos/gerador-legendas", label: "Legendas (Shorts / Reels / TikTok)", external: false },
+  { to: "https://mente-variavel-legendas.lovable.app/", label: "Legendas para YouTube", external: true },
   { to: "https://mentesimulator.online", label: "Analisador e Simulador de YouTube", badge: "3 testes grátis", external: true },
 ];
 
