@@ -1,5 +1,5 @@
 import { Link, useLocation } from "react-router-dom";
-import { Menu, X, Sun, Moon, ChevronDown, Settings, MessageSquare, Handshake, Music, ExternalLink, Youtube } from "lucide-react";
+import { Menu, X, Sun, Moon, ChevronDown, Settings, MessageSquare, Handshake, Music, ExternalLink, Youtube, CloudSun } from "lucide-react";
 import { useState, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useTheme } from "@/hooks/useTheme";
@@ -21,7 +21,7 @@ const servicosItems: NavItem[] = [
   { to: "/servicos/criador-prompt", label: "Criador de Prompt", external: false },
   { to: "/servicos/removedor-fundo", label: "Removedor de Fundo", external: false },
   { to: "/servicos/gerador-slides", label: "Gerador de Slides & E-book", external: false },
-  
+  { to: "/ferramentas/previsao-tempo", label: "Previsão do Tempo", external: false },
   { to: "https://mente-transcricao-audio.lovable.app/", label: "Transcrição de Áudio", external: true },
   { to: "https://mente-variavel-translate.lovable.app/", label: "Mente Translate", external: true },
   { to: "https://mente-variavel-landing.lovable.app/", label: "Landing Page Builder", external: true },

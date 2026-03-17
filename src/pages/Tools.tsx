@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import AdPlaceholder from "@/components/AdPlaceholder";
-import { ExternalLink, ImageMinus, Mail, Wallet, Sparkles, ArrowLeftRight, GraduationCap, Calculator, Film, Youtube } from "lucide-react";
+import { ExternalLink, ImageMinus, Mail, Wallet, Sparkles, ArrowLeftRight, GraduationCap, Calculator, Film, Youtube, CloudSun } from "lucide-react";
 import { motion } from "framer-motion";
 import { Badge } from "@/components/ui/badge";
 import { Link } from "react-router-dom";
@@ -66,6 +66,12 @@ const internalTools = [
     description: "Gere prompts otimizados para IAs como ChatGPT, Gemini, Claude e mais.",
     to: "/servicos/criador-prompt",
     icon: Sparkles,
+  },
+  {
+    name: "Previsão do Tempo",
+    description: "Consulte a temperatura, umidade, vento e previsão para qualquer cidade do mundo.",
+    to: "/ferramentas/previsao-tempo",
+    icon: CloudSun,
   },
 ];
 
