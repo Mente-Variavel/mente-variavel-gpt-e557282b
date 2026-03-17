@@ -67,6 +67,12 @@ const internalTools = [
     to: "/servicos/criador-prompt",
     icon: Sparkles,
   },
+  {
+    name: "Previsão do Tempo",
+    description: "Consulte a temperatura, umidade, vento e previsão para qualquer cidade do mundo.",
+    to: "/ferramentas/previsao-tempo",
+    icon: CloudSun,
+  },
 ];
 
 const externalToolsExtra = [
