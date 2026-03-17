@@ -125,9 +125,9 @@ export default function Index() {
               </Button>
               <div className="mt-4">
                 <Button asChild size="default" className="glow-cyan text-sm px-6" variant="outline">
-                  <a href="https://mente-variavel-clima.lovable.app/" target="_blank" rel="noopener noreferrer">
+                  <Link to="/ferramentas/previsao-tempo">
                     ☁️ Previsão do Tempo
-                  </a>
+                  </Link>
                 </Button>
               </div>
             </motion.div>

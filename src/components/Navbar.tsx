@@ -1,5 +1,5 @@
 import { Link, useLocation } from "react-router-dom";
-import { Menu, X, Sun, Moon, ChevronDown, Settings, MessageSquare, Handshake, Music, ExternalLink, Youtube } from "lucide-react";
+import { Menu, X, Sun, Moon, ChevronDown, Settings, MessageSquare, Handshake, Music, ExternalLink, Youtube, CloudSun } from "lucide-react";
 import { useState, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useTheme } from "@/hooks/useTheme";
