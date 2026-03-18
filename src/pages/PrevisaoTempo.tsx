@@ -152,51 +152,6 @@ export default function PrevisaoTempo() {
             </p>
           </motion.div>
 
-          {/* Settings toggle */}
-          <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.1 }}
-            className="mb-6"
-          >
-            <button
-              onClick={() => setShowSettings(!showSettings)}
-              className="flex items-center gap-2 text-sm text-muted-foreground hover:text-primary transition-colors"
-            >
-              <Settings2 className="w-4 h-4" />
-              Configurações da API
-              {showSettings ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
-            </button>
-            {showSettings && (
-              <motion.div
-                initial={{ opacity: 0, height: 0 }}
-                animate={{ opacity: 1, height: "auto" }}
-                className="mt-3 glass rounded-xl p-4 border border-border/50"
-              >
-                <label className="text-xs font-medium text-muted-foreground mb-1.5 block">
-                  OpenWeather API Key
-                </label>
-                <Input
-                  type="password"
-                  placeholder="Cole sua API Key aqui..."
-                  value={apiKey}
-                  onChange={(e) => setApiKey(e.target.value)}
-                  className="bg-secondary/50 border-border/50 text-sm"
-                />
-                <p className="text-[11px] text-muted-foreground mt-2">
-                  Obtenha sua chave gratuita em{" "}
-                  <a
-                    href="https://openweathermap.org/api"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-primary hover:underline"
-                  >
-                    openweathermap.org
-                  </a>
-                </p>
-              </motion.div>
-            )}
-          </motion.div>
 
           {/* Search */}
           <motion.form
