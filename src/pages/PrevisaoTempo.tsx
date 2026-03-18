@@ -365,56 +365,17 @@ export default function PrevisaoTempo() {
             </motion.div>
           )}
 
-          {/* Content Section */}
-          <motion.section
+          {/* Brief info */}
+          <motion.div
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
-            className="glass rounded-2xl p-6 md:p-8 border border-border/50 prose prose-invert max-w-none"
+            className="glass rounded-xl p-5 border border-border/50 text-center"
           >
-            <h2 className="font-display text-xl font-bold text-foreground mb-4">
-              Como usar a Previsão do Tempo
-            </h2>
-            <p className="text-sm text-muted-foreground leading-relaxed mb-4">
-              Nossa ferramenta de previsão do tempo é simples e direta. Basta digitar o nome de qualquer cidade no campo de busca e clicar em "Buscar". Em poucos segundos, você terá acesso à temperatura atual, sensação térmica, umidade, velocidade do vento e a previsão para os próximos dias.
+            <p className="text-sm text-muted-foreground">
+              Pesquise qualquer cidade para ver temperatura, umidade, vento e previsão de 5 dias. Configure sua API Key nas configurações acima.
             </p>
-
-            <h3 className="font-display text-lg font-semibold text-foreground mt-6 mb-3">
-              Por que consultar o clima é importante?
-            </h3>
-            <ul className="text-sm text-muted-foreground space-y-2 list-disc pl-5 mb-4">
-              <li>Planejar seu dia com mais segurança e conforto.</li>
-              <li>Evitar surpresas como chuvas inesperadas ou ondas de calor.</li>
-              <li>Organizar viagens, eventos ao ar livre e atividades esportivas.</li>
-              <li>Proteger sua saúde ao se preparar para mudanças bruscas de temperatura.</li>
-            </ul>
-
-            <h3 className="font-display text-lg font-semibold text-foreground mt-6 mb-3">
-              Dicas práticas
-            </h3>
-            <ul className="text-sm text-muted-foreground space-y-2 list-disc pl-5 mb-4">
-              <li>Consulte a previsão logo pela manhã para decidir o que vestir.</li>
-              <li>Verifique a umidade do ar — valores abaixo de 30% pedem hidratação extra.</li>
-              <li>Ventos acima de 40 km/h podem dificultar atividades ao ar livre.</li>
-              <li>Compare a temperatura real com a sensação térmica para se preparar melhor.</li>
-            </ul>
-
-            <h3 className="font-display text-lg font-semibold text-foreground mt-6 mb-3">
-              Sobre a API Key
-            </h3>
-            <p className="text-sm text-muted-foreground leading-relaxed">
-              Para usar esta ferramenta, você precisa de uma chave gratuita do OpenWeather. Acesse{" "}
-              <a
-                href="https://openweathermap.org/api"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-primary hover:underline"
-              >
-                openweathermap.org
-              </a>
-              , crie uma conta gratuita e copie sua API Key. Cole o valor no campo de configurações acima. Sua chave fica salva localmente no navegador e nunca é enviada para nossos servidores.
-            </p>
-          </motion.section>
+          </motion.div>
         </div>
       </main>
       <Footer />
