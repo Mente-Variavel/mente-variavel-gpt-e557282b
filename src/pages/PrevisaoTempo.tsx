@@ -20,7 +20,6 @@ import {
   CloudFog,
   MapPin,
 } from "lucide-react";
-} from "lucide-react";
 
 interface WeatherData {
   name: string;
