@@ -1,4 +1,5 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import { Button } from "@/components/ui/button";
@@ -17,9 +18,6 @@ import {
   CloudLightning,
   CloudDrizzle,
   CloudFog,
-  Settings2,
-  ChevronDown,
-  ChevronUp,
   MapPin,
 } from "lucide-react";
 
@@ -95,25 +93,14 @@ function groupForecastByDay(list: ForecastItem[]) {
 
 export default function PrevisaoTempo() {
   const [city, setCity] = useState("");
-  const [apiKey, setApiKey] = useState(() => localStorage.getItem("ow_api_key") || "");
-  const [showSettings, setShowSettings] = useState(false);
   const [weather, setWeather] = useState<WeatherData | null>(null);
   const [forecast, setForecast] = useState<ReturnType<typeof groupForecastByDay>>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
-  useEffect(() => {
-    if (apiKey) localStorage.setItem("ow_api_key", apiKey);
-  }, [apiKey]);
-
   const fetchWeather = async () => {
     if (!city.trim()) {
       setError("Digite o nome de uma cidade.");
-      return;
-    }
-    if (!apiKey.trim()) {
-      setError("Insira sua API Key do OpenWeather nas configurações.");
-      setShowSettings(true);
       return;
     }
     setLoading(true);
@@ -122,25 +109,15 @@ export default function PrevisaoTempo() {
     setForecast([]);
 
     try {
-      const [wRes, fRes] = await Promise.all([
-        fetch(
-          `https://api.openweathermap.org/data/2.5/weather?q=${encodeURIComponent(city)}&units=metric&lang=pt_br&appid=${apiKey}`
-        ),
-        fetch(
-          `https://api.openweathermap.org/data/2.5/forecast?q=${encodeURIComponent(city)}&units=metric&lang=pt_br&appid=${apiKey}`
-        ),
-      ]);
+      const { data, error: fnError } = await supabase.functions.invoke("weather", {
+        body: { city: city.trim() },
+      });
 
-      if (!wRes.ok) {
-        const err = await wRes.json();
-        throw new Error(err.message || "Erro ao buscar dados.");
-      }
+      if (fnError) throw new Error(fnError.message || "Erro ao buscar dados.");
+      if (data?.error) throw new Error(data.error);
 
-      const wData: WeatherData = await wRes.json();
-      const fData: ForecastData = await fRes.json();
-
-      setWeather(wData);
-      setForecast(groupForecastByDay(fData.list));
+      setWeather(data.weather);
+      setForecast(groupForecastByDay(data.forecast.list));
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "Erro desconhecido.");
     } finally {
@@ -175,51 +152,6 @@ export default function PrevisaoTempo() {
             </p>
           </motion.div>
 
-          {/* Settings toggle */}
-          <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.1 }}
-            className="mb-6"
-          >
-            <button
-              onClick={() => setShowSettings(!showSettings)}
-              className="flex items-center gap-2 text-sm text-muted-foreground hover:text-primary transition-colors"
-            >
-              <Settings2 className="w-4 h-4" />
-              Configurações da API
-              {showSettings ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
-            </button>
-            {showSettings && (
-              <motion.div
-                initial={{ opacity: 0, height: 0 }}
-                animate={{ opacity: 1, height: "auto" }}
-                className="mt-3 glass rounded-xl p-4 border border-border/50"
-              >
-                <label className="text-xs font-medium text-muted-foreground mb-1.5 block">
-                  OpenWeather API Key
-                </label>
-                <Input
-                  type="password"
-                  placeholder="Cole sua API Key aqui..."
-                  value={apiKey}
-                  onChange={(e) => setApiKey(e.target.value)}
-                  className="bg-secondary/50 border-border/50 text-sm"
-                />
-                <p className="text-[11px] text-muted-foreground mt-2">
-                  Obtenha sua chave gratuita em{" "}
-                  <a
-                    href="https://openweathermap.org/api"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-primary hover:underline"
-                  >
-                    openweathermap.org
-                  </a>
-                </p>
-              </motion.div>
-            )}
-          </motion.div>
 
           {/* Search */}
           <motion.form
@@ -373,7 +305,7 @@ export default function PrevisaoTempo() {
             className="glass rounded-xl p-5 border border-border/50 text-center"
           >
             <p className="text-sm text-muted-foreground">
-              Pesquise qualquer cidade para ver temperatura, umidade, vento e previsão de 5 dias. Configure sua API Key nas configurações acima.
+              Pesquise qualquer cidade do mundo para ver temperatura atual, umidade, vento, visibilidade e previsão para os próximos 5 dias.
             </p>
           </motion.div>
         </div>
