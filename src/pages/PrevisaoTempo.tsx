@@ -307,7 +307,6 @@ export default function PrevisaoTempo() {
             <p className="text-sm text-muted-foreground">
               Pesquise qualquer cidade do mundo para ver temperatura atual, umidade, vento, visibilidade e previsão para os próximos 5 dias.
             </p>
-            </p>
           </motion.div>
         </div>
       </main>
