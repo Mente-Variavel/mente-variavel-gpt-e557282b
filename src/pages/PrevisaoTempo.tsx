@@ -94,25 +94,14 @@ function groupForecastByDay(list: ForecastItem[]) {
 
 export default function PrevisaoTempo() {
   const [city, setCity] = useState("");
-  const [apiKey, setApiKey] = useState(() => localStorage.getItem("ow_api_key") || "");
-  const [showSettings, setShowSettings] = useState(false);
   const [weather, setWeather] = useState<WeatherData | null>(null);
   const [forecast, setForecast] = useState<ReturnType<typeof groupForecastByDay>>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
-  useEffect(() => {
-    if (apiKey) localStorage.setItem("ow_api_key", apiKey);
-  }, [apiKey]);
-
   const fetchWeather = async () => {
     if (!city.trim()) {
       setError("Digite o nome de uma cidade.");
-      return;
-    }
-    if (!apiKey.trim()) {
-      setError("Insira sua API Key do OpenWeather nas configurações.");
-      setShowSettings(true);
       return;
     }
     setLoading(true);
@@ -121,25 +110,15 @@ export default function PrevisaoTempo() {
     setForecast([]);
 
     try {
-      const [wRes, fRes] = await Promise.all([
-        fetch(
-          `https://api.openweathermap.org/data/2.5/weather?q=${encodeURIComponent(city)}&units=metric&lang=pt_br&appid=${apiKey}`
-        ),
-        fetch(
-          `https://api.openweathermap.org/data/2.5/forecast?q=${encodeURIComponent(city)}&units=metric&lang=pt_br&appid=${apiKey}`
-        ),
-      ]);
+      const { data, error: fnError } = await supabase.functions.invoke("weather", {
+        body: { city: city.trim() },
+      });
 
-      if (!wRes.ok) {
-        const err = await wRes.json();
-        throw new Error(err.message || "Erro ao buscar dados.");
-      }
+      if (fnError) throw new Error(fnError.message || "Erro ao buscar dados.");
+      if (data?.error) throw new Error(data.error);
 
-      const wData: WeatherData = await wRes.json();
-      const fData: ForecastData = await fRes.json();
-
-      setWeather(wData);
-      setForecast(groupForecastByDay(fData.list));
+      setWeather(data.weather);
+      setForecast(groupForecastByDay(data.forecast.list));
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "Erro desconhecido.");
     } finally {
