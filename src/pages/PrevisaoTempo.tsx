@@ -305,7 +305,8 @@ export default function PrevisaoTempo() {
             className="glass rounded-xl p-5 border border-border/50 text-center"
           >
             <p className="text-sm text-muted-foreground">
-              Pesquise qualquer cidade para ver temperatura, umidade, vento e previsão de 5 dias. Configure sua API Key nas configurações acima.
+              Pesquise qualquer cidade do mundo para ver temperatura atual, umidade, vento, visibilidade e previsão para os próximos 5 dias.
+            </p>
             </p>
           </motion.div>
         </div>
