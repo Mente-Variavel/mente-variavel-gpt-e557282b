@@ -18,10 +18,8 @@ import {
   CloudLightning,
   CloudDrizzle,
   CloudFog,
-  Settings2,
-  ChevronDown,
-  ChevronUp,
   MapPin,
+} from "lucide-react";
 } from "lucide-react";
 
 interface WeatherData {
