@@ -286,6 +286,5 @@ export default function GeradorBio() {
           </div>
         </footer>
       </div>
-    </>
   );
 }
