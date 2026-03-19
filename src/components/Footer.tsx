@@ -8,23 +8,6 @@ import logo from "@/assets/logo.png";
 
 const ADMIN_EMAIL = "mentevariavel@gmail.com";
 
-const partners = [
-  {
-    name: "Lovable",
-    description: "Plataforma que auxilia na criação de aplicações com inteligência artificial.",
-    url: "https://lovable.dev",
-  },
-  {
-    name: "Replit",
-    description: "Ambiente moderno de desenvolvimento em nuvem.",
-    url: "https://replit.com",
-  },
-  {
-    name: "Vercel",
-    description: "Infraestrutura de hospedagem e deploy de aplicações web.",
-    url: "https://vercel.com",
-  },
-];
 
 const Footer = () => {
   const [showLogin, setShowLogin] = useState(false);
