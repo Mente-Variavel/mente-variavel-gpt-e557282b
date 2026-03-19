@@ -111,18 +111,19 @@ export default function GeradorBio() {
     description: "Crie bios profissionais para Instagram com inteligência artificial. Grátis e em português.",
   };
 
-  return (
-    <>
-      <Helmet>
-        <html lang="pt-BR" />
-        <title>Gerador de Bio para Instagram Profissional (Grátis) | Mente Variável</title>
-        <meta name="description" content="Crie bios profissionais para Instagram com IA. Ideal para empresas, criadores e lojas. 100% grátis, rápido e em português brasileiro." />
-        <link rel="canonical" href="https://mente-variavel-gpt.lovable.app/produtos/gerador-bio" />
-        <script type="application/ld+json">{JSON.stringify(jsonLd)}</script>
-      </Helmet>
+  useEffect(() => {
+    document.title = "Gerador de Bio para Instagram Profissional (Grátis) | Mente Variável";
+    document.querySelector('meta[name="description"]')?.setAttribute("content", "Crie bios profissionais para Instagram com IA. Ideal para empresas, criadores e lojas. 100% grátis, rápido e em português brasileiro.");
+    const script = document.createElement("script");
+    script.type = "application/ld+json";
+    script.textContent = JSON.stringify(jsonLd);
+    document.head.appendChild(script);
+    return () => { script.remove(); };
+  }, []);
 
-      <div className="min-h-screen bg-background text-foreground">
-        <Navbar />
+  return (
+    <div className="min-h-screen bg-background text-foreground">
+      <Navbar />
 
         <main className="container mx-auto px-4 pt-24 pb-16 max-w-3xl">
           {/* Header */}
