@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Helmet } from "react-helmet-async";
+import { useEffect } from "react";
 import { motion } from "framer-motion";
 import { Copy, Crown, Sparkles, Loader2, Check, Instagram, Hash, Type, Subtitles } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
