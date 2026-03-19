@@ -8,23 +8,6 @@ import logo from "@/assets/logo.png";
 
 const ADMIN_EMAIL = "mentevariavel@gmail.com";
 
-const partners = [
-  {
-    name: "Lovable",
-    description: "Plataforma que auxilia na criação de aplicações com inteligência artificial.",
-    url: "https://lovable.dev",
-  },
-  {
-    name: "Replit",
-    description: "Ambiente moderno de desenvolvimento em nuvem.",
-    url: "https://replit.com",
-  },
-  {
-    name: "Vercel",
-    description: "Infraestrutura de hospedagem e deploy de aplicações web.",
-    url: "https://vercel.com",
-  },
-];
 
 const Footer = () => {
   const [showLogin, setShowLogin] = useState(false);
@@ -107,6 +90,7 @@ const Footer = () => {
           <div>
             <h4 className="font-display text-xs font-bold text-foreground mb-3 uppercase tracking-wider">Produtos</h4>
             <div className="flex flex-col gap-2 text-sm text-muted-foreground">
+              <Link to="/produtos/gerador-bio" className="hover:text-primary transition-colors">Gerador de Bio Instagram</Link>
               <Link to="/produtos/gerador-legendas" className="hover:text-primary transition-colors">Gerador de Legendas</Link>
               <Link to="/produtos/pix-checkout" className="hover:text-primary transition-colors">Pix Checkout</Link>
               <Link to="/criador-prompt" className="hover:text-primary transition-colors">Criador de Prompt</Link>
@@ -119,24 +103,6 @@ const Footer = () => {
           </div>
         </div>
 
-        {/* Parceiros Tecnológicos */}
-        <div className="border-t border-border/30 pt-6 mb-6">
-          <h4 className="font-display text-xs font-bold text-foreground mb-4 uppercase tracking-wider text-center">Parceiros Tecnológicos</h4>
-          <div className="flex flex-wrap justify-center gap-4">
-            {partners.map((partner) => (
-              <a
-                key={partner.name}
-                href={partner.url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="group flex flex-col items-center gap-1.5 rounded-lg border border-border/40 bg-secondary/30 px-5 py-3 transition-all hover:border-primary/50 hover:bg-secondary/60 hover:shadow-[0_0_12px_hsl(var(--primary)/0.15)] min-w-[160px]"
-              >
-                <span className="text-sm font-bold text-foreground group-hover:text-primary transition-colors">{partner.name}</span>
-                <span className="text-[11px] text-muted-foreground text-center leading-tight max-w-[180px]">{partner.description}</span>
-              </a>
-            ))}
-          </div>
-        </div>
 
         <div className="border-t border-border/30 pt-6 flex flex-col md:flex-row items-center justify-between gap-4">
           <p className="text-xs text-muted-foreground">© 2026 Mente Variável. Todos os direitos reservados.</p>

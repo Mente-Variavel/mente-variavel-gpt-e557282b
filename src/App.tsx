@@ -30,6 +30,7 @@ import CalculadoraPreco from "./pages/CalculadoraPreco";
 import ExplorarVideos from "./pages/ExplorarVideos";
 import GuiaFerramentas from "./pages/GuiaFerramentas";
 import PrevisaoTempo from "./pages/PrevisaoTempo";
+import GeradorBio from "./pages/GeradorBio";
 
 import Auth from "./pages/Auth";
 import AdminAds from "./pages/AdminAds";
@@ -75,6 +76,7 @@ function AppContent() {
         <Route path="/servicos/explorar-videos" element={<ExplorarVideos />} />
         <Route path="/guia-ferramentas" element={<GuiaFerramentas />} />
         <Route path="/ferramentas/previsao-tempo" element={<PrevisaoTempo />} />
+        <Route path="/produtos/gerador-bio" element={<GeradorBio />} />
 
         <Route path="/auth" element={<Auth />} />
         <Route path="/admin/anuncios" element={<AdminAds />} />
