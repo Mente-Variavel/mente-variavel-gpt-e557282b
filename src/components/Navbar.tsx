@@ -29,6 +29,7 @@ const servicosItems: NavItem[] = [
 ];
 
 const produtosItems: NavItem[] = [
+  { to: "/produtos/gerador-bio", label: "Gerador de Bio Instagram", external: false },
   { to: "/produtos/pix-checkout", label: "Pix Checkout", external: false },
   { to: "/produtos/gerador-legendas", label: "Legendas (Shorts / Reels / TikTok)", external: false },
   { to: "https://mente-variavel-legendas.lovable.app/", label: "Legendas para YouTube", external: true },
